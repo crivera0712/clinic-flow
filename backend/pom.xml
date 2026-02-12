@@ -79,6 +79,11 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
+				<configuration>
+					<url>jdbc:mysql://localhost:3306/clinic_management?createDatabaseIfNotExist=true</url>
+					<user>root</user>
+					<password>SdrtZ6542</password>
+				</configuration>
 			</plugin>
 
 			<plugin>
