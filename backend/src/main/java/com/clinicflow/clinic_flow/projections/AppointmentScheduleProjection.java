@@ -1,0 +1,13 @@
+package com.clinicflow.clinic_flow.projections;
+import java.time.LocalDateTime;
+
+public interface AppointmentScheduleProjection {
+    LocalDateTime getScheduledAt();
+    Long getAptId();
+    String getFirstName();
+    String getLastName();
+    Long getTherapistId();
+    String getTherapistName();
+    String getTherapistType();
+    String getBodyRegionDisplayName();
+}

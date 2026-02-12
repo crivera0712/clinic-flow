@@ -26,8 +26,8 @@ public class Therapist {
     @Column(name = "t_id")
     private Long id;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "therapist_name")
+    private String therapistName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "therapist_type", nullable = false)
