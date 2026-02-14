@@ -19,19 +19,21 @@ public class Appointment {
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 
+    @Setter
     @Column(name = "created_at")
     private Instant createdAt;
 
     @Column(name = "modified_at")
     private Instant modifiedAt;
 
+    @Setter
     @ManyToOne
     @JoinColumn(name = "c_id")
     private Case ptCase;
 
+    @Setter
     @ManyToOne
     @JoinColumn(name = "t_id")
     private Therapist therapist;
-
 
 }

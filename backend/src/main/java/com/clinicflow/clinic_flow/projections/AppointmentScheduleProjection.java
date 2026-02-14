@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 public interface AppointmentScheduleProjection {
     LocalDateTime getScheduledAt();
     Long getAptId();
+    Long getCaseId();
     String getFirstName();
     String getLastName();
     Long getTherapistId();
