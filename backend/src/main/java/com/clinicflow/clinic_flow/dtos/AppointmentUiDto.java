@@ -12,10 +12,12 @@ public class AppointmentUiDto {
     private Long aptId;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime scheduledAt;
+    private Long caseId;
     private String firstName;
     private String lastName;
     private Long therapistId;
     private String therapistName;
     private String therapistType;
     private String bodyRegionDisplayName;
+
 }

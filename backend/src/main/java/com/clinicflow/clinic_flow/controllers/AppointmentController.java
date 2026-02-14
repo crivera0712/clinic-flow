@@ -1,58 +1,70 @@
 package com.clinicflow.clinic_flow.controllers;
 
-import com.clinicflow.clinic_flow.dtos.AppointmentDto;
+import com.clinicflow.clinic_flow.dtos.AppointmentRequest;
+import com.clinicflow.clinic_flow.dtos.AppointmentResponse;
 import com.clinicflow.clinic_flow.dtos.AppointmentUiDto;
-import com.clinicflow.clinic_flow.entity.Appointment;
 import com.clinicflow.clinic_flow.mappers.AppointmentMapper;
 import com.clinicflow.clinic_flow.repositories.AppointmentRepository;
-import jakarta.transaction.Transactional;
+import com.clinicflow.clinic_flow.services.AppointmentService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
 
 @AllArgsConstructor
-@RequestMapping("/appoinments")
+@RequestMapping("/appointments")
 @RestController
 public class AppointmentController {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
+    private final AppointmentService appointmentService;
 
     // TODO: ADD response entity response to this method
-    @GetMapping
-    List<AppointmentUiDto> getAllAppointments(
-            @RequestParam(required = false, defaultValue = "", name = "sort") String sort
-            ) {
-        if (sort == null || sort.isEmpty())
-            sort = "scheduledAt";
-        return appointmentRepository.findAll(Sort.by(sort))
-                .stream()
-                .map(appointmentMapper::toAppointmentDto)
-                .toList();
+    @GetMapping()
+    List<AppointmentResponse> getAllAppointments() {
+        return appointmentService.getAllAppointments();
     }
-    @Transactional
-    @GetMapping("/{date}")
-    public ResponseEntity<List<AppointmentUiDto>> getAppointmentsByDate (@PathVariable LocalDate date){
-        var appts = appointmentRepository.findDailyAppointments(date);
-        if (appts.isEmpty()) return ResponseEntity.notFound().build();
 
-        return ResponseEntity.ok(appts
-                .stream().map(appointmentMapper::toAppointmentUiDto)
-                .toList()
-        );
+    @GetMapping("/{id}")
+    public AppointmentResponse getAppointmentById(@PathVariable Long id) {
+        var appointment = appointmentRepository.findById(id).orElseThrow();
+        return appointmentMapper.entityToAppointmentResponse(appointment);
+    }
+
+    @GetMapping("/date")
+    public ResponseEntity<List<AppointmentUiDto>> getAppointmentsByDate (
+            @RequestParam(required = false) LocalDate date){
+        if (date == null) date =  LocalDate.now();
+        var appts = appointmentService.getAppointmentsByDate(date);
+        return ResponseEntity.ok(appts);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<AppointmentDto> createAppointment(
-            @RequestBody AppointmentDto newAppointmentDto) {
+    public ResponseEntity<AppointmentResponse> createAppointment(
+            @RequestBody @Valid AppointmentRequest request) {
 
-        AppointmentDto newAppointmentRequest = appointmentRepository.save(newAppointmentDto);
-        return ResponseEntity.created()
+        var createdAppointmentDto = appointmentService.createAppointment(request);
+
+        // should i check params?
+        System.out.println("Debug statements to test create Post endpoint for appointments**");
+        System.out.println(request.toString());
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdAppointmentDto.getId())
+                .toUri();
+
+        return ResponseEntity
+                .created(location)
+                .body(createdAppointmentDto);
     }
 
 }
