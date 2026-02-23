@@ -1,19 +1,19 @@
-package com.clinicflow.clinic_flow.dtos;
+package com.clinicflow.clinic_flow.dtos.appointments;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 
-@ToString
-@NoArgsConstructor
 @AllArgsConstructor
-@Setter
+@NoArgsConstructor
 @Getter
-public class AppointmentResponse {
-    @NotNull(message = "appointment id cannot be missing")
-    private Long id;
+@Setter
+public class AppointmentRequestDto {
     @NotNull(message = "scheduled time cannot be missing")
     private LocalDateTime scheduledAt;
     private Instant modifiedAt;

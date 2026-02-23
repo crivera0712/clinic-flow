@@ -1,33 +1,42 @@
 package com.clinicflow.clinic_flow.controllers;
 
-import com.clinicflow.clinic_flow.dtos.PatientDto;
-import com.clinicflow.clinic_flow.entity.Patient;
-import com.clinicflow.clinic_flow.mappers.PatientMapper;
-import com.clinicflow.clinic_flow.repositories.PatientRepository;
+import com.clinicflow.clinic_flow.dtos.patients.PatientRequestDto;
+import com.clinicflow.clinic_flow.dtos.patients.PatientResponseDto;
+import com.clinicflow.clinic_flow.services.PatientService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-/*
-    can i build an api that returns all the patients within a date?
- */
 
 @AllArgsConstructor
 @RequestMapping("/patients")
 @RestController
 public class PatientController {
 
-    private final PatientRepository patientRepository;
-    private final PatientMapper patientMapper;
+    private final PatientService patientService;
 
     @GetMapping
-    public List<PatientDto> getPatients() {
-        return patientRepository.findAll()
-                .stream()
-                .map(patientMapper::toPatientDto)
-                .toList();
+    public List<PatientResponseDto> getPatients() {
+        return patientService.getPatients();
     }
+
+    @GetMapping("/{id}")
+    public PatientResponseDto getPatientById(
+            @PathVariable Long id){
+        return patientService.getPatient(id);
+    }
+
+    @GetMapping("/search")
+    public List<PatientResponseDto> searchPatient(
+            @RequestParam String q){
+        return patientService.searchPatient(q);
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<PatientResponseDto> createPatient(@RequestBody @Valid PatientRequestDto request) {
+        return ResponseEntity.ok(patientService.createPatient(request));
+    }
+
 }

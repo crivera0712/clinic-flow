@@ -5,17 +5,46 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/projections/AppointmentScheduleProjection.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/CaseController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/TherapistController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionRequestDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseRequestDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientRequestDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistRequestDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistsResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/BodyRegionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/CaseMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/TherapistMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/BodyRegionService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/CaseService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/PatientService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/TherapistService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V10__default_bool_val.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V8__default_bool_value_for_br.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V9__default_bool_val_for_br.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/ClinicFlowApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/ClinicFlowApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/AppointmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/AppointmentController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentUiDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/PatientController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/PatientController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentUiDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentUiDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/PatientDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Appointment.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Appointment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/BodyRegion.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/BodyRegion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Case.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Case.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Therapist.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Therapist.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/projections/AppointmentSummary.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V7__fixed_proc_to_work_with_projections.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V7__fixed_proc_to_work_with_projections.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/PatientMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/PatientMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/BodyRegionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/BodyRegionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/CaseRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/CaseRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/PatientRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/PatientRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/TherapistRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/TherapistRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,8 +55,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="com.intellij.jpb.JpaRepository" />
-        <option value="Interface" />
         <option value="Class" />
+        <option value="Interface" />
       </list>
     </option>
   </component>
@@ -62,6 +91,9 @@
       </MavenGeneralSettings>
     </option>
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -70,42 +102,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "JUnit.AppointmentControllerTest.executor": "Run",
-    "JUnit.AppointmentControllerTest.testPostRequestAppointment.executor": "Debug",
-    "Maven.clinic-flow [org.apache.maven.plugins:maven-clean-plugin:3.4.1:clean].executor": "Run",
-    "Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:10.15.0:migrate].executor": "Run",
-    "Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:11.7.2:migrate].executor": "Run",
-    "Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:11.7.2:repair].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.ClinicFlowApplication.executor": "Run",
-    "git-widget-placeholder": "dev",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/christian/Desktop/clinic-flow",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.projectsettings.compiler.annotationProcessors",
-    "ts.external.directory.path": "/Users/christian/Library/Application Support/JetBrains/IntelliJIdea2025.3/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;JUnit.AppointmentControllerTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AppointmentControllerTest.testPostRequestAppointment.executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.clinic-flow [org.apache.maven.plugins:maven-clean-plugin:3.4.1:clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:10.15.0:migrate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:11.7.2:migrate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinic-flow [org.flywaydb:flyway-maven-plugin:11.7.2:repair].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ClinicFlowApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/christian/Desktop/clinic-flow&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.annotationProcessors&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/christian/Library/Application Support/JetBrains/IntelliJIdea2025.3/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/backend" />
@@ -145,7 +177,13 @@
       <workItem from="1769902387060" duration="2990000" />
       <workItem from="1770000888828" duration="26984000" />
       <workItem from="1770355110408" duration="282000" />
-      <workItem from="1770355399943" duration="71439000" />
+      <workItem from="1770355399943" duration="72910000" />
+      <workItem from="1771062468053" duration="2359000" />
+      <workItem from="1771221785345" duration="8278000" />
+      <workItem from="1771311464481" duration="9130000" />
+      <workItem from="1771571089285" duration="17062000" />
+      <workItem from="1771646534292" duration="3467000" />
+      <workItem from="1771815372982" duration="5504000" />
     </task>
     <servers />
   </component>

@@ -3,7 +3,12 @@ package com.clinicflow.clinic_flow.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
 
+import java.util.HashSet;
+import java.util.Set;
+
+@DynamicInsert
 @Entity
 @Getter
 @Setter
@@ -21,7 +26,11 @@ public class BodyRegion {
     @Column(name = "display_name")
     private String displayName;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(name = "is_active", columnDefinition = "boolean default true")
+    private Boolean isActive = true;
+
+    @OneToMany(mappedBy = "bodyRegion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Case> cases = new HashSet<>();
+
 
 }

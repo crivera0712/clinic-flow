@@ -1,8 +1,8 @@
 package com.clinicflow.clinic_flow.services;
 
-import com.clinicflow.clinic_flow.dtos.AppointmentRequest;
-import com.clinicflow.clinic_flow.dtos.AppointmentResponse;
-import com.clinicflow.clinic_flow.dtos.AppointmentUiDto;
+import com.clinicflow.clinic_flow.dtos.appointments.AppointmentRequestDto;
+import com.clinicflow.clinic_flow.dtos.appointments.AppointmentResponseDto;
+import com.clinicflow.clinic_flow.dtos.appointments.AppointmentUiDto;
 import com.clinicflow.clinic_flow.entity.Appointment;
 import com.clinicflow.clinic_flow.entity.Case;
 import com.clinicflow.clinic_flow.entity.Therapist;
@@ -21,38 +21,48 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class AppointmentService {
-    private AppointmentRepository appointmentRepository;
-    private AppointmentMapper appointmentMapper;
-    private TherapistRepository therapistRepository;
-    private CaseRepository caseRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final AppointmentMapper appointmentMapper;
+    private final TherapistRepository therapistRepository;
+    private final CaseRepository caseRepository;
 
-    public List<AppointmentResponse> getAllAppointments(){
+    public List<AppointmentResponseDto> getAllAppointments(){
         return appointmentRepository
                 .findAll()
                 .stream()
-                .map(appointmentMapper::entityToAppointmentResponse)
+                .map(appointmentMapper::entityToAppointmentResponseDto)
                 .toList();
     }
 
-    @Transactional
-    public AppointmentResponse createAppointment(AppointmentRequest request) {
+    public AppointmentResponseDto getAppointmentById(Long id){
+        var appointment = appointmentRepository.findById(id).orElseThrow();
+        return appointmentMapper.entityToAppointmentResponseDto(appointment);
+    }
 
-        Appointment newAppointmentRequest = appointmentMapper.requestToAppointmentEntity(request);
+    @Transactional
+    public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
+
+        Appointment appointment = appointmentMapper.requestToAppointmentEntityDto(request);
         Therapist therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow();
         Case ptCase =  caseRepository.findById(request.getCaseId()).orElseThrow();
 
-        newAppointmentRequest.setTherapist(therapist);
-        newAppointmentRequest.setPtCase(ptCase);
-        newAppointmentRequest.setCreatedAt(Instant.now());
+        appointment.setTherapist(therapist);
+        appointment.setPtCase(ptCase);
+        appointment.setCreatedAt(Instant.now());
 
-        var newAppointment = appointmentRepository.save(newAppointmentRequest);
-        return appointmentMapper.entityToAppointmentResponse(newAppointment);
+        System.out.println("REQ scheduledAt = " + request.getScheduledAt());
+        System.out.println("REQ therapistId = " + request.getTherapistId());
+        System.out.println("ENTITY scheduledAt = " + appointment.getScheduledAt());
+
+        var newAppointment = appointmentRepository.save(appointment);
+
+        return appointmentMapper.entityToAppointmentResponseDto(newAppointment);
     }
 
     @Transactional
     public List<AppointmentUiDto> getAppointmentsByDate(LocalDate date){
-        var appts = appointmentRepository.findDailyAppointments(date);
-        return appts.
+        var appointments = appointmentRepository.findDailyAppointments(date);
+        return appointments.
                 stream()
                 .map(appointmentMapper::toAppointmentUiDto)
                 .toList();
