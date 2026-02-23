@@ -16,6 +16,7 @@ public class Appointment {
     @Column(name = "apt_id")
     private Long id;
 
+    @Setter
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 

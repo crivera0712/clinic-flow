@@ -1,4 +1,4 @@
-package com.clinicflow.clinic_flow.dtos;
+package com.clinicflow.clinic_flow.dtos.appointments;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -19,5 +19,4 @@ public class AppointmentUiDto {
     private String therapistName;
     private String therapistType;
     private String bodyRegionDisplayName;
-
 }
