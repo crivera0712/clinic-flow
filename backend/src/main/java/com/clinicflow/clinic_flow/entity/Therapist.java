@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.processing.Exclude;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,10 +16,19 @@ import java.util.Set;
 @Table(name = "therapists")
 public class Therapist {
 
-    private enum therapistType{
-        PHYSICAL_THERAPY_ASSISTANT,
-        PHYSICAL_THERAPIST,
-        OCCUPATIONAL_THERAPIST
+    public enum TherapistType{
+        PHYSICAL_THERAPY_ASSISTANT("Physcial Therapy Assistant"),
+        PHYSICAL_THERAPIST("Physical Therapist"),
+        OCCUPATIONAL_THERAPIST("Occupational Therapist");
+
+        private final String displayName;
+
+        TherapistType(String displayName) {
+            this.displayName = displayName;
+        }
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     @Id
@@ -31,7 +41,7 @@ public class Therapist {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "therapist_type", nullable = false)
-    private therapistType type;
+    private TherapistType type;
 
     @OneToMany(mappedBy = "therapist", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

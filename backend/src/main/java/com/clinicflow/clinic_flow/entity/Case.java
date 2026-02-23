@@ -22,6 +22,10 @@ public class Case {
     @JoinColumn(name = "p_id")
     private Patient patient;
 
+    @ManyToOne
+    @JoinColumn(name = "br_id")
+    private BodyRegion bodyRegion;
+
     @OneToMany(mappedBy = "ptCase", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Appointment> appointments = new HashSet<>();
 
