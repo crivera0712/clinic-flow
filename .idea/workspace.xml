@@ -5,46 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/CaseController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/TherapistController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionResponseDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseResponseDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistsResponseDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/BodyRegionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/CaseMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/TherapistMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/BodyRegionService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/CaseService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/PatientService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/TherapistService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V10__default_bool_val.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V8__default_bool_value_for_br.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V9__default_bool_val_for_br.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentPatchDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientPatchDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V11__add_created_at_cases.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V12__add_cascade_for_appt_case_fk.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V13__appts_status_column.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/AppointmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/AppointmentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/CaseController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/CaseController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/PatientController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/controllers/PatientController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentRequestDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentResponseDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/AppointmentUiDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentUiDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/PatientDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentResponseDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentUiDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/appointments/AppointmentUiDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/body_region/BodyRegionRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseResponseDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/cases/CaseResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/patients/PatientRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/dtos/therapists/TherapistRequestDto.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Appointment.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Appointment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/BodyRegion.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/BodyRegion.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Case.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Case.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Therapist.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/entity/Therapist.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/PatientMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/PatientMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/BodyRegionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/BodyRegionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/CaseRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/CaseRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/PatientRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/PatientRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/TherapistRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/TherapistRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/CaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/CaseService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/PatientService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/PatientService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,8 +43,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="com.intellij.jpb.JpaRepository" />
-        <option value="Class" />
         <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -183,12 +171,23 @@
       <workItem from="1771311464481" duration="9130000" />
       <workItem from="1771571089285" duration="17062000" />
       <workItem from="1771646534292" duration="3467000" />
-      <workItem from="1771815372982" duration="5504000" />
+      <workItem from="1771815372982" duration="23934000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

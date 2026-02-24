@@ -1,5 +1,7 @@
 package com.clinicflow.clinic_flow.dtos.appointments;
 
+import com.clinicflow.clinic_flow.entity.Appointment;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.time.Instant;
@@ -12,9 +14,11 @@ import java.time.LocalDateTime;
 @Getter
 public class AppointmentResponseDto {
     private Long id;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime scheduledAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private Instant modifiedAt;
-
     private Long caseId;
     private Long therapistId;
+    private Appointment.Status status;
 }

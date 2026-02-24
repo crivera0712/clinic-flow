@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.services;
 
+import com.clinicflow.clinic_flow.dtos.appointments.AppointmentPatchDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentUiDto;
@@ -46,6 +47,7 @@ public class AppointmentService {
         Therapist therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow();
         Case ptCase =  caseRepository.findById(request.getCaseId()).orElseThrow();
 
+        appointment.setStatus(Appointment.Status.SCHEDULED);
         appointment.setTherapist(therapist);
         appointment.setPtCase(ptCase);
         appointment.setCreatedAt(Instant.now());
@@ -66,5 +68,41 @@ public class AppointmentService {
                 stream()
                 .map(appointmentMapper::toAppointmentUiDto)
                 .toList();
+    }
+
+    @Transactional
+    public AppointmentResponseDto updateAppointmentById(Long id, AppointmentPatchDto request) {
+        var appointment = appointmentRepository.findById(id).orElseThrow( () ->
+                new RuntimeException("Appointment not found with id " + id));
+
+        if (request == null) return appointmentMapper.entityToAppointmentResponseDto(appointment);
+
+        if (request.getScheduledAt() != null) {
+            appointment.setScheduledAt(request.getScheduledAt());
+        }
+
+        if (request.getTherapistId() != null) {
+            var therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow( ()->
+                    new RuntimeException("Therapist not found with id " + request.getTherapistId()));
+            appointment.setTherapist(therapist);
+        }
+
+        if (request.getCaseId() != null) {
+            var patchCase = caseRepository.findById(request.getCaseId()).orElseThrow( () ->
+                    new RuntimeException("Case not found with id " + request.getCaseId()));
+            appointment.setPtCase(patchCase);
+        }
+
+        if (request.getStatus() != null) {
+            appointment.setStatus(request.getStatus());
+        }
+
+        appointment.setModifiedAt(Instant.now());
+
+        return appointmentMapper.entityToAppointmentResponseDto(appointmentRepository.save(appointment));
+    }
+
+    public void deleteAppointmentById(Long id){
+        appointmentRepository.deleteById(id);
     }
 }

@@ -16,8 +16,13 @@ public class CaseController {
     private final CaseService caseService;
 
     @GetMapping()
-    public List<CaseResponseDto> getBodyRegions() {
+    public List<CaseResponseDto> getCases() {
         return caseService.getCases();
+    }
+
+    @GetMapping("/patient/{id}")
+    public List<CaseResponseDto> getCasesByPatient(@PathVariable Long id) {
+        return caseService.searchByPatient(id);
     }
 
     @GetMapping("/{id}")

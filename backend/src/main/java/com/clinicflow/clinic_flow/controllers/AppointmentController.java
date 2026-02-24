@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.controllers;
 
+import com.clinicflow.clinic_flow.dtos.appointments.AppointmentPatchDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.dtos.appointments.AppointmentUiDto;
@@ -55,6 +56,19 @@ public class AppointmentController {
         return ResponseEntity
                 .created(location)
                 .body(createdAppointmentDto);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<AppointmentResponseDto> updateAppointment(
+            @PathVariable Long id, @RequestBody AppointmentPatchDto request) {
+        var patchAppointment = appointmentService.updateAppointmentById(id,  request);
+        return ResponseEntity.ok(patchAppointment);
+    }
+
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<?> deleteAppointmentById(@PathVariable Long id) {
+        appointmentService.deleteAppointmentById(id);
+        return ResponseEntity.ok().build();
     }
 
 }
