@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.dtos.appointments;
 
+import com.clinicflow.clinic_flow.entity.Appointment;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,4 +22,6 @@ public class AppointmentRequestDto {
     private Long caseId;
     @NotNull(message = "therapistId cannot be missing")
     private Long therapistId;
+    @NotNull
+    private Appointment.Status status;
 }

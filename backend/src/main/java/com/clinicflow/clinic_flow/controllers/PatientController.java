@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.controllers;
 
+import com.clinicflow.clinic_flow.dtos.patients.PatientPatchDto;
 import com.clinicflow.clinic_flow.dtos.patients.PatientRequestDto;
 import com.clinicflow.clinic_flow.dtos.patients.PatientResponseDto;
 import com.clinicflow.clinic_flow.services.PatientService;
@@ -32,6 +33,11 @@ public class PatientController {
     public List<PatientResponseDto> searchPatient(
             @RequestParam String q){
         return patientService.searchPatient(q);
+    }
+
+    @PatchMapping("/update")
+    public PatientResponseDto updatePatient(Long id, PatientPatchDto patch){
+        return patientService.updatePatient(id, patch);
     }
 
     @PostMapping("/create")

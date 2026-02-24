@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.services;
 
+import com.clinicflow.clinic_flow.dtos.patients.PatientPatchDto;
 import com.clinicflow.clinic_flow.dtos.patients.PatientRequestDto;
 import com.clinicflow.clinic_flow.dtos.patients.PatientResponseDto;
 import com.clinicflow.clinic_flow.entity.Patient;
@@ -42,5 +43,20 @@ public class PatientService {
         Patient patient = patientMapper.toPatient(patientRequestDto);
         var newPatient = patientRepository.save(patient);
         return patientMapper.toPatientResponseDto(newPatient);
+    }
+
+    public PatientResponseDto updatePatient (Long id, PatientPatchDto request) {
+        var patient = patientRepository.findById(id).orElseThrow( () ->
+                new RuntimeException("Patient with id " + id + " does not exist"));
+
+        if (request.getFirstName() != null) {
+            patient.setFirstName(request.getFirstName());
+        }
+
+        if (request.getLastName() != null) {
+            patient.setLastName(request.getLastName());
+        }
+
+        return patientMapper.toPatientResponseDto(patientRepository.save(patient));
     }
 }
