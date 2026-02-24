@@ -9,14 +9,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    //@Query(value ="select * " )
-   // List<Appointment>findAllByStartTime(LocalTime startTime);
-
     @Query(value = """
     SELECT
         a.scheduled_at AS scheduledAt,
         a.apt_id AS aptId,
         a.c_id AS caseId,
+        a.status as status
         p.first_name AS firstName,
         p.last_name AS lastName,
         t.t_id AS therapistId,

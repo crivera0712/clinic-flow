@@ -16,6 +16,7 @@ import java.util.Set;
 @Table(name = "therapists")
 public class Therapist {
 
+    @Getter
     public enum TherapistType{
         PHYSICAL_THERAPY_ASSISTANT("Physcial Therapy Assistant"),
         PHYSICAL_THERAPIST("Physical Therapist"),
@@ -25,9 +26,6 @@ public class Therapist {
 
         TherapistType(String displayName) {
             this.displayName = displayName;
-        }
-        public String getDisplayName() {
-            return displayName;
         }
     }
 
