@@ -64,6 +64,10 @@ public class AppointmentService {
     @Transactional
     public List<AppointmentUiDto> getAppointmentsByDate(LocalDate date){
         var appointments = appointmentRepository.findDailyAppointments(date);
+        appointments.forEach(appointment -> {
+            System.out.println("firstName = " + appointment.getFirstName()
+            + ", lastName = " + appointment.getLastName());
+        });
         return appointments.
                 stream()
                 .map(appointmentMapper::toAppointmentUiDto)

@@ -14,7 +14,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         a.scheduled_at AS scheduledAt,
         a.apt_id AS aptId,
         a.c_id AS caseId,
-        a.status as status
+        a.status as status,
         p.first_name AS firstName,
         p.last_name AS lastName,
         t.t_id AS therapistId,

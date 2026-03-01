@@ -17,6 +17,7 @@ public interface AppointmentMapper {
     @Mapping(target = "therapistId", source = "therapist.id")
     AppointmentResponseDto entityToAppointmentResponseDto(Appointment appointment);
 
+
     AppointmentUiDto toAppointmentUiDto(AppointmentScheduleProjection projection);
 
 
