@@ -1,4 +1,6 @@
 package com.clinicflow.clinic_flow.projections;
+import com.clinicflow.clinic_flow.entity.Appointment;
+
 import java.time.LocalDateTime;
 
 public interface AppointmentScheduleProjection {
@@ -11,4 +13,5 @@ public interface AppointmentScheduleProjection {
     String getTherapistName();
     String getTherapistType();
     String getBodyRegionDisplayName();
+    Appointment.Status getStatus();
 }
