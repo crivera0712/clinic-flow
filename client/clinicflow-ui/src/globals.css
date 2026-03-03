@@ -8,6 +8,23 @@ html, body, #root {
     padding: 0;
 }
 
-html, body {
-    background: #475569;
+@layer components {
+    .card {
+        background: var(--panel-alt);
+        border-radius: 18px;
+        padding: clamp(22px, 2.8vw, 34px);
+        min-height: clamp(140px, 20vh, 210px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        animation: rise 560ms ease-out both;
+        animation-delay: var(--delay, 0ms);
+    }
+
+    .queue-card {
+        border-left: 10px solid var(--accent, var(--accent-slate));
+        gap: 6px;
+    }
 }

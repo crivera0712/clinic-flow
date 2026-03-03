@@ -5,20 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/ScheduleDisplayPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/data_source_mapping.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/mappers/AppointmentMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/projections/AppointmentScheduleProjection.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/projections/AppointmentScheduleProjection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/repositories/AppointmentRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/services/AppointmentService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/App.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/index.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/ScheduleDisplayPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/ScheduleDisplayPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/globals.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +28,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="figma-ui" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -165,7 +156,8 @@
       <workItem from="1771989791868" duration="1252000" />
       <workItem from="1771991159192" duration="8186000" />
       <workItem from="1772053002308" duration="1276000" />
-      <workItem from="1772182177667" duration="7892000" />
+      <workItem from="1772182177667" duration="9496000" />
+      <workItem from="1772498652321" duration="598000" />
     </task>
     <servers />
   </component>
