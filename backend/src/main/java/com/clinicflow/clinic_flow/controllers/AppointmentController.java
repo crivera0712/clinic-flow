@@ -17,7 +17,7 @@ import java.util.List;
 
 
 @AllArgsConstructor
-@RequestMapping("/appointments")
+@RequestMapping("/api/appointments")
 @RestController
 public class AppointmentController {
 
