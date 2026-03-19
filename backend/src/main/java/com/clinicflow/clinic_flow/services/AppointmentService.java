@@ -7,6 +7,8 @@ import com.clinicflow.clinic_flow.dtos.appointments.AppointmentUiDto;
 import com.clinicflow.clinic_flow.entity.Appointment;
 import com.clinicflow.clinic_flow.entity.Case;
 import com.clinicflow.clinic_flow.entity.Therapist;
+import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
+import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.mappers.AppointmentMapper;
 import com.clinicflow.clinic_flow.repositories.AppointmentRepository;
 import com.clinicflow.clinic_flow.repositories.CaseRepository;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -42,6 +45,12 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
+
+        Optional<Appointment> apptCheck = appointmentRepository.findByCreatedAt(request.getScheduledAt());
+
+        if (apptCheck.isPresent()) {
+            throw new AppointmentAtTimeExistsException(request.getScheduledAt());
+        }
 
         Appointment appointment = appointmentMapper.requestToAppointmentEntityDto(request);
         Therapist therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow();

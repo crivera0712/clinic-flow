@@ -1,6 +1,7 @@
 package com.clinicflow.clinic_flow.dtos.appointments;
 
 import com.clinicflow.clinic_flow.entity.Appointment;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,13 +16,16 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class AppointmentRequestDto {
-    @NotNull(message = "scheduled time cannot be missing")
+    @NotBlank(message = "scheduled time cannot be missing")
     private LocalDateTime scheduledAt;
+
     private Instant modifiedAt;
-    @NotNull(message = "caseId cannot be missing")
+
+    @NotBlank(message = "caseId cannot be missing")
     private Long caseId;
-    @NotNull(message = "therapistId cannot be missing")
+
+    @NotBlank(message = "therapistId cannot be missing")
     private Long therapistId;
-    @NotNull
+
     private Appointment.Status status;
 }
