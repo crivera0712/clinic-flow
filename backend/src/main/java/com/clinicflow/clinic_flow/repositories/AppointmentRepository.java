@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     @Query(value = """
@@ -17,6 +19,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         a.status as status,
         p.first_name AS firstName,
         p.last_name AS lastName,
+            
         t.t_id AS therapistId,
         t.therapist_name AS therapistName,
         t.therapist_type AS therapistType,
@@ -30,4 +33,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     ORDER BY a.scheduled_at
     """, nativeQuery = true)
     List<AppointmentScheduleProjection> findDailyAppointments(@Param("date") LocalDate date);
+
+    Optional<Appointment> findByCreatedAt(LocalDateTime createdAt);
 }
