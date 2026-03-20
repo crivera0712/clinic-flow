@@ -1,11 +1,11 @@
 package com.clinicflow.clinic_flow.controllers;
-import com.clinicflow.clinic_flow.mappers.AppointmentMapper;
-import com.clinicflow.clinic_flow.repositories.AppointmentRepository;
-import com.clinicflow.clinic_flow.services.AppointmentService;
+import com.clinicflow.clinic_flow.appointment.AppointmentController;
+import com.clinicflow.clinic_flow.appointment.AppointmentMapper;
+import com.clinicflow.clinic_flow.appointment.AppointmentRepository;
+import com.clinicflow.clinic_flow.appointment.AppointmentService;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
