@@ -16,7 +16,7 @@ public class AppointmentResponseDto {
     private Long id;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime scheduledAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "UTC")
     private Instant modifiedAt;
     private Long caseId;
     private Long therapistId;

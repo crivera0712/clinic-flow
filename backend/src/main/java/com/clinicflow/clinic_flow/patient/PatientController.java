@@ -7,11 +7,13 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @AllArgsConstructor
-@RequestMapping("/patients")
+@RequestMapping("/api/patients")
 @RestController
 public class PatientController {
 
@@ -34,14 +36,27 @@ public class PatientController {
         return patientService.searchPatient(q);
     }
 
-    @PatchMapping("/update")
-    public PatientResponseDto updatePatient(Long id, PatientPatchDto patch){
-        return patientService.updatePatient(id, patch);
+    @PatchMapping("/{id}")
+    public ResponseEntity<PatientResponseDto> updatePatient(
+            @PathVariable Long id,
+            @RequestBody PatientPatchDto patch){
+        return ResponseEntity.ok(patientService.updatePatient(id, patch));
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<PatientResponseDto> createPatient(@RequestBody @Valid PatientRequestDto request) {
-        return ResponseEntity.ok(patientService.createPatient(request));
+        PatientResponseDto createdPatient = patientService.createPatient(request);
+
+        URI location = URI.create("/api/patients/" + createdPatient.getId());
+
+
+        return ResponseEntity.created(location).body(createdPatient);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deletePatient(@RequestParam Long id){
+        patientService.deletePatient(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

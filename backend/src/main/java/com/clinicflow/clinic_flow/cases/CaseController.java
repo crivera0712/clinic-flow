@@ -1,15 +1,20 @@
 package com.clinicflow.clinic_flow.cases;
 
+import com.clinicflow.clinic_flow.cases.dtos.CasePatchDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseRequestDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/case")
+@RequestMapping("/api/cases")
 public class CaseController {
 
     private final CaseService caseService;
@@ -29,8 +34,25 @@ public class CaseController {
         return caseService.getCase(id);
     }
 
-    @PostMapping("/create")
-    public CaseResponseDto createCase(@RequestBody CaseRequestDto request) {
-        return caseService.createCase(request);
+    @PostMapping()
+    public ResponseEntity<CaseResponseDto> createCase(@RequestBody @Valid CaseRequestDto request) {
+        var response = caseService.createCase(request);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(response.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(response);
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CaseResponseDto> updateCase(@PathVariable Long id, @RequestBody @Valid CasePatchDto patch) {
+
+        var patchedCase = caseService.updateCase(id, patch);
+
+        return ResponseEntity.ok(patchedCase);
+    }
+
+
 }
