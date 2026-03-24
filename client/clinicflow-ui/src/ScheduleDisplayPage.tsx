@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 //import { fetchAppointmentsByDate } from "./api/displayBoard";
 
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+
 // ---- Types (match your backend JSON) ----
 export type Status = "CHECKED_IN" | "IN_SESSION" | "FINISHED" | "SCHEDULED";
 
@@ -31,7 +39,6 @@ function getTodayISODate(): string {
 
 // Backend sends "YYYY-MM-DD HH:mm" — convert to "YYYY-MM-DDTHH:mm" for safe parsing.
 function parseBackendDateTime(dt: string): Date {
-    // Example: "2026-02-23 10:00" -> "2026-02-23T10:00"
     const isoLike = dt.includes(" ") ? dt.replace(" ", "T") : dt;
     return new Date(isoLike);
 }
@@ -45,47 +52,109 @@ function formatTime(dt: string): string {
 
 // Simple accent mapping (edit to match your clinic colors)
 const therapistAccentMap: Record<string, string> = {
-    "Ada Wong": "bg-blue-500",
-    "Leon Kennedy": "bg-green-600",
-    "Jill Valentine": "bg-purple-600",
+    "Ada Wong":       "#3b82f6",
+    "Leon Kennedy":   "#16a34a",
+    "Jill Valentine": "#9333ea",
 };
+const DEFAULT_ACCENT = "#9ca3af";
 
 type CardItem = AppointmentDisplay & { accent: string };
 
 function toCardItem(a: AppointmentDisplay): CardItem {
     return {
         ...a,
-        accent: therapistAccentMap[a.therapistName] ?? "bg-gray-400",
+        accent: therapistAccentMap[a.therapistName] ?? DEFAULT_ACCENT,
     };
 }
 
 // ---- UI Components ----
 function ScheduleCard({ item }: { item: CardItem }) {
     return (
-        <div className="relative bg-gray-50 rounded-2xl p-8 border border-gray-200 flex flex-col justify-between overflow-hidden">
-            {/* Accent Bar */}
-            <div className={`absolute left-0 top-0 h-full w-3 ${item.accent}`} />
+        <Card
+            sx={{
+                position: "relative",
+                borderRadius: "16px",
+                overflow: "hidden",
+                bgcolor: "#263348",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                minHeight: 160,
+            }}
+        >
+            {/* Accent bar */}
+            <Box
+                sx={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    height: "100%",
+                    width: 12,
+                    bgcolor: item.accent,
+                    zIndex: 1,
+                }}
+            />
 
-            {/* Appointment time (top-right chip) */}
-            <div className="absolute right-6 top-6 rounded-xl bg-white/80 px-4 py-2 text-3xl font-semibold text-gray-700 border border-gray-200">
-                {formatTime(item.scheduledAt)}
-            </div>
+            {/* Time chip — top-right */}
+            <Chip
+                label={formatTime(item.scheduledAt)}
+                sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    fontSize: "1.5rem",
+                    fontWeight: 600,
+                    height: "auto",
+                    py: 0.5,
+                    px: 1,
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    color: "#e2e8f0",
+                    borderRadius: "10px",
+                    "& .MuiChip-label": { px: 0 },
+                    zIndex: 2,
+                }}
+            />
 
-            {/* Therapist name */}
-            <div className="pl-4 text-4xl font-semibold text-gray-600">
-                {item.therapistName}
-            </div>
+            <CardContent
+                sx={{
+                    pl: "28px",
+                    pr: 3,
+                    pt: 3,
+                    pb: "16px !important",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    flex: 1,
+                    gap: 1,
+                }}
+            >
+                {/* Therapist name */}
+                <Typography sx={{ fontSize: "2.25rem", fontWeight: 600, color: "#94a3b8", lineHeight: 1.2 }}>
+                    {item.therapistName}
+                </Typography>
 
-            {/* Patient name (vertically centered) */}
-            <div className="pl-4 text-4xl font-bold text-gray-900 flex-1 flex items-center">
-                {item.lastName}, {item.firstName}
-            </div>
+                {/* Patient name */}
+                <Typography
+                    sx={{
+                        fontSize: "2.25rem",
+                        fontWeight: 700,
+                        color: "#f1f5f9",
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        lineHeight: 1.2,
+                    }}
+                >
+                    {item.lastName}, {item.firstName}
+                </Typography>
 
-            {/* Region */}
-            <div className="pl-4 text-4xl font-bold text-gray-600">
-                {item.bodyRegionDisplayName}
-            </div>
-        </div>
+                {/* Body region */}
+                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#94a3b8", lineHeight: 1.2 }}>
+                    {item.bodyRegionDisplayName}
+                </Typography>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -202,76 +271,125 @@ export default function ScheduleDisplayPage() {
     const visibleUpNext = upNext.slice(0, 4);
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-100 p-4 gap-10">
+        <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", bgcolor: "#0f172a", p: 2, gap: 5 }}>
             {/* HEADER */}
-            <div className="flex items-start justify-between">
-                <h2 className="text-4xl font-bold">Mill Valley Physical Therapy</h2>
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff" }}>
+                    Mill Valley Physical Therapy
+                </Typography>
 
-                <div className="text-right">
-                    <div className="text-3xl font-semibold text-gray-800">{currentTime}</div>
-                    <div className="text-2xl text-gray-600">{currentDate}</div>
-                </div>
-            </div>
+                <Box sx={{ textAlign: "right" }}>
+                    <Typography sx={{ fontSize: "1.875rem", fontWeight: 600, color: "grey.100" }}>
+                        {currentTime}
+                    </Typography>
+                    <Typography sx={{ fontSize: "1.5rem", color: "grey.400" }}>
+                        {currentDate}
+                    </Typography>
+                </Box>
+            </Box>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-800 rounded-2xl p-4 text-2xl">
+                <Alert severity="error" sx={{ borderRadius: "16px", fontSize: "1.5rem" }}>
                     {error}
-                </div>
+                </Alert>
             )}
 
             {/* WAITING SECTION */}
-            <div>
-                <h2 className="text-4xl font-bold mb-4">Waiting Room</h2>
+            <Box>
+                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, mb: 2, color: "#fff" }}>
+                    Waiting Room
+                </Typography>
 
-                <div className="bg-white rounded-3xl shadow-lg p-6">
+                <Paper elevation={0} sx={{ borderRadius: "24px", p: 3, bgcolor: "#1e293b" }}>
                     {waiting.length > 2 && (
-                        <div className="text-lg text-gray-500 text-right">
+                        <Typography sx={{ fontSize: "1.125rem", color: "#64748b", textAlign: "right", mb: 1 }}>
                             +{waiting.length - 2} more waiting
-                        </div>
+                        </Typography>
                     )}
 
                     {visibleWaiting.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
-                            <div className="text-3xl font-semibold text-gray-700">No one waiting</div>
-                        </div>
+                        <Box
+                            sx={{
+                                borderRadius: "16px",
+                                border: "2px dashed",
+                                borderColor: "rgba(255,255,255,0.12)",
+                                p: 5,
+                                textAlign: "center",
+                            }}
+                        >
+                            <Typography sx={{ fontSize: "1.875rem", fontWeight: 600, color: "#64748b" }}>
+                                No one waiting
+                            </Typography>
+                        </Box>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4">
+                        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                             {waitingSlots.map((w, i) =>
                                 w ? (
                                     <ScheduleCard key={i} item={w} />
                                 ) : (
-                                    <div
+                                    <Box
                                         key={i}
-                                        className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 flex items-center justify-center"
+                                        sx={{
+                                            borderRadius: "16px",
+                                            border: "2px dashed",
+                                            borderColor: "rgba(255,255,255,0.08)",
+                                            p: 4,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            minHeight: 160,
+                                        }}
                                     >
-                                        <div className="text-2xl font-semibold text-gray-400">Empty</div>
-                                    </div>
+                                        <Typography sx={{ fontSize: "1.5rem", fontWeight: 600, color: "#475569" }}>
+                                            Empty
+                                        </Typography>
+                                    </Box>
                                 )
                             )}
-                        </div>
+                        </Box>
                     )}
-                </div>
-            </div>
+                </Paper>
+            </Box>
 
             {/* UP NEXT SECTION */}
-            <div>
-                <h2 className="text-4xl font-bold mb-4">Up Next</h2>
+            <Box>
+                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, mb: 2, color: "#fff" }}>
+                    Up Next
+                </Typography>
 
-                <div className="bg-white rounded-3xl shadow-lg p-8">
+                <Paper elevation={0} sx={{ borderRadius: "24px", p: 4, bgcolor: "#1e293b" }}>
                     {visibleUpNext.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
-                            <div className="text-3xl font-semibold text-gray-700">No upcoming appointments</div>
-                            <div className="text-2xl text-gray-500 mt-2">End of day ✅</div>
-                        </div>
+                        <Box
+                            sx={{
+                                borderRadius: "16px",
+                                border: "2px dashed",
+                                borderColor: "rgba(255,255,255,0.12)",
+                                p: 5,
+                                textAlign: "center",
+                            }}
+                        >
+                            <Typography sx={{ fontSize: "1.875rem", fontWeight: 600, color: "#64748b" }}>
+                                No upcoming appointments
+                            </Typography>
+                            <Typography sx={{ fontSize: "1.5rem", color: "#475569", mt: 1 }}>
+                                End of day ✅
+                            </Typography>
+                        </Box>
                     ) : (
-                        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(calc(50% - 0.5rem), 1fr))" }}>
+                        <Box
+                            sx={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(calc(50% - 8px), 1fr))",
+                                gap: 2,
+                            }}
+                        >
                             {visibleUpNext.map((t, index) => (
                                 <ScheduleCard key={index} item={t} />
                             ))}
-                        </div>
+                        </Box>
                     )}
-                </div>
-            </div>
-        </div>
+                </Paper>
+            </Box>
+        </Box>
     );
 }

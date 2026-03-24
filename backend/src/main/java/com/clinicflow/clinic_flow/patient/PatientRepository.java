@@ -1,6 +1,5 @@
 package com.clinicflow.clinic_flow.patient;
 
-import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +16,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     OR p.last_name  LIKE CONCAT(:q, '%')
 """, nativeQuery = true
     )
-    List<PatientResponseDto> searchPatientByOneToken(@Param("q") String q);
+    List<Patient> searchPatientByOneToken(@Param("q") String q);
 
     @Query(value = """
     SELECT *
@@ -30,5 +29,5 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
         p.first_name LIKE CONCAT(:q2, '%')
         AND p.last_name LIKE CONCAT(:q1, '%')
 )""", nativeQuery = true)
-    List<PatientResponseDto> searchPatientByTwoTokens(String q1,  String q2);
+    List<Patient> searchPatientByTwoTokens(@Param("q1") String q1, @Param("q2") String q2);
 }

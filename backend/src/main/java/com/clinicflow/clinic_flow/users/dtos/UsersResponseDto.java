@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.users.dtos;
 
+import com.clinicflow.clinic_flow.users.Users;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,5 +12,5 @@ public class UsersResponseDto {
     private Long id;
     private String username;
     private LocalDateTime createdAt;
-    private String role;
+    private Users.RoleName roleName;
 }

@@ -3,6 +3,7 @@ package com.clinicflow.clinic_flow.patient;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
+import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,29 +23,48 @@ public class PatientService {
     }
 
     public PatientResponseDto getPatient(Long id) {
-        return patientMapper.toPatientResponseDto(patientRepository.getPatientById((id)));
+        Patient patient = patientRepository.getPatientById(id);
+        if (patient == null) {
+            throw new PatientNotFoundException(id);
+        }
+        return patientMapper.toPatientResponseDto(patient);
     }
 
     @Transactional
     public List<PatientResponseDto> searchPatient(String tokens) {
+        if (tokens == null || tokens.trim().isEmpty()) {
+            throw new IllegalArgumentException("search query must not be blank");
+        }
+
         String[] tokenArray = tokens.trim().split("\\s+");
         if (tokenArray.length == 1){
-            return patientRepository.searchPatientByOneToken(tokenArray[0]);
+            return patientRepository.searchPatientByOneToken(tokenArray[0])
+                    .stream()
+                    .map(patientMapper::toPatientResponseDto)
+                    .toList();
         } else if (tokenArray.length == 2) {
-            return patientRepository.searchPatientByTwoTokens(tokenArray[0], tokenArray[1]);
+            return patientRepository.searchPatientByTwoTokens(tokenArray[0], tokenArray[1])
+                    .stream()
+                    .map(patientMapper::toPatientResponseDto)
+                    .toList();
         }
-        return patientRepository.searchPatientByOneToken(tokenArray[0]);
+        return patientRepository.searchPatientByOneToken(tokenArray[0])
+                .stream()
+                .map(patientMapper::toPatientResponseDto)
+                .toList();
     }
 
+    @Transactional
     public PatientResponseDto createPatient (PatientRequestDto patientRequestDto) {
         Patient patient = patientMapper.toPatient(patientRequestDto);
         var newPatient = patientRepository.save(patient);
         return patientMapper.toPatientResponseDto(newPatient);
     }
 
+    @Transactional
     public PatientResponseDto updatePatient (Long id, PatientPatchDto request) {
         var patient = patientRepository.findById(id).orElseThrow( () ->
-                new RuntimeException("Patient with id " + id + " does not exist"));
+                new PatientNotFoundException(id));
 
         if (request.getFirstName() != null) {
             patient.setFirstName(request.getFirstName());
@@ -55,5 +75,13 @@ public class PatientService {
         }
 
         return patientMapper.toPatientResponseDto(patientRepository.save(patient));
+    }
+
+    @Transactional
+    public void deletePatient (Long id) {
+        var patient = patientRepository.findById(id).orElseThrow( () ->
+                new PatientNotFoundException(id));
+
+        patientRepository.deleteById(id);
     }
 }
