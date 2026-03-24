@@ -64,7 +64,7 @@ public class AppointmentController {
         return ResponseEntity.ok(patchAppointment);
     }
 
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAppointmentById(@PathVariable Long id) {
         appointmentService.deleteAppointmentById(id);
         return ResponseEntity.ok().build();

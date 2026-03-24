@@ -14,7 +14,12 @@ public class Users {
 
     public enum RoleName {
         DISPLAY,
-        ADMIN
+        ADMIN;
+
+        @Override
+        public String toString() {
+            return super.toString();
+        }
     }
 
     @Id
@@ -35,6 +40,6 @@ public class Users {
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role_name")
+    @Column(name = "role")
     private RoleName roleName;
 }

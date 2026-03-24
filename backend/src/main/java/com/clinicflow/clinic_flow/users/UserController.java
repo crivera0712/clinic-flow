@@ -1,7 +1,8 @@
 package com.clinicflow.clinic_flow.users;
 
-import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
+import com.clinicflow.clinic_flow.Auth.dtos.LoginRequest;
+import com.clinicflow.clinic_flow.Auth.dtos.LoginResponse;
+import com.clinicflow.clinic_flow.users.dtos.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -38,8 +39,16 @@ public class UserController {
                 .path("/{id}")
                 .buildAndExpand(createdUser.getId())
                 .toUri();
+
         return ResponseEntity
                 .created(location)
                 .body(createdUser);
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<UsersResponseDto>  updateUser(@PathVariable Long id, @Valid @RequestBody UserPatchDto userPatchDto) {
+        var  updatedUser = usersService.updateUser(id, userPatchDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
 }

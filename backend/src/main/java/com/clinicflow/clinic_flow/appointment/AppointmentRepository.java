@@ -27,10 +27,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         JOIN cases c ON c.c_id = a.c_id
         JOIN patients p ON p.p_id = c.p_id
         JOIN body_regions br ON br.br_id = c.br_id
-    WHERE DATE(a.scheduled_at) = :date
+    WHERE CAST(a.scheduled_at AS DATE) = :date
     ORDER BY a.scheduled_at
     """, nativeQuery = true)
     List<AppointmentScheduleProjection> findDailyAppointments(@Param("date") LocalDate date);
 
-    Optional<Appointment> findByCreatedAt(LocalDateTime createdAt);
+    Optional<Appointment> findByScheduledAt(LocalDateTime scheduledAt);
 }

@@ -42,7 +42,7 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
 
-        Optional<Appointment> apptCheck = appointmentRepository.findByCreatedAt(request.getScheduledAt());
+        Optional<Appointment> apptCheck = appointmentRepository.findByScheduledAt(request.getScheduledAt());
 
         if (apptCheck.isPresent()) {
             throw new AppointmentAtTimeExistsException(request.getScheduledAt());
@@ -57,10 +57,6 @@ public class AppointmentService {
         appointment.setPtCase(ptCase);
         appointment.setCreatedAt(Instant.now());
 
-        System.out.println("REQ scheduledAt = " + request.getScheduledAt());
-        System.out.println("REQ therapistId = " + request.getTherapistId());
-        System.out.println("ENTITY scheduledAt = " + appointment.getScheduledAt());
-
         var newAppointment = appointmentRepository.save(appointment);
 
         return appointmentMapper.entityToAppointmentResponseDto(newAppointment);
@@ -69,10 +65,6 @@ public class AppointmentService {
     @Transactional
     public List<AppointmentUiDto> getAppointmentsByDate(LocalDate date){
         var appointments = appointmentRepository.findDailyAppointments(date);
-        appointments.forEach(appointment -> {
-            System.out.println("firstName = " + appointment.getFirstName()
-            + ", lastName = " + appointment.getLastName());
-        });
         return appointments.
                 stream()
                 .map(appointmentMapper::toAppointmentUiDto)

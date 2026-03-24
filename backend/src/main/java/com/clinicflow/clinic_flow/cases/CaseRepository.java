@@ -7,8 +7,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface CaseRepository extends JpaRepository<Case, Long> {
-    Case getCaseById(Long id);
-
     @Query(value = """
     SELECT *
     FROM cases AS c
