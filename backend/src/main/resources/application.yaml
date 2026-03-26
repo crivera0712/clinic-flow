@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: clinic-flow
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: true
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: 900 # 5 mins
+    refreshTokenExpiration: 604800 # 7 days

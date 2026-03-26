@@ -17,6 +17,6 @@ public class CreateUserRequest {
     @Size(min = 6, message = "password is too short")
     private String passwordHash;
 
-    private boolean enabled;
-    private Users.RoleName roleName;
+    //private boolean enabled;
+    //private Users.RoleName roleName;
 }

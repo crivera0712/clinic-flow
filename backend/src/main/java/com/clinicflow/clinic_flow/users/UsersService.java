@@ -45,12 +45,16 @@ public class UsersService implements UserDetailsService {
         if (userCheck.isPresent()) {
             throw new UserAlreadyExistsException(request.getUsername());
         }
+
         Users user = usersMapper.toEntity(request);
 
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         user.setCreatedAt(LocalDateTime.now());
         user.setRoleName(Users.RoleName.DISPLAY);
+        user.setEnabled(Boolean.TRUE);
+
         var newUser = usersRepository.save(user);
+
         return usersMapper.toUsersResponseDto(newUser);
     }
 
