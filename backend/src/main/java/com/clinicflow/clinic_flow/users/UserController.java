@@ -1,7 +1,5 @@
 package com.clinicflow.clinic_flow.users;
 
-import com.clinicflow.clinic_flow.Auth.dtos.LoginRequest;
-import com.clinicflow.clinic_flow.Auth.dtos.LoginResponse;
 import com.clinicflow.clinic_flow.users.dtos.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
