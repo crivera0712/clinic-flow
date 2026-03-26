@@ -1,4 +1,4 @@
-package com.clinicflow.clinic_flow.Auth.dtos;
+package com.clinicflow.clinic_flow.auth.dtos;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
