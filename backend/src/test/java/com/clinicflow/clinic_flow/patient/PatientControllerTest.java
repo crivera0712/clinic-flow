@@ -1,5 +1,7 @@
 package com.clinicflow.clinic_flow.patient;
 
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
@@ -40,6 +42,12 @@ class PatientControllerTest {
 
     @MockitoBean
     private PatientService patientService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AuthSessionService authSessionService;
 
     @Test
     void shouldReturnPatients_whenGetPatientsIsCalled() throws Exception {
@@ -187,7 +195,7 @@ class PatientControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -206,7 +214,7 @@ class PatientControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -226,7 +234,7 @@ class PatientControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -242,7 +250,7 @@ class PatientControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -258,7 +266,7 @@ class PatientControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test

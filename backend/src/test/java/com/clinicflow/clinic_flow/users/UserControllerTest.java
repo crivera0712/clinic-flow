@@ -1,5 +1,7 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
@@ -43,6 +45,12 @@ class UserControllerTest {
     @MockitoBean
     private UsersService usersService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AuthSessionService authSessionService;
+
     @Test
     void shouldReturnUsers_whenGetUsersIsCalled() throws Exception {
         // Arrange
@@ -58,9 +66,9 @@ class UserControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].username").value("sam"))
-                .andExpect(jsonPath("$[0].role").value(Users.RoleName.DISPLAY.toString()))
+                .andExpect(jsonPath("$[0].roleName").value(Users.RoleName.DISPLAY.toString()))
                 .andExpect(jsonPath("$[1].id").value(2L))
-                .andExpect(jsonPath("$[1].role").value(Users.RoleName.ADMIN.toString()));
+                .andExpect(jsonPath("$[1].roleName").value(Users.RoleName.ADMIN.toString()));
         verify(usersService).getUsers();
     }
 
@@ -76,7 +84,7 @@ class UserControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5L))
                 .andExpect(jsonPath("$.username").value("sam"))
-                .andExpect(jsonPath("$.role").value(Users.RoleName.DISPLAY.toString()));
+                .andExpect(jsonPath("$.roleName").value(Users.RoleName.DISPLAY.toString()));
         verify(usersService).getUserById(5L);
     }
 
@@ -116,7 +124,7 @@ class UserControllerTest {
                 .andExpect(header().string("Location", containsString("/api/users/12")))
                 .andExpect(jsonPath("$.id").value(12L))
                 .andExpect(jsonPath("$.username").value("sam"))
-                .andExpect(jsonPath("$.role").value(Users.RoleName.DISPLAY.toString()));
+                .andExpect(jsonPath("$.roleName").value(Users.RoleName.DISPLAY.toString()));
         verify(usersService).createUser(any());
     }
 
@@ -137,7 +145,7 @@ class UserControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -158,7 +166,7 @@ class UserControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -218,7 +226,7 @@ class UserControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(9L))
                 .andExpect(jsonPath("$.username").value("sam"))
-                .andExpect(jsonPath("$.role").value("ADMIN"));
+                .andExpect(jsonPath("$.roleName").value("ADMIN"));
         verify(usersService).updateUser(eq(9L), any());
     }
 
@@ -227,7 +235,7 @@ class UserControllerTest {
         // Arrange
         String json = """
                 {
-                  "role": null
+                  "roleName": null
                 }
                 """;
 
@@ -238,7 +246,7 @@ class UserControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -246,7 +254,7 @@ class UserControllerTest {
         // Arrange
         String malformedJson = """
                 {
-                  "role":
+                  "roleName":
                 }
                 """;
 
@@ -281,10 +289,10 @@ class UserControllerTest {
         response.setId(id);
         response.setUsername(username);
         response.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
-        response.setRole(role);
+        response.setRoleName(role);
         return response;
     }
 
-    private record PatchRequest(String role) {
+    private record PatchRequest(String roleName) {
     }
 }

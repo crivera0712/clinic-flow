@@ -5,34 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/backend/.env.example" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AdminController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/Jwt.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/JwtResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/LoginResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/RefreshResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/filters/JwtAuthenticationFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/filters/LoggingFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/JwtConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V15__default_users_role.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/AuthPrincipal.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth_sessions/AuthSessionRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth_sessions/AuthSessionService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth_sessions/AuthSessions.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/exception/InvalidSessionException.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/Auth/AuthService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/Auth/JwtService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/JwtService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/Auth/dtos/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/LoginRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/Auth/dtos/LoginResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/LoginResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/Jwt.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/Jwt.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/JwtService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/JwtService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/filters/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/filters/JwtAuthenticationFilter.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/exception/GlobalExceptionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/Users.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/Users.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UsersMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UsersMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UsersService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/UsersService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/dtos/CreateUserRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/users/dtos/CreateUserRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/cases/CaseControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/cases/CaseControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/cases/CaseServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/cases/CaseServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/controllers/AppointmentControllerTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/patient/PatientControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/patient/PatientControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/users/UserControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/users/UserControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/users/UsersServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/users/UsersServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,7 +139,7 @@
       <recent name="$PROJECT_DIR$/backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Spring Boot.ClinicFlowApplication">
+  <component name="RunManager">
     <configuration name="AppointmentControllerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="clinic-flow" />
       <extension name="coverage">
@@ -238,11 +232,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.AppointmentControllerTest" />
         <item itemvalue="JUnit.UserControllerTest.shouldCreateUser_whenPostUserReceivesValidRequest" />
         <item itemvalue="JUnit.PatientControllerTest" />
         <item itemvalue="JUnit.PatientControllerTest.shouldCreatePatient_whenPostPatientReceivesValidRequest" />
         <item itemvalue="JUnit.AppointmentControllerTest.shouldDeleteAppointment_whenDeleteAppointmentByIdIsCalled" />
-        <item itemvalue="JUnit.AppointmentControllerTest" />
       </list>
     </recent_temporary>
   </component>
@@ -288,7 +282,7 @@
       <workItem from="1773881351182" duration="3142000" />
       <workItem from="1773902919593" duration="54194000" />
       <workItem from="1774145197542" duration="44196000" />
-      <workItem from="1774412458209" duration="16383000" />
+      <workItem from="1774412458209" duration="33651000" />
     </task>
     <servers />
   </component>
@@ -316,7 +310,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/users/UserControllerTest.java</url>
-          <line>262</line>
+          <line>270</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
