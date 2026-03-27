@@ -1,0 +1,29 @@
+import { apiRequest } from "./client";
+import type { CurrentUser, JwtResponse, LoginRequest } from "../types/auth";
+
+export function login(request: LoginRequest) {
+  return apiRequest<JwtResponse>("/auth/login", {
+    method: "POST",
+    body: request,
+    skipAuth: true,
+    retryOn401: false,
+  });
+}
+
+export function refresh() {
+  return apiRequest<JwtResponse>("/auth/refresh", {
+    method: "POST",
+    skipAuth: true,
+    retryOn401: false,
+  });
+}
+
+export function logout() {
+  return apiRequest<void>("/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function getCurrentUser() {
+  return apiRequest<CurrentUser>("/auth/me");
+}
