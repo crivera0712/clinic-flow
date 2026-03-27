@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +34,9 @@ class UsersServiceTest {
 
     @Mock
     private UsersMapper usersMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsersService usersService;
@@ -116,6 +120,7 @@ class UsersServiceTest {
 
         when(usersRepository.findByUsername("sam")).thenReturn(Optional.empty());
         when(usersMapper.toEntity(request)).thenReturn(mappedUser);
+        when(passwordEncoder.encode("secret1")).thenReturn("encoded-secret1");
         when(usersRepository.save(mappedUser)).thenReturn(savedUser);
         when(usersMapper.toUsersResponseDto(savedUser)).thenReturn(response);
 
@@ -125,9 +130,11 @@ class UsersServiceTest {
         // Assert
         assertSame(response, result);
         assertEquals(Users.RoleName.DISPLAY, mappedUser.getRoleName());
+        assertEquals("encoded-secret1", mappedUser.getPasswordHash());
         assertNotNull(mappedUser.getCreatedAt());
         verify(usersRepository).findByUsername("sam");
         verify(usersMapper).toEntity(request);
+        verify(passwordEncoder).encode("secret1");
         verify(usersRepository).save(mappedUser);
         verify(usersMapper).toUsersResponseDto(savedUser);
     }
@@ -192,14 +199,12 @@ class UsersServiceTest {
         CreateUserRequest request = new CreateUserRequest();
         request.setUsername(username);
         request.setPasswordHash(passwordHash);
-        request.setEnabled(enabled);
-        request.setRole(role);
         return request;
     }
 
     private UserPatchDto patch(Users.RoleName role) {
         UserPatchDto patch = new UserPatchDto();
-        patch.setRole(role);
+        patch.setRoleName(role);
         return patch;
     }
 
@@ -219,7 +224,7 @@ class UsersServiceTest {
         response.setId(id);
         response.setUsername(username);
         response.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
-        response.setRole(role);
+        response.setRoleName(role);
         return response;
     }
 }

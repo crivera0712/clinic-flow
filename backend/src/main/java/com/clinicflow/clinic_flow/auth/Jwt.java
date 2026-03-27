@@ -8,9 +8,12 @@ import lombok.*;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
+@Getter
 @AllArgsConstructor
 public class Jwt {
 
+    private final String sid;
+    private final String tokenType;
     private final Claims claims;
     private final SecretKey key;
 
@@ -24,6 +27,10 @@ public class Jwt {
 
     public Users.RoleName getRole(){
         return Users.RoleName.valueOf(claims.get("role", String.class));
+    }
+
+    public String getSid(){
+        return claims.get("sid", String.class);
     }
 
     @Override

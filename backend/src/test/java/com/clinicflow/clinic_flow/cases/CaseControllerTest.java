@@ -1,5 +1,7 @@
 package com.clinicflow.clinic_flow.cases;
 
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
 import com.clinicflow.clinic_flow.exception.BodyRegionNotFoundException;
 import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
@@ -44,6 +46,12 @@ class CaseControllerTest {
 
     @MockitoBean
     private CaseService caseService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AuthSessionService authSessionService;
 
     @Test
     void shouldReturnCases_whenGetCasesIsCalled() throws Exception {
@@ -152,7 +160,7 @@ class CaseControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -252,7 +260,7 @@ class CaseControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test

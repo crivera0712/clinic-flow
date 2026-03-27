@@ -151,7 +151,7 @@ class CaseServiceTest {
         CaseResponseDto response = response(7L, 10L, 20L);
 
         when(patientRepository.getPatientById(10L)).thenReturn(patient);
-        when(bodyRegionRepository.getBodyRegionById(20L)).thenReturn(bodyRegion);
+        when(bodyRegionRepository.findById(20L)).thenReturn(Optional.of(bodyRegion));
         when(caseMapper.toCase(request)).thenReturn(mappedCase);
         when(caseRepository.save(mappedCase)).thenReturn(savedCase);
         when(caseMapper.toCaseResponseDto(savedCase)).thenReturn(response);
@@ -165,7 +165,7 @@ class CaseServiceTest {
         assertSame(bodyRegion, mappedCase.getBodyRegion());
         assertNotNull(mappedCase.getCreatedAt());
         verify(patientRepository).getPatientById(10L);
-        verify(bodyRegionRepository).getBodyRegionById(20L);
+        verify(bodyRegionRepository).findById(20L);
         verify(caseMapper).toCase(request);
         verify(caseRepository).save(mappedCase);
         verify(caseMapper).toCaseResponseDto(savedCase);
@@ -184,7 +184,7 @@ class CaseServiceTest {
         // Assert
         assertEquals("Patient with id 10 does not exist", exception.getMessage());
         verify(patientRepository).getPatientById(10L);
-        verify(bodyRegionRepository, never()).getBodyRegionById(any(Long.class));
+        verify(bodyRegionRepository, never()).findById(any(Long.class));
         verify(caseRepository, never()).save(any(Case.class));
     }
 
@@ -193,7 +193,7 @@ class CaseServiceTest {
         // Arrange
         CaseRequestDto request = request(10L, 20L);
         when(patientRepository.getPatientById(10L)).thenReturn(patient(10L));
-        when(bodyRegionRepository.getBodyRegionById(20L)).thenReturn(null);
+        when(bodyRegionRepository.findById(20L)).thenReturn(Optional.empty());
 
         // Act
         BodyRegionNotFoundException exception = assertThrows(BodyRegionNotFoundException.class,
@@ -202,7 +202,7 @@ class CaseServiceTest {
         // Assert
         assertEquals("Could not find body region with id 20", exception.getMessage());
         verify(patientRepository).getPatientById(10L);
-        verify(bodyRegionRepository).getBodyRegionById(20L);
+        verify(bodyRegionRepository).findById(20L);
         verify(caseRepository, never()).save(any(Case.class));
     }
 
@@ -215,7 +215,7 @@ class CaseServiceTest {
         CaseResponseDto response = response(6L, 10L, 30L);
 
         when(caseRepository.findById(6L)).thenReturn(Optional.of(caseEntity));
-        when(bodyRegionRepository.getBodyRegionById(30L)).thenReturn(newBodyRegion);
+        when(bodyRegionRepository.findById(30L)).thenReturn(Optional.of(newBodyRegion));
         when(caseRepository.save(caseEntity)).thenReturn(caseEntity);
         when(caseMapper.toCaseResponseDto(caseEntity)).thenReturn(response);
 
@@ -226,7 +226,7 @@ class CaseServiceTest {
         assertSame(response, result);
         assertSame(newBodyRegion, caseEntity.getBodyRegion());
         verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository).getBodyRegionById(30L);
+        verify(bodyRegionRepository).findById(30L);
         verify(caseRepository).save(caseEntity);
         verify(caseMapper).toCaseResponseDto(caseEntity);
     }
@@ -248,7 +248,7 @@ class CaseServiceTest {
         assertSame(response, result);
         assertEquals(20L, caseEntity.getBodyRegion().getId());
         verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository, never()).getBodyRegionById(any(Long.class));
+        verify(bodyRegionRepository, never()).findById(any(Long.class));
         verify(caseRepository).save(caseEntity);
     }
 
@@ -272,7 +272,7 @@ class CaseServiceTest {
         // Arrange
         Case caseEntity = ptCase(6L, 10L, 20L);
         when(caseRepository.findById(6L)).thenReturn(Optional.of(caseEntity));
-        when(bodyRegionRepository.getBodyRegionById(30L)).thenReturn(null);
+        when(bodyRegionRepository.findById(30L)).thenReturn(Optional.empty());
 
         // Act
         BodyRegionNotFoundException exception = assertThrows(BodyRegionNotFoundException.class,
@@ -281,7 +281,7 @@ class CaseServiceTest {
         // Assert
         assertEquals("Could not find body region with id 30", exception.getMessage());
         verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository).getBodyRegionById(30L);
+        verify(bodyRegionRepository).findById(30L);
         verify(caseRepository, never()).save(any(Case.class));
     }
 
