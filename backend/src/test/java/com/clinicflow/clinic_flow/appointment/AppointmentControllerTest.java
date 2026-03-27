@@ -1,5 +1,7 @@
 package com.clinicflow.clinic_flow.appointment;
 
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
@@ -44,6 +46,12 @@ class AppointmentControllerTest {
 
     @MockitoBean
     private AppointmentService appointmentService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AuthSessionService authSessionService;
 
     @Test
     void shouldReturnAppointments_whenGetAllAppointmentsIsCalled() throws Exception {
@@ -198,7 +206,7 @@ class AppointmentControllerTest {
 
         // Assert
         response.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test

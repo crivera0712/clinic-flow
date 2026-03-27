@@ -275,7 +275,7 @@ class AppointmentServiceTest {
         appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
         Therapist therapist = therapistWithId(6L);
         Case ptCase = caseWithId(7L);
-        AppointmentPatchDto request = new AppointmentPatchDto(
+        AppointmentPatchDto request = patchRequest(
                 LocalDateTime.of(2026, 2, 14, 11, 30), 17L, 16L, Appointment.Status.FINISHED);
         AppointmentResponseDto response = responseDto(9L);
 
@@ -334,7 +334,7 @@ class AppointmentServiceTest {
         appointment.setTherapist(originalTherapist);
         appointment.setPtCase(originalCase);
         appointment.setStatus(Appointment.Status.SCHEDULED);
-        AppointmentPatchDto request = new AppointmentPatchDto(null, null, null, Appointment.Status.CHECKED_IN);
+        AppointmentPatchDto request = patchRequest(null, null, null, Appointment.Status.CHECKED_IN);
         AppointmentResponseDto response = responseDto(9L);
 
         when(appointmentRepository.findById(9L)).thenReturn(Optional.of(appointment));
@@ -361,7 +361,7 @@ class AppointmentServiceTest {
     @Test
     void shouldThrowRuntimeException_whenUpdateAppointmentByIdDoesNotFindAppointment() {
         // Arrange
-        AppointmentPatchDto request = new AppointmentPatchDto(LocalDateTime.now(), 1L, 2L, Appointment.Status.SCHEDULED);
+        AppointmentPatchDto request = patchRequest(LocalDateTime.now(), 1L, 2L, Appointment.Status.SCHEDULED);
         when(appointmentRepository.findById(9L)).thenReturn(Optional.empty());
 
         // Act
@@ -378,7 +378,7 @@ class AppointmentServiceTest {
     void shouldThrowRuntimeException_whenUpdateAppointmentByIdDoesNotFindTherapist() {
         // Arrange
         Appointment appointment = appointmentWithId(9L);
-        AppointmentPatchDto request = new AppointmentPatchDto(null, null, 3L, null);
+        AppointmentPatchDto request = patchRequest(null, null, 3L, null);
 
         when(appointmentRepository.findById(9L)).thenReturn(Optional.of(appointment));
         when(therapistRepository.findById(Long.valueOf(3L))).thenReturn(Optional.empty());
@@ -399,7 +399,7 @@ class AppointmentServiceTest {
     void shouldThrowRuntimeException_whenUpdateAppointmentByIdDoesNotFindCase() {
         // Arrange
         Appointment appointment = appointmentWithId(9L);
-        AppointmentPatchDto request = new AppointmentPatchDto(null, 4L, null, null);
+        AppointmentPatchDto request = patchRequest(null, 4L, null, null);
 
         when(appointmentRepository.findById(9L)).thenReturn(Optional.of(appointment));
         when(caseRepository.findById(4L)).thenReturn(Optional.empty());
@@ -434,6 +434,27 @@ class AppointmentServiceTest {
         appointment.setStatus(Appointment.Status.SCHEDULED);
         setAppointmentId(appointment, id);
         return appointment;
+    }
+
+    private AppointmentPatchDto patchRequest(
+            LocalDateTime scheduledAt, Long caseId, Long therapistId, Appointment.Status status
+    ) {
+        AppointmentPatchDto patch = new AppointmentPatchDto();
+        setField(patch, "scheduledAt", scheduledAt);
+        setField(patch, "caseId", caseId);
+        setField(patch, "therapistId", therapistId);
+        setField(patch, "status", status);
+        return patch;
+    }
+
+    private void setField(AppointmentPatchDto patch, String fieldName, Object value) {
+        try {
+            var field = AppointmentPatchDto.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(patch, value);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private AppointmentResponseDto responseDto(Long id) {

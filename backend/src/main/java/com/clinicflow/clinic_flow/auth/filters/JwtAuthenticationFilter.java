@@ -1,7 +1,8 @@
 package com.clinicflow.clinic_flow.auth.filters;
 
-import com.clinicflow.clinic_flow.auth.Jwt;
 import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth.dtos.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,9 +23,13 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final AuthSessionService authSessionService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+    ) throws ServletException, IOException {
+
         var authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -37,17 +42,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return;
         }
 
-        var authentication = new UsernamePasswordAuthenticationToken(
-                jwt.getUserId(),
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
-        );
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request)
-        );
+        if ("access".equals(jwt.getTokenType()) && authSessionService.isAccessSessionActive(jwt.getSid())) {
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    new AuthPrincipal(jwt.getUserId(), jwt.getSid()),
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
+            );
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
         filterChain.doFilter(request, response);
     }
 }
