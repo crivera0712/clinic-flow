@@ -10,6 +10,35 @@ import Typography from "@mui/material/Typography";
 import { ApiError } from "./api/client";
 import { useAuth } from "./auth/AuthContext";
 
+const loginFieldSx = {
+  "& .MuiInputLabel-root": {
+    color: "#94a3b8",
+  },
+  "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+    px: 0.75,
+    backgroundColor: "rgba(15, 23, 42, 0.92)",
+  },
+  "& .MuiOutlinedInput-root": {
+    color: "#e2e8f0",
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    "& fieldset": {
+      borderColor: "rgba(148, 163, 184, 0.28)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(56, 189, 248, 0.55)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#38bdf8",
+    },
+  },
+  "& .MuiOutlinedInput-input:-webkit-autofill": {
+    WebkitBoxShadow: "0 0 0 100px rgba(15, 23, 42, 0.45) inset",
+    WebkitTextFillColor: "#e2e8f0",
+    caretColor: "#e2e8f0",
+    borderRadius: "inherit",
+  },
+};
+
 export default function LoginPage() {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
@@ -79,6 +108,9 @@ export default function LoginPage() {
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             autoComplete="username"
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={loginFieldSx}
             fullWidth
             required
           />
@@ -89,6 +121,9 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={loginFieldSx}
             fullWidth
             required
           />

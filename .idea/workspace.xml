@@ -6,18 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/LoginResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/dtos/LoginResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/JwtConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/JwtConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/config/SecurityConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/LoginPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/LoginPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/ScheduleDisplayPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/ScheduleDisplayPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/api/displayBoard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/api/displayBoard.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/main.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/types/appointment.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/types/appointment.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/vite.config.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -130,7 +122,7 @@
       <recent name="$PROJECT_DIR$/backend" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Spring Boot.ClinicFlowApplication">
     <configuration name="AppointmentControllerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="clinic-flow" />
       <extension name="coverage">
@@ -273,7 +265,7 @@
       <workItem from="1773881351182" duration="3142000" />
       <workItem from="1773902919593" duration="54194000" />
       <workItem from="1774145197542" duration="44196000" />
-      <workItem from="1774412458209" duration="36336000" />
+      <workItem from="1774412458209" duration="38376000" />
     </task>
     <servers />
   </component>

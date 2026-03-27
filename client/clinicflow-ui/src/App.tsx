@@ -29,8 +29,26 @@ function AuthenticatedShell() {
 
           {currentUser && (
             <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label={currentUser.roleName} color={currentUser.roleName === "ADMIN" ? "secondary" : "default"} />
-              <Chip label={currentUser.username} variant="outlined" />
+              <Chip
+                label={currentUser.roleName}
+                color={currentUser.roleName === "ADMIN" ? "secondary" : "default"}
+                sx={{
+                  color: "#e2e8f0",
+                  bgcolor: currentUser.roleName === "ADMIN" ? undefined : "rgba(148, 163, 184, 0.14)",
+                }}
+              />
+              <Chip
+                label={currentUser.username}
+                variant="outlined"
+                sx={{
+                  color: "#e2e8f0",
+                  borderColor: "rgba(148, 163, 184, 0.35)",
+                  bgcolor: "rgba(15, 23, 42, 0.72)",
+                  "& .MuiChip-label": {
+                    color: "inherit",
+                  },
+                }}
+              />
             </Stack>
           )}
 
