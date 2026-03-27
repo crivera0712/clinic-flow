@@ -7,6 +7,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { AppointmentDisplay } from "./types/appointment";
 
@@ -32,20 +33,27 @@ function formatTime(dt: string): string {
     }).format(parseBackendDateTime(dt));
 }
 
-// Simple accent mapping (edit to match your clinic colors)
-const therapistAccentMap: Record<string, string> = {
-    "Ada Wong":       "#3b82f6",
-    "Leon Kennedy":   "#16a34a",
-    "Jill Valentine": "#9333ea",
-};
-const DEFAULT_ACCENT = "#9ca3af";
+const THERAPIST_ACCENT_PALETTE = [
+    "#38bdf8",
+    "#22c55e",
+    "#f59e0b",
+    "#f97316",
+    "#a78bfa",
+    "#ef4444",
+    "#14b8a6",
+    "#eab308",
+];
+
+function getTherapistAccent(therapistId: number): string {
+    return THERAPIST_ACCENT_PALETTE[Math.abs(therapistId) % THERAPIST_ACCENT_PALETTE.length];
+}
 
 type CardItem = AppointmentDisplay & { accent: string };
 
 function toCardItem(a: AppointmentDisplay): CardItem {
     return {
         ...a,
-        accent: therapistAccentMap[a.therapistName] ?? DEFAULT_ACCENT,
+        accent: getTherapistAccent(a.therapistId),
     };
 }
 
@@ -63,6 +71,7 @@ function ScheduleCard({ item }: { item: CardItem }) {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 minHeight: 160,
+                height: "100%",
             }}
         >
             {/* Accent bar */}
@@ -208,7 +217,7 @@ export default function ScheduleDisplayPage() {
     const visibleUpNext = upNext.slice(0, 4);
 
     return (
-        <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", bgcolor: "#0f172a", p: 2, gap: 5 }}>
+        <Stack sx={{ minHeight: "100vh", bgcolor: "#0f172a", p: 2 }} spacing={5}>
             {/* HEADER */}
             <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                 <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff" }}>
@@ -238,7 +247,7 @@ export default function ScheduleDisplayPage() {
             )}
 
             {/* WAITING SECTION */}
-            <Box>
+            <Stack spacing={2}>
                 <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, mb: 2, color: "#fff" }}>
                     Waiting Room
                 </Typography>
@@ -265,14 +274,17 @@ export default function ScheduleDisplayPage() {
                             </Typography>
                         </Box>
                     ) : (
-                        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                        <Stack direction="row" spacing={2}>
                             {waitingSlots.map((w, i) =>
                                 w ? (
-                                    <ScheduleCard key={i} item={w} />
+                                    <Box key={i} sx={{ flex: 1 }}>
+                                        <ScheduleCard item={w} />
+                                    </Box>
                                 ) : (
                                     <Box
                                         key={i}
                                         sx={{
+                                            flex: 1,
                                             borderRadius: "16px",
                                             border: "2px dashed",
                                             borderColor: "rgba(255,255,255,0.08)",
@@ -282,20 +294,20 @@ export default function ScheduleDisplayPage() {
                                             justifyContent: "center",
                                             minHeight: 160,
                                         }}
-                                    >
-                                        <Typography sx={{ fontSize: "1.5rem", fontWeight: 600, color: "#475569" }}>
-                                            Empty
-                                        </Typography>
-                                    </Box>
+                                        >
+                                            <Typography sx={{ fontSize: "1.5rem", fontWeight: 600, color: "#475569" }}>
+                                                Empty
+                                            </Typography>
+                                        </Box>
                                 )
                             )}
-                        </Box>
+                        </Stack>
                     )}
                 </Paper>
-            </Box>
+            </Stack>
 
             {/* UP NEXT SECTION */}
-            <Box>
+            <Stack spacing={2}>
                 <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, mb: 2, color: "#fff" }}>
                     Up Next
                 </Typography>
@@ -319,20 +331,32 @@ export default function ScheduleDisplayPage() {
                             </Typography>
                         </Box>
                     ) : (
-                        <Box
+                        <Stack
+                            direction="row"
+                            spacing={2}
+                            useFlexGap
                             sx={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(calc(50% - 8px), 1fr))",
-                                gap: 2,
+                                flexWrap: "wrap",
                             }}
                         >
                             {visibleUpNext.map((t, index) => (
-                                <ScheduleCard key={index} item={t} />
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        flex: {
+                                            xs: "1 1 100%",
+                                            md: "1 1 calc(50% - 8px)",
+                                        },
+                                        minWidth: 0,
+                                    }}
+                                >
+                                    <ScheduleCard item={t} />
+                                </Box>
                             ))}
-                        </Box>
+                        </Stack>
                     )}
                 </Paper>
-            </Box>
-        </Box>
+            </Stack>
+        </Stack>
     );
 }
