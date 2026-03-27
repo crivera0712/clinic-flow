@@ -11,3 +11,8 @@ spring:
     secret: ${JWT_SECRET}
     accessTokenExpiration: 900 # 5 mins
     refreshTokenExpiration: 604800 # 7 days
+    cookieSecure: false
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173

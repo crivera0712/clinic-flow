@@ -2,6 +2,12 @@ html, body, #root {
     height: 100%;
     margin: 0;
     padding: 0;
+    background: #020617;
+    font-family: "Segoe UI", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 @layer components {

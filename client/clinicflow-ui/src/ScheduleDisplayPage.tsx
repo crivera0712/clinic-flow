@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-//import { fetchAppointmentsByDate } from "./api/displayBoard";
+import { fetchAppointmentsByDate } from "./api/displayBoard";
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -8,25 +8,7 @@ import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-
-// ---- Types (match your backend JSON) ----
-export type Status = "CHECKED_IN" | "IN_SESSION" | "FINISHED" | "SCHEDULED";
-
-export interface AppointmentDisplay {
-    aptId: number;
-    scheduledAt: string; // e.g. "2026-02-23 10:00"
-    caseId: number;
-
-    firstName: string;
-    lastName: string;
-
-    therapistId: number;
-    therapistName: string;
-    therapistType: string;
-
-    bodyRegionDisplayName: string;
-    status: Status;
-}
+import type { AppointmentDisplay } from "./types/appointment";
 
 // ---- Helpers ----
 function getTodayISODate(): string {
@@ -161,6 +143,7 @@ function ScheduleCard({ item }: { item: CardItem }) {
 export default function ScheduleDisplayPage() {
     const [appointments, setAppointments] = useState<AppointmentDisplay[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Live clock (top-right)
     const [now, setNow] = useState(() => new Date());
@@ -187,61 +170,15 @@ export default function ScheduleDisplayPage() {
 
         async function load() {
             try {
+                setLoading(true);
                 setError(null);
                 const today = getTodayISODate();
-                const data: AppointmentDisplay[] = [
-                    {
-                        aptId: 1,
-                        scheduledAt: `${today} 09:00`,
-                        caseId: 101,
-                        firstName: "John",
-                        lastName: "Doe",
-                        therapistId: 1,
-                        therapistName: "Ada Wong",
-                        therapistType: "Physical Therapist",
-                        bodyRegionDisplayName: "Lower Back",
-                        status: "CHECKED_IN",
-                    },
-                    {
-                        aptId: 2,
-                        scheduledAt: `${today} 09:30`,
-                        caseId: 102,
-                        firstName: "Jane",
-                        lastName: "Smith",
-                        therapistId: 2,
-                        therapistName: "Leon Kennedy",
-                        therapistType: "Physical Therapist",
-                        bodyRegionDisplayName: "Shoulder",
-                        status: "SCHEDULED",
-                    },
-                    {
-                        aptId: 3,
-                        scheduledAt: `${today} 10:00`,
-                        caseId: 103,
-                        firstName: "Carlos",
-                        lastName: "Rivera",
-                        therapistId: 3,
-                        therapistName: "Jill Valentine",
-                        therapistType: "Physical Therapist",
-                        bodyRegionDisplayName: "Knee",
-                        status: "SCHEDULED",
-                    },
-                    {
-                        aptId: 4,
-                        scheduledAt: `${today} 10:15`,
-                        caseId: 103,
-                        firstName: "name2",
-                        lastName: "Rivera",
-                        therapistId: 3,
-                        therapistName: "Jill Valentine",
-                        therapistType: "Physical Therapist",
-                        bodyRegionDisplayName: "Knee",
-                        status: "SCHEDULED",
-                    },
-                ];
+                const data = await fetchAppointmentsByDate(today);
                 if (!cancelled) setAppointments(data);
             } catch (e) {
                 if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load appointments");
+            } finally {
+                if (!cancelled) setLoading(false);
             }
         }
 
@@ -291,6 +228,12 @@ export default function ScheduleDisplayPage() {
             {error && (
                 <Alert severity="error" sx={{ borderRadius: "16px", fontSize: "1.5rem" }}>
                     {error}
+                </Alert>
+            )}
+
+            {loading && !error && (
+                <Alert severity="info" sx={{ borderRadius: "16px", fontSize: "1.125rem" }}>
+                    Loading today&apos;s appointments...
                 </Alert>
             )}
 
