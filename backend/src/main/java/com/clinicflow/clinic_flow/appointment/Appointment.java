@@ -21,6 +21,12 @@ public class Appointment {
         SCHEDULED
     }
 
+    public enum Type {
+        EVALUATION,
+        REASSESSMENT,
+        FOLLOW_UP
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "apt_id")
@@ -42,6 +48,10 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private Status status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Type type;
 
     @Setter
     @ManyToOne

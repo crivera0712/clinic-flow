@@ -24,6 +24,9 @@ public class Patient {
     @Column(name = "last_name")
     private String lastName;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Case> cases = new HashSet<>();
 }

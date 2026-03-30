@@ -14,4 +14,5 @@ public class AppointmentPatchDto {
     private Long caseId;
     private Long therapistId;
     private Appointment.Status status;
+    private Appointment.Type type;
 }

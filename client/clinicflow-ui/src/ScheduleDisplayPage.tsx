@@ -33,6 +33,17 @@ function formatTime(dt: string): string {
     }).format(parseBackendDateTime(dt));
 }
 
+function formatAppointmentType(type: AppointmentDisplay["type"]): string | null {
+    switch (type) {
+        case "EVALUATION":
+            return "Evaluation";
+        case "REASSESSMENT":
+            return "Reassessment";
+        default:
+            return null;
+    }
+}
+
 const THERAPIST_ACCENT_PALETTE = [
     "#38bdf8",
     "#22c55e",
@@ -59,6 +70,8 @@ function toCardItem(a: AppointmentDisplay): CardItem {
 
 // ---- UI Components ----
 function ScheduleCard({ item }: { item: CardItem }) {
+    const appointmentType = formatAppointmentType(item.type);
+
     return (
         <Card
             sx={{
@@ -137,13 +150,21 @@ function ScheduleCard({ item }: { item: CardItem }) {
                         lineHeight: 1.2,
                     }}
                 >
-                    {item.lastName}, {item.firstName}
+                    {item.displayName}
                 </Typography>
 
-                {/* Body region */}
-                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#94a3b8", lineHeight: 1.2 }}>
-                    {item.bodyRegionDisplayName}
-                </Typography>
+                <Stack spacing={0.25}>
+                    {appointmentType && (
+                        <Typography sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#cbd5e1", lineHeight: 1.2 }}>
+                            {appointmentType}
+                        </Typography>
+                    )}
+
+                    {/* Body region */}
+                    <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#94a3b8", lineHeight: 1.2 }}>
+                        {item.bodyRegionDisplayName}
+                    </Typography>
+                </Stack>
             </CardContent>
         </Card>
     );

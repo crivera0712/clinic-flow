@@ -7,6 +7,10 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     show-sql: true
+  logging:
+    level:
+      org.springframework.web: DEBUG
+      com.fasterxml.jackson: DEBUG
   jwt:
     secret: ${JWT_SECRET}
     accessTokenExpiration: 900 # 5 mins

@@ -21,4 +21,6 @@ public class AppointmentUiDto {
     private String therapistType;
     private String bodyRegionDisplayName;
     private Appointment.Status status;
+    private Appointment.Type type;
+    private String displayName;
 }
