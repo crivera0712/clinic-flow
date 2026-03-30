@@ -11,6 +11,8 @@ import com.clinicflow.clinic_flow.cases.CaseRepository;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,12 +28,10 @@ public class AppointmentService {
     private final TherapistRepository therapistRepository;
     private final CaseRepository caseRepository;
 
-    public List<AppointmentResponseDto> getAllAppointments(){
+    public Page<AppointmentResponseDto> getAllAppointments(Pageable pageable) {
         return appointmentRepository
-                .findAll()
-                .stream()
-                .map(appointmentMapper::entityToAppointmentResponseDto)
-                .toList();
+                .findAll(pageable)
+                .map(appointmentMapper::entityToAppointmentResponseDto);
     }
 
     public AppointmentResponseDto getAppointmentById(Long id){

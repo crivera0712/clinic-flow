@@ -37,9 +37,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         var token = authHeader.replace("Bearer ", "");
         var jwt = jwtService.parseToken(token);
-        if (jwt == null || jwt.isExpired()) {
+        if (jwt == null) {
             filterChain.doFilter(request, response);
-        return;
+            return;
+        }
+
+        if (jwt.isExpired()) {
+            authSessionService.checkRevokedAt(jwt.getSid());
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if ("access".equals(jwt.getTokenType()) && authSessionService.isAccessSessionActive(jwt.getSid())) {

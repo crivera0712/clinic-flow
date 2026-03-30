@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDto> handleUnexpected(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorDto("Internal server error"));
+                .body(new ErrorDto("Unhandled ex: " + ex.getMessage()));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

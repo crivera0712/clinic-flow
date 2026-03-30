@@ -15,6 +15,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -52,21 +55,24 @@ class PatientControllerTest {
     @Test
     void shouldReturnPatients_whenGetPatientsIsCalled() throws Exception {
         // Arrange
-        when(patientService.getPatients()).thenReturn(List.of(
+        var page = new PageImpl<>(List.of(
                 new PatientResponseDto(1L, "Sam", "Lee"),
                 new PatientResponseDto(2L, "Alex", "Kim")
         ));
+        when(patientService.getPatients(any(Pageable.class))).thenReturn(page);
 
         // Act
-        var response = mockMvc.perform(get("/api/patients"));
+        var response = mockMvc.perform(get("/api/patients")
+                .param("page", "0")
+                .param("size", "10"));
 
         // Assert
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].firstName").value("Sam"))
-                .andExpect(jsonPath("$[0].lastName").value("Lee"))
-                .andExpect(jsonPath("$[1].id").value(2L));
-        verify(patientService).getPatients();
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].firstName").value("Sam"))
+                .andExpect(jsonPath("$.content[0].lastName").value("Lee"))
+                .andExpect(jsonPath("$.content[1].id").value(2L));
+        verify(patientService).getPatients(any(Pageable.class));
     }
 
     @Test

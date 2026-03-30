@@ -6,6 +6,8 @@ import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,10 +18,9 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
 
-    public List<PatientResponseDto> getPatients() {
-        return patientRepository.findAll()
-                .stream().map(patientMapper::toPatientResponseDto)
-                .toList();
+    public Page<PatientResponseDto> getPatients(Pageable pageable) {
+        return patientRepository
+                .findAll(pageable).map(patientMapper::toPatientResponseDto);
     }
 
     public PatientResponseDto getPatient(Long id) {
@@ -57,6 +58,8 @@ public class PatientService {
     @Transactional
     public PatientResponseDto createPatient (PatientRequestDto patientRequestDto) {
         Patient patient = patientMapper.toPatient(patientRequestDto);
+        String dpn = (patient.getLastName() + ", " + patient.getFirstName().charAt(0));
+        patient.setDisplayName(dpn);
         var newPatient = patientRepository.save(patient);
         return patientMapper.toPatientResponseDto(newPatient);
     }
@@ -74,6 +77,10 @@ public class PatientService {
             patient.setLastName(request.getLastName());
         }
 
+        if (request.getFirstName() != null || request.getLastName() != null) {
+            patient.setDisplayName(updateDisplayName(patient.getFirstName(), patient.getLastName()));
+        }
+
         return patientMapper.toPatientResponseDto(patientRepository.save(patient));
     }
 
@@ -82,6 +89,13 @@ public class PatientService {
         var patient = patientRepository.findById(id).orElseThrow( () ->
                 new PatientNotFoundException(id));
 
-        patientRepository.deleteById(id);
+        if (patient != null){
+            patientRepository.deleteById(id);
+        }
     }
+
+    private String updateDisplayName (String firstName, String lastName) {
+        return lastName + ", " + firstName.charAt(0);
+    }
+
 }
