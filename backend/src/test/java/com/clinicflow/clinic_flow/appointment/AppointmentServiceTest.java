@@ -15,6 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,17 +64,18 @@ class AppointmentServiceTest {
         Appointment secondAppointment = appointmentWithId(2L);
         AppointmentResponseDto firstResponse = responseDto(1L);
         AppointmentResponseDto secondResponse = responseDto(2L);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(appointmentRepository.findAll()).thenReturn(List.of(firstAppointment, secondAppointment));
+        when(appointmentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(firstAppointment, secondAppointment)));
         when(appointmentMapper.entityToAppointmentResponseDto(firstAppointment)).thenReturn(firstResponse);
         when(appointmentMapper.entityToAppointmentResponseDto(secondAppointment)).thenReturn(secondResponse);
 
         // Act
-        List<AppointmentResponseDto> result = appointmentService.getAllAppointments();
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
 
         // Assert
-        assertEquals(List.of(firstResponse, secondResponse), result);
-        verify(appointmentRepository).findAll();
+        assertEquals(List.of(firstResponse, secondResponse), result.getContent());
+        verify(appointmentRepository).findAll(pageable);
         verify(appointmentMapper).entityToAppointmentResponseDto(firstAppointment);
         verify(appointmentMapper).entityToAppointmentResponseDto(secondAppointment);
     }
@@ -77,14 +83,15 @@ class AppointmentServiceTest {
     @Test
     void shouldReturnEmptyList_whenGetAllAppointmentsFindsNoAppointments() {
         // Arrange
-        when(appointmentRepository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(appointmentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
 
         // Act
-        List<AppointmentResponseDto> result = appointmentService.getAllAppointments();
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
 
         // Assert
         assertTrue(result.isEmpty());
-        verify(appointmentRepository).findAll();
+        verify(appointmentRepository).findAll(pageable);
         verify(appointmentMapper, never()).entityToAppointmentResponseDto(any(Appointment.class));
     }
 
@@ -125,7 +132,14 @@ class AppointmentServiceTest {
     void shouldCreateAppointment_whenCreateAppointmentReceivesValidRequest() {
         // Arrange
         LocalDateTime scheduledAt = LocalDateTime.of(2026, 2, 13, 9, 0);
-        AppointmentRequestDto request = new AppointmentRequestDto(scheduledAt, null, 4L, 3L, null);
+        AppointmentRequestDto request = new AppointmentRequestDto(
+                scheduledAt,
+                null,
+                4L,
+                3L,
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
+        );
         Appointment mappedAppointment = new Appointment();
         Therapist therapist = therapistWithId(3L);
         Case ptCase = caseWithId(4L);
@@ -160,7 +174,14 @@ class AppointmentServiceTest {
     void shouldThrowConflict_whenCreateAppointmentFindsExistingAppointmentAtSameTime() {
         // Arrange
         LocalDateTime scheduledAt = LocalDateTime.of(2026, 2, 13, 9, 0);
-        AppointmentRequestDto request = new AppointmentRequestDto(scheduledAt, null, 4L, 3L, null);
+        AppointmentRequestDto request = new AppointmentRequestDto(
+                scheduledAt,
+                null,
+                4L,
+                3L,
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
+        );
 
         when(appointmentRepository.findByScheduledAt(scheduledAt)).thenReturn(Optional.of(new Appointment()));
 
@@ -181,7 +202,14 @@ class AppointmentServiceTest {
     void shouldThrowException_whenCreateAppointmentTherapistDoesNotExist() {
         // Arrange
         LocalDateTime scheduledAt = LocalDateTime.of(2026, 2, 13, 9, 0);
-        AppointmentRequestDto request = new AppointmentRequestDto(scheduledAt, null, 4L, 3L, null);
+        AppointmentRequestDto request = new AppointmentRequestDto(
+                scheduledAt,
+                null,
+                4L,
+                3L,
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
+        );
         Appointment mappedAppointment = new Appointment();
 
         when(appointmentRepository.findByScheduledAt(scheduledAt)).thenReturn(Optional.empty());
@@ -205,7 +233,14 @@ class AppointmentServiceTest {
     void shouldThrowException_whenCreateAppointmentCaseDoesNotExist() {
         // Arrange
         LocalDateTime scheduledAt = LocalDateTime.of(2026, 2, 13, 9, 0);
-        AppointmentRequestDto request = new AppointmentRequestDto(scheduledAt, null, 4L, 3L, null);
+        AppointmentRequestDto request = new AppointmentRequestDto(
+                scheduledAt,
+                null,
+                4L,
+                3L,
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
+        );
         Appointment mappedAppointment = new Appointment();
 
         when(appointmentRepository.findByScheduledAt(scheduledAt)).thenReturn(Optional.empty());
@@ -232,10 +267,12 @@ class AppointmentServiceTest {
         LocalDate date = LocalDate.of(2026, 2, 13);
         AppointmentScheduleProjection firstProjection = projection(
                 21L, LocalDateTime.of(2026, 2, 13, 9, 0), 31L, "Sam", "Lee", 41L,
-                "Taylor", "PHYSICAL_THERAPIST", "Shoulder", Appointment.Status.SCHEDULED);
+                "Taylor", "PHYSICAL_THERAPIST", "Shoulder", Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION, "Lee, S");
         AppointmentScheduleProjection secondProjection = projection(
                 22L, LocalDateTime.of(2026, 2, 13, 10, 0), 32L, "Alex", "Kim", 42L,
-                "Morgan", "OCCUPATIONAL_THERAPIST", "Knee", Appointment.Status.CHECKED_IN);
+                "Morgan", "OCCUPATIONAL_THERAPIST", "Knee", Appointment.Status.CHECKED_IN,
+                Appointment.Type.FOLLOW_UP, "Kim, A");
         AppointmentUiDto firstDto = uiDto(21L, firstProjection.getScheduledAt());
         AppointmentUiDto secondDto = uiDto(22L, secondProjection.getScheduledAt());
 
@@ -464,7 +501,8 @@ class AppointmentServiceTest {
                 Instant.parse("2026-02-01T12:00:00Z"),
                 4L,
                 3L,
-                Appointment.Status.SCHEDULED
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
         );
     }
 
@@ -479,7 +517,9 @@ class AppointmentServiceTest {
                 "Taylor",
                 "PHYSICAL_THERAPIST",
                 "Shoulder",
-                Appointment.Status.SCHEDULED
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION,
+                "Lee, S"
         );
     }
 
@@ -507,7 +547,9 @@ class AppointmentServiceTest {
             String therapistName,
             String therapistType,
             String bodyRegionDisplayName,
-            Appointment.Status status
+            Appointment.Status status,
+            Appointment.Type type,
+            String displayName
     ) {
         return new AppointmentScheduleProjection() {
             @Override
@@ -558,6 +600,16 @@ class AppointmentServiceTest {
             @Override
             public Appointment.Status getStatus() {
                 return status;
+            }
+
+            @Override
+            public Appointment.Type getType() {
+                return type;
+            }
+
+            @Override
+            public String getDisplayName() {
+                return displayName;
             }
         };
     }

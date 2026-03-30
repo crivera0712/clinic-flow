@@ -33,8 +33,9 @@ public class Case {
     @JoinColumn(name = "br_id")
     private BodyRegion bodyRegion;
 
+    /*
     @OneToMany(mappedBy = "ptCase", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<Appointment> appointments = new HashSet<>();
-
+*/
 
 }

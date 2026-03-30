@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.appointment;
 
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.patient.PatientService;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -48,6 +51,9 @@ class AppointmentControllerTest {
     private AppointmentService appointmentService;
 
     @MockitoBean
+    private PatientService patientService;
+
+    @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
@@ -56,20 +62,28 @@ class AppointmentControllerTest {
     @Test
     void shouldReturnAppointments_whenGetAllAppointmentsIsCalled() throws Exception {
         // Arrange
-        when(appointmentService.getAllAppointments()).thenReturn(List.of(responseDto(1L), responseDto(2L)));
+        var appointments = List.of(responseDto(1L), responseDto(2L));
+        var page = new PageImpl<>(appointments);
+
+        when(appointmentService.getAllAppointments(any(Pageable.class))).thenReturn(page);
 
         // Act
-        var response = mockMvc.perform(get("/api/appointments"));
+        var response = mockMvc.perform(
+                get("/api/appointments")
+                        .param("page", "0")
+                        .param("size", "10")
+        );
 
         // Assert
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].scheduledAt").value("2026-02-13 09:00"))
-                .andExpect(jsonPath("$[0].caseId").value(4L))
-                .andExpect(jsonPath("$[0].therapistId").value(3L))
-                .andExpect(jsonPath("$[0].status").value("SCHEDULED"))
-                .andExpect(jsonPath("$[1].id").value(2L));
-        verify(appointmentService).getAllAppointments();
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].scheduledAt").value("2026-02-13 09:00"))
+                .andExpect(jsonPath("$.content[0].caseId").value(4L))
+                .andExpect(jsonPath("$.content[0].therapistId").value(3L))
+                .andExpect(jsonPath("$.content[0].status").value("SCHEDULED"))
+                .andExpect(jsonPath("$.content[1].id").value(2L));
+
+        verify(appointmentService).getAllAppointments(any(Pageable.class));
     }
 
     @Test
@@ -104,7 +118,9 @@ class AppointmentControllerTest {
                 "Taylor",
                 "PHYSICAL_THERAPIST",
                 "Shoulder",
-                Appointment.Status.SCHEDULED
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION,
+                "Lee, S"
         );
         when(appointmentService.getAppointmentsByDate(date)).thenReturn(List.of(dto));
 
@@ -122,7 +138,9 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$[0].therapistName").value("Taylor"))
                 .andExpect(jsonPath("$[0].therapistType").value("PHYSICAL_THERAPIST"))
                 .andExpect(jsonPath("$[0].bodyRegionDisplayName").value("Shoulder"))
-                .andExpect(jsonPath("$[0].status").value("SCHEDULED"));
+                .andExpect(jsonPath("$[0].status").value("SCHEDULED"))
+                .andExpect(jsonPath("$[0].type").value("EVALUATION"))
+                .andExpect(jsonPath("$[0].displayName").value("Lee, S"));
         verify(appointmentService).getAppointmentsByDate(date);
     }
 
@@ -146,6 +164,8 @@ class AppointmentControllerTest {
         String json = """
                 {
                   "scheduledAt": "2026-02-13T09:00:00",
+                  "status": "SCHEDULED",
+                  "type": "EVALUATION",
                   "therapistId": 3,
                   "caseId": 4
                 }
@@ -165,7 +185,8 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$.scheduledAt").value("2026-02-13 09:00"))
                 .andExpect(jsonPath("$.caseId").value(4L))
                 .andExpect(jsonPath("$.therapistId").value(3L))
-                .andExpect(jsonPath("$.status").value("SCHEDULED"));
+                .andExpect(jsonPath("$.status").value("SCHEDULED"))
+                .andExpect(jsonPath("$.type").value("EVALUATION"));
         verify(appointmentService).createAppointment(any());
     }
 
@@ -175,6 +196,8 @@ class AppointmentControllerTest {
         String malformedJson = """
                 {
                   "scheduledAt": "2026-02-13T09:00:00",
+                  "status": "SCHEDULED",
+                  "type": "EVALUATION",
                   "therapistId":
                 }
                 """;
@@ -194,6 +217,8 @@ class AppointmentControllerTest {
         String invalidJson = """
                 {
                   "scheduledAt": null,
+                  "status": null,
+                  "type": null,
                   "therapistId": null,
                   "caseId": null
                 }
@@ -215,6 +240,8 @@ class AppointmentControllerTest {
         String json = """
                 {
                   "scheduledAt": "2026-02-13T09:00:00",
+                  "status": "SCHEDULED",
+                  "type": "EVALUATION",
                   "therapistId": 3,
                   "caseId": 4
                 }
@@ -247,7 +274,8 @@ class AppointmentControllerTest {
                 Instant.parse("2026-02-02T12:00:00Z"),
                 17L,
                 16L,
-                Appointment.Status.FINISHED
+                Appointment.Status.FINISHED,
+                Appointment.Type.FOLLOW_UP
         );
         when(appointmentService.updateAppointmentById(any(Long.class), any())).thenReturn(responseDto);
 
@@ -262,7 +290,8 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$.scheduledAt").value("2026-02-14 11:30"))
                 .andExpect(jsonPath("$.caseId").value(17L))
                 .andExpect(jsonPath("$.therapistId").value(16L))
-                .andExpect(jsonPath("$.status").value("FINISHED"));
+                .andExpect(jsonPath("$.status").value("FINISHED"))
+                .andExpect(jsonPath("$.type").value("FOLLOW_UP"));
         verify(appointmentService).updateAppointmentById(any(Long.class), any());
     }
 
@@ -306,7 +335,8 @@ class AppointmentControllerTest {
                 Instant.parse("2026-02-01T12:00:00Z"),
                 4L,
                 3L,
-                Appointment.Status.SCHEDULED
+                Appointment.Status.SCHEDULED,
+                Appointment.Type.EVALUATION
         );
     }
 

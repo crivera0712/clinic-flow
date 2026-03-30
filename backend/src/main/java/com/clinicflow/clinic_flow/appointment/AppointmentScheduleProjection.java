@@ -13,4 +13,6 @@ public interface AppointmentScheduleProjection {
     String getTherapistType();
     String getBodyRegionDisplayName();
     Appointment.Status getStatus();
+    Appointment.Type getType();
+    String getDisplayName();
 }

@@ -4,6 +4,8 @@ export type Status =
   | "FINISHED"
   | "SCHEDULED";
 
+export type AppointmentType = "EVALUATION" | "REASSESMENT" | "FOLLOW_UP";
+
 export interface AppointmentDisplay {
   aptId: number;
   scheduledAt: string;
@@ -15,4 +17,6 @@ export interface AppointmentDisplay {
   therapistType: string;
   bodyRegionDisplayName: string;
   status: Status;
+  type: AppointmentType;
+  displayName: string;
 }

@@ -4,8 +4,13 @@ import com.clinicflow.clinic_flow.appointment.dtos.AppointmentPatchDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
+import com.clinicflow.clinic_flow.common.PageResponse;
+import com.clinicflow.clinic_flow.patient.PatientService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -23,8 +28,14 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @GetMapping()
-    public List<AppointmentResponseDto> getAllAppointments() {
-        return appointmentService.getAllAppointments();
+    public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
+
+        return ResponseEntity.ok(PageResponse.from(result));
     }
 
     @GetMapping("/{id}")

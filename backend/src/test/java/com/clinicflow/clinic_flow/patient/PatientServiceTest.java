@@ -10,6 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -41,17 +46,18 @@ class PatientServiceTest {
         Patient secondPatient = patient(2L, "Alex", "Kim");
         PatientResponseDto firstResponse = response(1L, "Sam", "Lee");
         PatientResponseDto secondResponse = response(2L, "Alex", "Kim");
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(patientRepository.findAll()).thenReturn(List.of(firstPatient, secondPatient));
+        when(patientRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(firstPatient, secondPatient)));
         when(patientMapper.toPatientResponseDto(firstPatient)).thenReturn(firstResponse);
         when(patientMapper.toPatientResponseDto(secondPatient)).thenReturn(secondResponse);
 
         // Act
-        List<PatientResponseDto> result = patientService.getPatients();
+        Page<PatientResponseDto> result = patientService.getPatients(pageable);
 
         // Assert
-        assertEquals(List.of(firstResponse, secondResponse), result);
-        verify(patientRepository).findAll();
+        assertEquals(List.of(firstResponse, secondResponse), result.getContent());
+        verify(patientRepository).findAll(pageable);
         verify(patientMapper).toPatientResponseDto(firstPatient);
         verify(patientMapper).toPatientResponseDto(secondPatient);
     }
@@ -59,14 +65,15 @@ class PatientServiceTest {
     @Test
     void shouldReturnEmptyList_whenGetPatientsFindsNoPatients() {
         // Arrange
-        when(patientRepository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(patientRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
 
         // Act
-        List<PatientResponseDto> result = patientService.getPatients();
+        Page<PatientResponseDto> result = patientService.getPatients(pageable);
 
         // Assert
         assertTrue(result.isEmpty());
-        verify(patientRepository).findAll();
+        verify(patientRepository).findAll(pageable);
         verify(patientMapper, never()).toPatientResponseDto(any(Patient.class));
     }
 
