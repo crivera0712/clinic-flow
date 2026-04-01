@@ -1,23 +1,21 @@
 package com.clinicflow.clinic_flow.auth;
 
 import com.clinicflow.clinic_flow.auth.dtos.*;
-import com.clinicflow.clinic_flow.auth_sessions.AuthSessionRepository;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
 import com.clinicflow.clinic_flow.config.JwtConfig;
-import com.clinicflow.clinic_flow.exception.InvalidSessionException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -28,7 +26,6 @@ public class AuthService {
     private final UsersRepository usersRepository;
     private final UsersMapper usersMapper;
     private final JwtConfig jwtConfig;
-    private final AuthSessionRepository authSessionRepository;
     private final AuthSessionService authSessionService;
 
     @Transactional
@@ -43,32 +40,23 @@ public class AuthService {
         var user = usersRepository.findByUsername(request.getUsername()).orElseThrow( () ->
                 new UserNotFoundException(request.getUsername()));
 
-        AuthSessions session = new AuthSessions();
-        session.setId(UUID.randomUUID().toString());
-        session.setUser(user);
-        session.setCreatedAt(LocalDateTime.now());
-        session.setRefreshExpiresAt(LocalDateTime.now().plusSeconds(jwtConfig.getRefreshTokenExpiration()));
-        authSessionRepository.save(session);
-
-        var accessToken = jwtService.generateAccessToken(user, session.getId());
-        var refreshToken = jwtService.generateRefreshToken(user, session.getId());
-
-        return new LoginResult(accessToken, refreshToken);
+        return issueTokenPair(user);
     }
 
     @Transactional
     public void logout(String sid) {
-        var session = authSessionRepository.findById(sid).orElseThrow(
-                () -> new InvalidSessionException("Could not find session")
-        );
-        session.setRevokedAt(LocalDateTime.now());
-        authSessionRepository.save(session);
+        authSessionService.revokeSession(sid);
     }
 
-    public Jwt refreshToken(Jwt refreshToken) {
-        authSessionService.requireRefreshableSession(refreshToken.getSid());
+    @Transactional
+    public LoginResult refreshToken(Jwt refreshToken) {
+        if (refreshToken == null || !"refresh".equals(refreshToken.getTokenType()) || refreshToken.isExpired()) {
+            throw new BadCredentialsException("Invalid refresh token");
+        }
+        var session = authSessionService.requireRefreshableSession(refreshToken.getSid());
         var user = usersRepository.findById(refreshToken.getUserId()).orElseThrow();
-        return jwtService.generateAccessToken(user, refreshToken.getSid());
+        authSessionService.revokeSession(session.getId());
+        return issueTokenPair(user);
     }
 
     public LoginResponse me() {
@@ -83,22 +71,27 @@ public class AuthService {
         return usersMapper.toLoginResponse(user);
     }
 
-    public boolean validateToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    public boolean validateToken(String token) {
+        if (token == null) {
             return false;
         }
 
-        var token = authHeader.replace("Bearer ", "");
         var jwt = jwtService.parseToken(token);
-        if (jwt == null || jwt.isExpired()) {
-            return false;
-        }
 
-        if (!"access".equals(jwt.getTokenType())) {
-            return false;
+        if (jwt != null && authSessionService.checkRevokedAt(jwt.getSid())) {
+            return !jwt.isExpired();
         }
+        return false;
+    }
 
-        return authSessionService.isAccessSessionActive(jwt.getSid());
+    private LoginResult issueTokenPair(com.clinicflow.clinic_flow.users.Users user) {
+        AuthSessions session = authSessionService.createSession(
+                user,
+                LocalDateTime.now().plusSeconds(jwtConfig.getRefreshTokenExpiration())
+        );
+        var accessToken = jwtService.generateAccessToken(user, session.getId());
+        var refreshToken = jwtService.generateRefreshToken(user, session.getId());
+        return new LoginResult(accessToken, refreshToken);
     }
 
 

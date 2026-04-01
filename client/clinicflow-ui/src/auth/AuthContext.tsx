@@ -5,6 +5,8 @@ import type { CurrentUser, LoginRequest } from "../types/auth";
 
 type AuthStatus = "bootstrapping" | "authenticated" | "anonymous";
 
+const ACCESS_TOKEN_STORAGE_KEY = "clinicflow.accessToken";
+
 type AuthContextValue = {
   accessToken: string | null;
   currentUser: CurrentUser | null;
@@ -22,13 +24,56 @@ function useProvideAuth(): AuthContextValue {
   const [status, setStatus] = useState<AuthStatus>("bootstrapping");
   const accessTokenRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
+  const didBootstrapRef = useRef(false);
 
-  useEffect(() => {
-    accessTokenRef.current = accessToken;
-  }, [accessToken]);
+  function readStoredAccessToken() {
+    return sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+
+  function writeStoredAccessToken(token: string) {
+    sessionStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  }
+
+  function clearStoredAccessToken() {
+    sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+
+  function parseJwtPayload(token: string) {
+    try {
+      const [, payload] = token.split(".");
+      if (!payload) {
+        return null;
+      }
+
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+      return JSON.parse(window.atob(padded)) as { exp?: number };
+    } catch {
+      return null;
+    }
+  }
+
+  function isTokenExpired(token: string) {
+    const payload = parseJwtPayload(token);
+    if (!payload?.exp) {
+      return true;
+    }
+
+    return payload.exp * 1000 <= Date.now();
+  }
+
+  function setAccessTokenState(token: string | null) {
+    accessTokenRef.current = token;
+    setAccessToken(token);
+    if (token) {
+      writeStoredAccessToken(token);
+    } else {
+      clearStoredAccessToken();
+    }
+  }
 
   function clearAuthState() {
-    setAccessToken(null);
+    setAccessTokenState(null);
     setCurrentUser(null);
     setStatus("anonymous");
   }
@@ -48,7 +93,7 @@ function useProvideAuth(): AuthContextValue {
     refreshPromiseRef.current = (async () => {
       try {
         const response = await refreshRequest();
-        setAccessToken(response.token);
+        setAccessTokenState(response.token);
         return response.token;
       } catch {
         clearAuthState();
@@ -63,7 +108,7 @@ function useProvideAuth(): AuthContextValue {
 
   async function login(request: LoginRequest) {
     const response = await loginRequest(request);
-    setAccessToken(response.token);
+    setAccessTokenState(response.token);
 
     try {
       await loadCurrentUser();
@@ -93,14 +138,41 @@ function useProvideAuth(): AuthContextValue {
     return () => {
       resetApiClient();
     };
-  });
+  }, []);
 
   useEffect(() => {
+    if (didBootstrapRef.current) {
+      return;
+    }
+    didBootstrapRef.current = true;
+
     let cancelled = false;
 
     async function bootstrap() {
+      const storedToken = readStoredAccessToken();
+
+      if (storedToken && !isTokenExpired(storedToken)) {
+        setAccessTokenState(storedToken);
+
+        try {
+          await loadCurrentUser();
+        } catch {
+          if (!cancelled) {
+            clearAuthState();
+          }
+        }
+        return;
+      }
+
+      if (storedToken) {
+        clearStoredAccessToken();
+      }
+
       const token = await refresh();
       if (!token || cancelled) {
+        if (!cancelled) {
+          clearAuthState();
+        }
         return;
       }
 
