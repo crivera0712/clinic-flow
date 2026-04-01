@@ -1,9 +1,6 @@
 package com.clinicflow.clinic_flow.appointment;
 
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentPatchDto;
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
+import com.clinicflow.clinic_flow.appointment.dtos.*;
 import com.clinicflow.clinic_flow.cases.Case;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
@@ -13,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -27,6 +25,7 @@ public class AppointmentService {
     private final AppointmentMapper appointmentMapper;
     private final TherapistRepository therapistRepository;
     private final CaseRepository caseRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     public Page<AppointmentResponseDto> getAllAppointments(Pageable pageable) {
         return appointmentRepository
@@ -98,9 +97,18 @@ public class AppointmentService {
             appointment.setStatus(request.getStatus());
         }
 
+        if (request.getType() != null) {
+            appointment.setType(request.getType());
+        }
+
         appointment.setModifiedAt(Instant.now());
 
-        return appointmentMapper.entityToAppointmentResponseDto(appointmentRepository.save(appointment));
+        var saved =  appointmentRepository.save(appointment);
+
+        simpMessagingTemplate.convertAndSend("/topic/display-board." + saved.getScheduledAt().toLocalDate(),
+        new DisplayBoardUpdateMessage("APPOINTMENT_UPDATED", saved.getScheduledAt().toLocalDate()));
+
+        return appointmentMapper.entityToAppointmentResponseDto(saved);
     }
 
     public void deleteAppointmentById(Long id){
