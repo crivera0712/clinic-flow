@@ -6,9 +6,9 @@ import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -16,8 +16,9 @@ public class TherapistService {
     private final TherapistRepository therapistRepository;
     private final TherapistMapper therapistMapper;
 
-    public List<TherapistsResponseDto> getTherapists(){
-        return therapistRepository.findAll().stream().map(therapistMapper::toTherapistResponseDto).toList();
+    public Page<TherapistsResponseDto> getTherapists(String search, Pageable pageable){
+        return therapistRepository.search(search, pageable)
+                .map(therapistMapper::toTherapistResponseDto);
     }
 
     public TherapistsResponseDto getTherapistById(Long id){

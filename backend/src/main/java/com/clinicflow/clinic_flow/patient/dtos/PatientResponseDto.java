@@ -9,4 +9,5 @@ public class PatientResponseDto {
     private Long id;
     private String firstName;
     private String lastName;
+    private String displayName;
 }

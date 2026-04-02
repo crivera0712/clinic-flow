@@ -4,7 +4,7 @@ export type Status =
   | "FINISHED"
   | "SCHEDULED";
 
-export type AppointmentType = "EVALUATION" | "REASSESMENT" | "FOLLOW_UP";
+export type AppointmentType = "EVALUATION" | "REASSESSMENT" | "FOLLOW_UP";
 
 export interface AppointmentDisplay {
   aptId: number;

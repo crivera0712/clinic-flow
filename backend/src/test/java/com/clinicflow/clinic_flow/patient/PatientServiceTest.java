@@ -328,11 +328,12 @@ class PatientServiceTest {
         patient.setId(id);
         patient.setFirstName(firstName);
         patient.setLastName(lastName);
+        patient.setDisplayName(lastName + ", " + firstName.charAt(0));
         return patient;
     }
 
     private PatientResponseDto response(Long id, String firstName, String lastName) {
-        return new PatientResponseDto(id, firstName, lastName);
+        return new PatientResponseDto(id, firstName, lastName, lastName + ", " + firstName.charAt(0));
     }
 
     private PatientPatchDto patch(String firstName, String lastName) {

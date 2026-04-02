@@ -4,6 +4,8 @@ import com.clinicflow.clinic_flow.appointment.dtos.*;
 import com.clinicflow.clinic_flow.cases.Case;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
+import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
+import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
 import com.clinicflow.clinic_flow.cases.CaseRepository;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import jakarta.transaction.Transactional;
@@ -27,9 +29,18 @@ public class AppointmentService {
     private final CaseRepository caseRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
-    public Page<AppointmentResponseDto> getAllAppointments(Pageable pageable) {
-        return appointmentRepository
-                .findAll(pageable)
+    public Page<AppointmentResponseDto> getAllAppointments(Pageable pageable, LocalDate date) {
+        Page<Appointment> result;
+        if (date == null) {
+            result = appointmentRepository.findAll(pageable);
+        } else {
+            result = appointmentRepository.findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                    date.atStartOfDay(),
+                    date.plusDays(1).atStartOfDay(),
+                    pageable
+            );
+        }
+        return result
                 .map(appointmentMapper::entityToAppointmentResponseDto);
     }
 
@@ -48,8 +59,10 @@ public class AppointmentService {
         }
 
         Appointment appointment = appointmentMapper.requestToAppointmentEntityDto(request);
-        Therapist therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow();
-        Case ptCase =  caseRepository.findById(request.getCaseId()).orElseThrow();
+        Therapist therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow(() ->
+                new TherapistNotFoundException(request.getTherapistId()));
+        Case ptCase =  caseRepository.findById(request.getCaseId()).orElseThrow(() ->
+                new CaseNotFoundException(request.getCaseId()));
 
         appointment.setStatus(Appointment.Status.SCHEDULED);
         appointment.setTherapist(therapist);
@@ -83,13 +96,13 @@ public class AppointmentService {
 
         if (request.getTherapistId() != null) {
             var therapist = therapistRepository.findById(request.getTherapistId()).orElseThrow( ()->
-                    new RuntimeException("Therapist not found with id " + request.getTherapistId()));
+                    new TherapistNotFoundException(request.getTherapistId()));
             appointment.setTherapist(therapist);
         }
 
         if (request.getCaseId() != null) {
             var patchCase = caseRepository.findById(request.getCaseId()).orElseThrow( () ->
-                    new RuntimeException("Case not found with id " + request.getCaseId()));
+                    new CaseNotFoundException(request.getCaseId()));
             appointment.setPtCase(patchCase);
         }
 
@@ -112,6 +125,8 @@ public class AppointmentService {
     }
 
     public void deleteAppointmentById(Long id){
-        appointmentRepository.deleteById(id);
+        var appointment = appointmentRepository.findById(id).orElseThrow(() ->
+                new RuntimeException("Appointment not found with id " + id));
+        appointmentRepository.delete(appointment);
     }
 }

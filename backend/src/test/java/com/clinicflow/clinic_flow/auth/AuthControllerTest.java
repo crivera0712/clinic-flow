@@ -146,16 +146,21 @@ class AuthControllerTest {
     void shouldReturnAccessToken_whenRefreshTokenIsValid() throws Exception {
         Jwt refreshJwt = mock(Jwt.class);
         Jwt accessJwt = mock(Jwt.class);
+        Jwt newRefreshJwt = mock(Jwt.class);
 
         when(jwtService.parseToken("refresh-token")).thenReturn(refreshJwt);
         when(refreshJwt.isExpired()).thenReturn(false);
         when(refreshJwt.getTokenType()).thenReturn("refresh");
-        when(authService.refreshToken(refreshJwt)).thenReturn(accessJwt);
+        when(authService.refreshToken(refreshJwt)).thenReturn(new LoginResult(accessJwt, newRefreshJwt));
+        when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
+        when(jwtConfig.isCookieSecure()).thenReturn(true);
         when(accessJwt.toString()).thenReturn("new-access-token");
+        when(newRefreshJwt.toString()).thenReturn("new-refresh-token");
 
         mockMvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("new-access-token"));
+                .andExpect(jsonPath("$.token").value("new-access-token"))
+                .andExpect(cookie().value("refreshToken", "new-refresh-token"));
 
         verify(authService).refreshToken(refreshJwt);
     }
