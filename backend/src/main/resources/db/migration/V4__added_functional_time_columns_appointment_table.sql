@@ -1,8 +1,8 @@
-alter table appointments
-    change start_time scheduled_at datetime not null;
+ALTER TABLE appointments
+    RENAME COLUMN start_time TO scheduled_at;
 
-alter table appointments
-    add created_at datetime not null;
+ALTER TABLE appointments
+    ADD COLUMN created_at TIMESTAMP NOT NULL;
 
-alter table appointments
-    add modified_at datetime null;
+ALTER TABLE appointments
+    ADD COLUMN modified_at TIMESTAMP NULL;

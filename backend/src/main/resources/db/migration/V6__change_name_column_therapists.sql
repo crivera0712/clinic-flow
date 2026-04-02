@@ -1,2 +1,2 @@
-alter table therapists
-    change name therapist_name varchar(255) not null;
+ALTER TABLE therapists
+    RENAME COLUMN name TO therapist_name;
