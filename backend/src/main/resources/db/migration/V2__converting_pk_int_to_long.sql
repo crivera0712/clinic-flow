@@ -1,37 +1,38 @@
-
 ALTER TABLE appointments
-DROP FOREIGN KEY appointments_case_c_id_fk,
-    DROP FOREIGN KEY appointments_therapists_t_id_fk;
+    DROP CONSTRAINT appointments_case_c_id_fk,
+    DROP CONSTRAINT appointments_therapists_t_id_fk;
 
 ALTER TABLE cases
-DROP FOREIGN KEY case_body_regions_br_id_fk,
-    DROP FOREIGN KEY case_patients_p_id_fk;
+    DROP CONSTRAINT case_body_regions_br_id_fk,
+    DROP CONSTRAINT case_patients_p_id_fk;
 
 ALTER TABLE body_regions
-    MODIFY br_id BIGINT AUTO_INCREMENT;
+    ALTER COLUMN br_id TYPE BIGINT;
+ALTER SEQUENCE body_regions_br_id_seq AS BIGINT;
 
 ALTER TABLE patients
-    MODIFY p_id BIGINT AUTO_INCREMENT;
+    ALTER COLUMN p_id TYPE BIGINT;
+ALTER SEQUENCE patients_p_id_seq AS BIGINT;
 
 ALTER TABLE cases
-    MODIFY c_id BIGINT AUTO_INCREMENT;
+    ALTER COLUMN c_id TYPE BIGINT;
+ALTER SEQUENCE cases_c_id_seq AS BIGINT;
 
 ALTER TABLE therapists
-    MODIFY t_id BIGINT AUTO_INCREMENT;
+    ALTER COLUMN t_id TYPE BIGINT;
+ALTER SEQUENCE therapists_t_id_seq AS BIGINT;
 
 ALTER TABLE appointments
-    MODIFY apt_id BIGINT AUTO_INCREMENT;
-
-
+    ALTER COLUMN apt_id TYPE BIGINT;
+ALTER SEQUENCE appointments_apt_id_seq AS BIGINT;
 
 ALTER TABLE cases
-    MODIFY p_id BIGINT NOT NULL,
-    MODIFY br_id BIGINT NOT NULL;
+    ALTER COLUMN p_id TYPE BIGINT,
+    ALTER COLUMN br_id TYPE BIGINT;
 
 ALTER TABLE appointments
-    MODIFY t_id BIGINT NOT NULL,
-    MODIFY c_id BIGINT NOT NULL;
-
+    ALTER COLUMN t_id TYPE BIGINT,
+    ALTER COLUMN c_id TYPE BIGINT;
 
 ALTER TABLE cases
     ADD CONSTRAINT case_body_regions_br_id_fk
