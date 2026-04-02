@@ -3,14 +3,17 @@ package com.clinicflow.clinic_flow.body_region;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionPatchDto;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionRequestDto;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionResponseDto;
+import com.clinicflow.clinic_flow.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @AllArgsConstructor
 @RequestMapping("/api/bodyregion")
@@ -18,8 +21,14 @@ import java.util.List;
 public class BodyRegionController {
     private final BodyRegionService bodyRegionService;
     @GetMapping
-    public ResponseEntity<List<BodyRegionResponseDto>> getBodyRegions() {
-        return ResponseEntity.ok(bodyRegionService.getBodyRegions());
+    public ResponseEntity<PageResponse<BodyRegionResponseDto>> getBodyRegions(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BodyRegionResponseDto> result = bodyRegionService.getBodyRegions(search, pageable);
+        return ResponseEntity.ok(PageResponse.from(result));
     }
 
     @GetMapping("/{id}")
@@ -36,13 +45,19 @@ public class BodyRegionController {
                 .buildAndExpand(response.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(response);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<BodyRegionResponseDto> updateBodyRegion(@PathVariable Long id, @RequestBody @Valid BodyRegionPatchDto patch) {
         var patchedUser = bodyRegionService.updateBodyRegion(id, patch);
         return ResponseEntity.ok(patchedUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBodyRegion(@PathVariable Long id) {
+        bodyRegionService.deleteBodyRegion(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

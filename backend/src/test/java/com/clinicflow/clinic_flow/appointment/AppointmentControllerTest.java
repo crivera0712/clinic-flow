@@ -26,6 +26,8 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -65,7 +67,7 @@ class AppointmentControllerTest {
         var appointments = List.of(responseDto(1L), responseDto(2L));
         var page = new PageImpl<>(appointments);
 
-        when(appointmentService.getAllAppointments(any(Pageable.class))).thenReturn(page);
+        when(appointmentService.getAllAppointments(any(Pageable.class), isNull())).thenReturn(page);
 
         // Act
         var response = mockMvc.perform(
@@ -83,7 +85,26 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$.content[0].status").value("SCHEDULED"))
                 .andExpect(jsonPath("$.content[1].id").value(2L));
 
-        verify(appointmentService).getAllAppointments(any(Pageable.class));
+        verify(appointmentService).getAllAppointments(any(Pageable.class), isNull());
+    }
+
+    @Test
+    void shouldReturnAppointments_whenGetAllAppointmentsReceivesDateFilter() throws Exception {
+        var page = new PageImpl<>(List.of(responseDto(1L)));
+
+        when(appointmentService.getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)))).thenReturn(page);
+
+        var response = mockMvc.perform(
+                get("/api/appointments")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("date", "2026-02-13")
+        );
+
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1L));
+
+        verify(appointmentService).getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)));
     }
 
     @Test
@@ -324,7 +345,7 @@ class AppointmentControllerTest {
         var response = mockMvc.perform(delete("/api/appointments/9"));
 
         // Assert
-        response.andExpect(status().isOk());
+        response.andExpect(status().isNoContent());
         verify(appointmentService).deleteAppointmentById(9L);
     }
 

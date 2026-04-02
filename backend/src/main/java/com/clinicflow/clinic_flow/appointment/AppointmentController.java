@@ -30,10 +30,11 @@ public class AppointmentController {
     @GetMapping()
     public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointments(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) LocalDate date
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
 
         return ResponseEntity.ok(PageResponse.from(result));
     }
@@ -76,9 +77,9 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAppointmentById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAppointmentById(@PathVariable Long id) {
         appointmentService.deleteAppointmentById(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
 }

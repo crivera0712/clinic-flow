@@ -7,11 +7,13 @@ import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.cases.Case;
 import com.clinicflow.clinic_flow.cases.CaseRepository;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
+import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
+import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,9 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,8 +56,21 @@ class AppointmentServiceTest {
     @Mock
     private CaseRepository caseRepository;
 
-    @InjectMocks
+    @Mock
+    private SimpMessagingTemplate simpMessagingTemplate;
+
     private AppointmentService appointmentService;
+
+    @BeforeEach
+    void setUp() {
+        appointmentService = new AppointmentService(
+                appointmentRepository,
+                appointmentMapper,
+                therapistRepository,
+                caseRepository,
+                simpMessagingTemplate
+        );
+    }
 
     @Test
     void shouldReturnAppointmentResponses_whenGetAllAppointmentsFindsAppointments() {
@@ -71,7 +86,7 @@ class AppointmentServiceTest {
         when(appointmentMapper.entityToAppointmentResponseDto(secondAppointment)).thenReturn(secondResponse);
 
         // Act
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null);
 
         // Assert
         assertEquals(List.of(firstResponse, secondResponse), result.getContent());
@@ -87,12 +102,36 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
 
         // Act
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null);
 
         // Assert
         assertTrue(result.isEmpty());
         verify(appointmentRepository).findAll(pageable);
         verify(appointmentMapper, never()).entityToAppointmentResponseDto(any(Appointment.class));
+    }
+
+    @Test
+    void shouldReturnDateFilteredAppointments_whenGetAllAppointmentsReceivesDate() {
+        Appointment appointment = appointmentWithId(1L);
+        AppointmentResponseDto response = responseDto(1L);
+        Pageable pageable = PageRequest.of(0, 10);
+        LocalDate date = LocalDate.of(2026, 2, 13);
+
+        when(appointmentRepository.findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                eq(date.atStartOfDay()),
+                eq(date.plusDays(1).atStartOfDay()),
+                eq(pageable)
+        )).thenReturn(new PageImpl<>(List.of(appointment)));
+        when(appointmentMapper.entityToAppointmentResponseDto(appointment)).thenReturn(response);
+
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
+
+        assertEquals(List.of(response), result.getContent());
+        verify(appointmentRepository).findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                eq(date.atStartOfDay()),
+                eq(date.plusDays(1).atStartOfDay()),
+                eq(pageable)
+        );
     }
 
     @Test
@@ -217,11 +256,11 @@ class AppointmentServiceTest {
         when(therapistRepository.findById(Long.valueOf(3L))).thenReturn(Optional.empty());
 
         // Act
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+        TherapistNotFoundException exception = assertThrows(TherapistNotFoundException.class,
                 () -> appointmentService.createAppointment(request));
 
         // Assert
-        assertNotNull(exception);
+        assertEquals("Therapist with id 3 not found", exception.getMessage());
         verify(appointmentRepository).findByScheduledAt(scheduledAt);
         verify(appointmentMapper).requestToAppointmentEntityDto(request);
         verify(therapistRepository).findById(Long.valueOf(3L));
@@ -249,11 +288,11 @@ class AppointmentServiceTest {
         when(caseRepository.findById(4L)).thenReturn(Optional.empty());
 
         // Act
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+        CaseNotFoundException exception = assertThrows(CaseNotFoundException.class,
                 () -> appointmentService.createAppointment(request));
 
         // Assert
-        assertNotNull(exception);
+        assertEquals("Could not find case by id 4", exception.getMessage());
         verify(appointmentRepository).findByScheduledAt(scheduledAt);
         verify(appointmentMapper).requestToAppointmentEntityDto(request);
         verify(therapistRepository).findById(Long.valueOf(3L));
@@ -421,11 +460,11 @@ class AppointmentServiceTest {
         when(therapistRepository.findById(Long.valueOf(3L))).thenReturn(Optional.empty());
 
         // Act
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        TherapistNotFoundException exception = assertThrows(TherapistNotFoundException.class,
                 () -> appointmentService.updateAppointmentById(9L, request));
 
         // Assert
-        assertEquals("Therapist not found with id 3", exception.getMessage());
+        assertEquals("Therapist with id 3 not found", exception.getMessage());
         verify(appointmentRepository).findById(9L);
         verify(therapistRepository).findById(Long.valueOf(3L));
         verify(caseRepository, never()).findById(any(Long.class));
@@ -442,11 +481,11 @@ class AppointmentServiceTest {
         when(caseRepository.findById(4L)).thenReturn(Optional.empty());
 
         // Act
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        CaseNotFoundException exception = assertThrows(CaseNotFoundException.class,
                 () -> appointmentService.updateAppointmentById(9L, request));
 
         // Assert
-        assertEquals("Case not found with id 4", exception.getMessage());
+        assertEquals("Could not find case by id 4", exception.getMessage());
         verify(appointmentRepository).findById(9L);
         verify(caseRepository).findById(4L);
         verify(therapistRepository, never()).findById(any(Long.class));
@@ -455,13 +494,14 @@ class AppointmentServiceTest {
 
     @Test
     void shouldDeleteAppointment_whenDeleteAppointmentByIdIsCalled() {
-        // Arrange
+        Appointment appointment = appointmentWithId(15L);
+        when(appointmentRepository.findById(15L)).thenReturn(Optional.of(appointment));
 
         // Act
         appointmentService.deleteAppointmentById(15L);
 
         // Assert
-        verify(appointmentRepository).deleteById(15L);
+        verify(appointmentRepository).delete(appointment);
     }
 
     private Appointment appointmentWithId(Long id) {

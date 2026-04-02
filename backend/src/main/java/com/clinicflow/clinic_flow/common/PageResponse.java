@@ -13,7 +13,7 @@ public class PageResponse<T> {
     private List<T> content;
     private int page;
     private int size;
-    private int totalElements;
+    private long totalElements;
     private int totalPages;
     private boolean last;
 
@@ -22,7 +22,7 @@ public class PageResponse<T> {
         response.content = page.getContent();
         response.page = page.getNumber();
         response.size = page.getSize();
-        response.totalElements = page.getNumberOfElements();
+        response.totalElements = page.getTotalElements();
         response.totalPages = page.getTotalPages();
         response.last = page.isLast();
         return response;

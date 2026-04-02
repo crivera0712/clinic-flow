@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { configureApiClient, resetApiClient } from "../api/client";
 import { getCurrentUser, login as loginRequest, logout as logoutRequest, refresh as refreshRequest } from "../api/auth";

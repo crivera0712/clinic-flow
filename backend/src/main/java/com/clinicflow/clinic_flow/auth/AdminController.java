@@ -23,10 +23,11 @@ public class AdminController {
     @GetMapping()
     public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointments(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) java.time.LocalDate date
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
 
         return ResponseEntity.ok(PageResponse.from(result));
     }
