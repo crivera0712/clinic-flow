@@ -65,6 +65,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
     }
 
+    @ExceptionHandler(TherapistNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleTherapistNotFound(TherapistNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(new ErrorDto(ex.getMessage()));

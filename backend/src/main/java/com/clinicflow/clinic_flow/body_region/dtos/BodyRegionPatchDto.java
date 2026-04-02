@@ -7,5 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 public class BodyRegionPatchDto {
     private String code;
+    private String displayName;
     private Boolean isActive;
 }

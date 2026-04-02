@@ -7,11 +7,18 @@ import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
+import { Link as RouterLink, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
+import { AdminLayout } from "./components/admin/AdminLayout";
+import { AppointmentsPage } from "./features/appointments/AppointmentsPage";
+import { BodyRegionsPage } from "./features/body-regions/BodyRegionsPage";
+import { PatientsPage } from "./features/patients/PatientsPage";
+import { TherapistsPage } from "./features/therapists/TherapistsPage";
 import { useAuth } from "./auth/AuthContext";
 
-function AuthenticatedShell() {
+function ScheduleShell() {
   const { currentUser, logout } = useAuth();
 
   return (
@@ -52,7 +59,13 @@ function AuthenticatedShell() {
             </Stack>
           )}
 
-          <Button color="inherit" onClick={logout}>
+          {currentUser?.roleName === "ADMIN" && (
+            <Button component={RouterLink} to="/admin/appointments" color="inherit" variant="outlined">
+              Admin Panel
+            </Button>
+          )}
+
+          <Button color="inherit" onClick={() => void logout()}>
             Logout
           </Button>
         </Toolbar>
@@ -74,7 +87,7 @@ function AuthenticatedShell() {
           >
             <Typography sx={{ fontWeight: 600 }}>Admin access is active.</Typography>
             <Typography sx={{ color: "#94a3b8" }}>
-              This shell is ready for the future admin page for patients, cases, body regions, and appointments.
+              Use the admin panel to manage appointments, body regions, patients, and therapists.
             </Typography>
           </Box>
         )}
@@ -82,6 +95,37 @@ function AuthenticatedShell() {
         <ScheduleDisplayPage />
       </Container>
     </Box>
+  );
+}
+
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { currentUser } = useAuth();
+  if (currentUser?.roleName !== "ADMIN") {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AuthenticatedApp() {
+  return (
+    <Routes>
+      <Route path="/" element={<ScheduleShell />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireAdmin>
+            <AdminLayout />
+          </RequireAdmin>
+        }
+      >
+        <Route index element={<Navigate to="/admin/appointments" replace />} />
+        <Route path="appointments" element={<AppointmentsPage />} />
+        <Route path="body-regions" element={<BodyRegionsPage />} />
+        <Route path="patients" element={<PatientsPage />} />
+        <Route path="therapists" element={<TherapistsPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
@@ -111,7 +155,7 @@ function App() {
     return <LoginPage />;
   }
 
-  return <AuthenticatedShell />;
+  return <AuthenticatedApp />;
 }
 
-export default App
+export default App;
