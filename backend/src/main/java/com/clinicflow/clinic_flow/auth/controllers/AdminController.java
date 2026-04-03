@@ -1,4 +1,4 @@
-package com.clinicflow.clinic_flow.auth;
+package com.clinicflow.clinic_flow.auth.controllers;
 
 import com.clinicflow.clinic_flow.appointment.AppointmentService;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
@@ -24,10 +24,11 @@ public class AdminController {
     public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) java.time.LocalDate date
+            @RequestParam(required = false) java.time.LocalDate date,
+            @RequestParam(required = false) Long caseId
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date, caseId);
 
         return ResponseEntity.ok(PageResponse.from(result));
     }

@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,4 +43,8 @@ public class Users {
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private RoleName roleName;
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id")
+    private Clinics clinic;
 }

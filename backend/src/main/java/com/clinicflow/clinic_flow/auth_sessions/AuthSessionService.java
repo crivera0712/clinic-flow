@@ -16,14 +16,14 @@ public class AuthSessionService {
     private final AuthSessionRepository authSessionRepository;
 
     public boolean isAccessSessionActive(String sid) {
-        var session = authSessionRepository.findById(sid).orElse(null);
+        var session = authSessionRepository.findById(parseSessionId(sid)).orElse(null);
         return session != null && session.getRevokedAt() == null;
     }
 
     @Transactional
     public AuthSessions createSession(Users user, LocalDateTime refreshExpiresAt) {
         AuthSessions session = new AuthSessions();
-        session.setId(UUID.randomUUID().toString());
+        session.setId(UUID.randomUUID());
         session.setUser(user);
         session.setCreatedAt(LocalDateTime.now());
         session.setRefreshExpiresAt(refreshExpiresAt);
@@ -32,7 +32,7 @@ public class AuthSessionService {
 
     @Transactional
     public AuthSessions requireRefreshableSession(String sid) {
-        var session = authSessionRepository.findById(sid).orElseThrow(() ->
+        var session = authSessionRepository.findById(parseSessionId(sid)).orElseThrow(() ->
                 new InvalidSessionException("Could not find session"));
 
         if (session.getRefreshExpiresAt().isBefore(LocalDateTime.now()) && session.getRevokedAt() == null) {
@@ -53,6 +53,17 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeSession(String sid) {
+        var session = authSessionRepository.findById(parseSessionId(sid)).orElseThrow(() ->
+                new InvalidSessionException("Could not find session"));
+
+        if (session.getRevokedAt() == null) {
+            session.setRevokedAt(LocalDateTime.now());
+            authSessionRepository.save(session);
+        }
+    }
+
+    @Transactional
+    public void revokeSession(UUID sid) {
         var session = authSessionRepository.findById(sid).orElseThrow(() ->
                 new InvalidSessionException("Could not find session"));
 
@@ -64,7 +75,7 @@ public class AuthSessionService {
 
     @Transactional
     public boolean checkRevokedAt(String sid){
-        var session = authSessionRepository.findById(sid).orElse(null);
+        var session = authSessionRepository.findById(parseSessionId(sid)).orElse(null);
 
         if  (session == null) {
             throw new InvalidSessionException("Could not find session");
@@ -76,6 +87,14 @@ public class AuthSessionService {
             return false;
         }
         return session.getRevokedAt() == null;
+    }
+
+    private UUID parseSessionId(String sid) {
+        try {
+            return UUID.fromString(sid);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSessionException("Invalid session ID");
+        }
     }
 
 }

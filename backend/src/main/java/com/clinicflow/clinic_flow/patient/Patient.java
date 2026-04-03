@@ -1,6 +1,7 @@
 package com.clinicflow.clinic_flow.patient;
 
 import com.clinicflow.clinic_flow.cases.Case;
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,4 +30,8 @@ public class Patient {
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Case> cases = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id")
+    private Clinics clinic;
 }
