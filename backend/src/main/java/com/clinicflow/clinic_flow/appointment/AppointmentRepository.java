@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     @Query(value = """
     SELECT
+        a.clinic_id,
         a.scheduled_at AS scheduledAt,
         a.apt_id AS aptId,
         a.c_id AS caseId,
@@ -20,7 +21,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         a.type as type,
         p.first_name AS firstName,
         p.last_name AS lastName,
-        p.display_name AS displayName, 
+        p.display_name AS displayName,
         t.t_id AS therapistId,
         t.therapist_name AS therapistName,
         t.therapist_type AS therapistType,
@@ -30,16 +31,32 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         JOIN cases c ON c.c_id = a.c_id
         JOIN patients p ON p.p_id = c.p_id
         JOIN body_regions br ON br.br_id = c.br_id
-    WHERE CAST(a.scheduled_at AS DATE) = :date
+    WHERE
+            a.clinic_id = :clinicId
+            AND CAST(a.scheduled_at AS DATE) = :date
     ORDER BY a.scheduled_at
     """, nativeQuery = true)
-    List<AppointmentScheduleProjection> findDailyAppointments(@Param("date") LocalDate date);
+    List<AppointmentScheduleProjection> findDailyAppointments(
+            @Param("date") LocalDate date,
+            @Param("clinicId") Long clinicId);
 
     Page<Appointment> findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
             LocalDateTime startInclusive,
             LocalDateTime endExclusive,
-            Pageable pageable
+            Pageable pageable,
+            Long clinicId
     );
 
-    Optional<Appointment> findByScheduledAt(LocalDateTime scheduledAt);
+    Page<Appointment> findByClinicIdAndPtCaseIdOrderByScheduledAtDesc(Long clinicId, Long caseId, Pageable pageable);
+
+    Optional<Appointment> findByScheduledAtAndClinicIdAndTherapistId(
+            LocalDateTime scheduledAt,  Long clinicId, Long therapistId
+    );
+
+    Page<Appointment> findByIdAndClinicIdAndPageable(Long id, Long clinicId, Pageable pageable);
+
+    Optional<Appointment> findByIdAndClinicId(Long id, Long clinicId);
+
+
+    Page<Appointment> findAllByClinicId(Long clinicId, Pageable pageable);
 }

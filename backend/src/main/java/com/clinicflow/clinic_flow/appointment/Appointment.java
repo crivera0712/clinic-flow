@@ -1,6 +1,7 @@
 package com.clinicflow.clinic_flow.appointment;
 
 import com.clinicflow.clinic_flow.cases.Case;
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -57,5 +58,9 @@ public class Appointment {
     @ManyToOne
     @JoinColumn(name = "t_id")
     private Therapist therapist;
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id")
+    private Clinics clinic;
 
 }

@@ -88,7 +88,8 @@ export interface CaseUpdateRequest {
 }
 
 export interface AppointmentListParams {
-  date: string;
+  date?: string;
+  caseId?: number;
   page?: number;
   size?: number;
 }

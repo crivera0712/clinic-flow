@@ -16,8 +16,9 @@ export async function listAppointments(params: AppointmentListParams): Promise<E
   const searchParams = new URLSearchParams({
     page: String(params.page ?? 0),
     size: String(params.size ?? 1000),
-    date: params.date,
   });
+  if (params.date) searchParams.set("date", params.date);
+  if (params.caseId !== undefined) searchParams.set("caseId", String(params.caseId));
   const response = await apiRequest<PageResponse<AppointmentRecord>>(`/appointments?${searchParams.toString()}`);
   const rows = response.content.map(toRecord);
   return { rows, rowCount: response.totalElements };

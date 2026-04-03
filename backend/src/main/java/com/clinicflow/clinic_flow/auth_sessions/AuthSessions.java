@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.auth_sessions;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.users.Users;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @AllArgsConstructor
@@ -17,7 +19,7 @@ import java.time.LocalDateTime;
 @Table(name = "auth_sessions")
 public class AuthSessions {
     @Id
-    private String id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -31,4 +33,8 @@ public class AuthSessions {
 
     @Column(name = "refresh_expires_at")
     private LocalDateTime refreshExpiresAt;
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id")
+    private Clinics clinic;
 }

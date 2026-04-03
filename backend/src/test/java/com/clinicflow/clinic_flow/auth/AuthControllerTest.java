@@ -1,9 +1,10 @@
 package com.clinicflow.clinic_flow.auth;
 
-import com.clinicflow.clinic_flow.auth.dtos.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth.controllers.AuthController;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
-import com.clinicflow.clinic_flow.auth.dtos.LoginResult;
+import com.clinicflow.clinic_flow.auth.records.LoginResult;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;

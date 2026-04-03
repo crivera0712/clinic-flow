@@ -16,6 +16,7 @@ public class Jwt {
     private final String tokenType;
     private final Claims claims;
     private final SecretKey key;
+    private final Long clinicId;
 
     public boolean isExpired(){
         return claims.getExpiration().before(new Date());

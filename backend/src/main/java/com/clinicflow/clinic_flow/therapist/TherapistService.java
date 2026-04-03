@@ -17,7 +17,11 @@ public class TherapistService {
     private final TherapistMapper therapistMapper;
 
     public Page<TherapistsResponseDto> getTherapists(String search, Pageable pageable){
-        return therapistRepository.search(search, pageable)
+        var therapists = search == null || search.isBlank()
+                ? therapistRepository.findAll(pageable)
+                : therapistRepository.search(search.trim(), pageable);
+
+        return therapists
                 .map(therapistMapper::toTherapistResponseDto);
     }
 

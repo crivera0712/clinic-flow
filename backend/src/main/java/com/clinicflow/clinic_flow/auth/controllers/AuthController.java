@@ -1,6 +1,8 @@
-package com.clinicflow.clinic_flow.auth;
+package com.clinicflow.clinic_flow.auth.controllers;
 
-import com.clinicflow.clinic_flow.auth.dtos.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth.AuthService;
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.dtos.JwtResponse;
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;

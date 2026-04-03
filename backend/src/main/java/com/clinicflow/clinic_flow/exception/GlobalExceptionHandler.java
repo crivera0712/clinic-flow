@@ -110,4 +110,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDto> handleInvalidSessionException(InvalidSessionException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorDto(ex.getMessage()));
     }
+
+    @ExceptionHandler(ClinicNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleClinicNotFoundException(ClinicNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AppointmentNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleAppointmentNotFoundException(AppointmentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
+    }
 }

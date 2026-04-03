@@ -86,7 +86,7 @@ class AppointmentServiceTest {
         when(appointmentMapper.entityToAppointmentResponseDto(secondAppointment)).thenReturn(secondResponse);
 
         // Act
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null, null);
 
         // Assert
         assertEquals(List.of(firstResponse, secondResponse), result.getContent());
@@ -102,7 +102,7 @@ class AppointmentServiceTest {
         when(appointmentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
 
         // Act
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, null, null);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -124,7 +124,7 @@ class AppointmentServiceTest {
         )).thenReturn(new PageImpl<>(List.of(appointment)));
         when(appointmentMapper.entityToAppointmentResponseDto(appointment)).thenReturn(response);
 
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date, null);
 
         assertEquals(List.of(response), result.getContent());
         verify(appointmentRepository).findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
@@ -132,6 +132,27 @@ class AppointmentServiceTest {
                 eq(date.plusDays(1).atStartOfDay()),
                 eq(pageable)
         );
+    }
+
+    @Test
+    void shouldReturnCaseFilteredAppointments_whenGetAllAppointmentsReceivesCaseId() {
+        Appointment firstAppointment = appointmentWithId(2L);
+        Appointment secondAppointment = appointmentWithId(1L);
+        AppointmentResponseDto firstResponse = responseDto(2L);
+        AppointmentResponseDto secondResponse = responseDto(1L);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(appointmentRepository.findByPtCaseIdOrderByScheduledAtDesc(4L, pageable))
+                .thenReturn(new PageImpl<>(List.of(firstAppointment, secondAppointment)));
+        when(appointmentMapper.entityToAppointmentResponseDto(firstAppointment)).thenReturn(firstResponse);
+        when(appointmentMapper.entityToAppointmentResponseDto(secondAppointment)).thenReturn(secondResponse);
+
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, LocalDate.of(2026, 2, 13), 4L);
+
+        assertEquals(List.of(firstResponse, secondResponse), result.getContent());
+        verify(appointmentRepository).findByPtCaseIdOrderByScheduledAtDesc(4L, pageable);
+        verify(appointmentRepository, never()).findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(any(), any(), any());
+        verify(appointmentRepository, never()).findAll(pageable);
     }
 
     @Test

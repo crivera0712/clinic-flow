@@ -67,7 +67,7 @@ class AppointmentControllerTest {
         var appointments = List.of(responseDto(1L), responseDto(2L));
         var page = new PageImpl<>(appointments);
 
-        when(appointmentService.getAllAppointments(any(Pageable.class), isNull())).thenReturn(page);
+        when(appointmentService.getAllAppointments(any(Pageable.class), isNull(), isNull())).thenReturn(page);
 
         // Act
         var response = mockMvc.perform(
@@ -85,14 +85,14 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$.content[0].status").value("SCHEDULED"))
                 .andExpect(jsonPath("$.content[1].id").value(2L));
 
-        verify(appointmentService).getAllAppointments(any(Pageable.class), isNull());
+        verify(appointmentService).getAllAppointments(any(Pageable.class), isNull(), isNull());
     }
 
     @Test
     void shouldReturnAppointments_whenGetAllAppointmentsReceivesDateFilter() throws Exception {
         var page = new PageImpl<>(List.of(responseDto(1L)));
 
-        when(appointmentService.getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)))).thenReturn(page);
+        when(appointmentService.getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)), isNull())).thenReturn(page);
 
         var response = mockMvc.perform(
                 get("/api/appointments")
@@ -104,7 +104,27 @@ class AppointmentControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1L));
 
-        verify(appointmentService).getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)));
+        verify(appointmentService).getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)), isNull());
+    }
+
+    @Test
+    void shouldReturnAppointments_whenGetAllAppointmentsReceivesCaseFilter() throws Exception {
+        var page = new PageImpl<>(List.of(responseDto(9L)));
+
+        when(appointmentService.getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)), eq(4L))).thenReturn(page);
+
+        var response = mockMvc.perform(
+                get("/api/appointments")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("date", "2026-02-13")
+                        .param("caseId", "4")
+        );
+
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(9L));
+
+        verify(appointmentService).getAllAppointments(any(Pageable.class), eq(LocalDate.of(2026, 2, 13)), eq(4L));
     }
 
     @Test

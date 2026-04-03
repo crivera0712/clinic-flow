@@ -9,6 +9,7 @@ import com.clinicflow.clinic_flow.exception.BodyRegionNotFoundException;
 import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.PatientRepository;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,29 +23,34 @@ import java.util.List;
 public class CaseService {
     private final CaseRepository caseRepository;
     private final CaseMapper caseMapper;
-
     private final PatientRepository patientRepository;
     private final BodyRegionRepository bodyRegionRepository;
+    private final CurrentUserService currentUserService;
 
     public List<CaseResponseDto> getCases(){
-        return caseRepository.findAll().stream().map(caseMapper::toCaseResponseDto).toList();
+        var clinicId = currentUserService.getCurrentClinicId();
+        return caseRepository
+                .findAllByClinicId(clinicId)
+                .stream()
+                .map(caseMapper::toCaseResponseDto)
+                .toList();
     }
 
     public CaseResponseDto getCase(Long id){
-        return caseMapper.toCaseResponseDto(caseRepository.findById(id).orElseThrow( () ->
-                new CaseNotFoundException(id)));
+        var clinicId = currentUserService.getCurrentClinicId();
+        return caseMapper.toCaseResponseDto(findCaseOrThrow(id, clinicId));
     }
 
     public List<CaseResponseDto> searchByPatient(Long id){
-        return caseRepository.getCaseByPatient(id).stream().map(caseMapper::toCaseResponseDto).toList();
+        var clinicId = currentUserService.getCurrentClinicId();
+        return caseRepository.getCaseByPatient(id, clinicId).stream().map(caseMapper::toCaseResponseDto).toList();
     }
 
     @Transactional
     public CaseResponseDto createCase(CaseRequestDto request){
-        var patient = patientRepository.getPatientById(request.getPatientId());
-        if (patient == null) {
-            throw new PatientNotFoundException(request.getPatientId());
-        }
+        var clinicId = currentUserService.getCurrentClinicId();
+        var patient = patientRepository.findByIdAndClinicId(request.getPatientId(), clinicId).orElseThrow(() ->
+                new PatientNotFoundException(request.getPatientId()));
 
         BodyRegion bodyRegion = bodyRegionRepository.findById(request.getBodyRegionId()).orElseThrow( () ->
                 new BodyRegionNotFoundException(request.getBodyRegionId()));
@@ -54,15 +60,16 @@ public class CaseService {
         caseEntity.setPatient(patient);
         caseEntity.setBodyRegion(bodyRegion);
         caseEntity.setCreatedAt(Date.from(Instant.now()));
+        caseEntity.setClinic(patient.getClinic());
 
         var newCase = caseRepository.save(caseEntity);
         return caseMapper.toCaseResponseDto(newCase);
     }
 
     @Transactional
+
     public CaseResponseDto updateCase(Long id, CasePatchDto patch){
-        var caseEntity = caseRepository.findById(id).orElseThrow( () ->
-                new CaseNotFoundException(id));
+        var caseEntity = findCaseOrThrow(id, currentUserService.getCurrentClinicId());
 
         if (patch != null && patch.getBodyRegionId() != null){
             var bodyRegion = bodyRegionRepository.findById(patch.getBodyRegionId()).orElseThrow( () ->
@@ -76,8 +83,13 @@ public class CaseService {
 
     @Transactional
     public void deleteCase(Long id){
-        caseRepository.deleteById(id);
+        var caseEntity = findCaseOrThrow(id, currentUserService.getCurrentClinicId());
+        caseRepository.delete(caseEntity);
     }
 
+    private Case findCaseOrThrow(Long id,Long clinicId){
+        return caseRepository.findByIdAndClinicId(id, clinicId).orElseThrow( () ->
+                new CaseNotFoundException(id));
+    }
 
 }

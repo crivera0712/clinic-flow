@@ -1,7 +1,7 @@
 package com.clinicflow.clinic_flow.auth.filters;
 
 import com.clinicflow.clinic_flow.auth.JwtService;
-import com.clinicflow.clinic_flow.auth.dtos.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if ("access".equals(jwt.getTokenType()) && authSessionService.isAccessSessionActive(jwt.getSid())) {
             var authentication = new UsernamePasswordAuthenticationToken(
-                    new AuthPrincipal(jwt.getUserId(), jwt.getSid()),
+                    new AuthPrincipal(jwt.getUserId(), jwt.getSid(), jwt.getClinicId()),
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
             );

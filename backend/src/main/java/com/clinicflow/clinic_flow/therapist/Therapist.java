@@ -1,6 +1,7 @@
 package com.clinicflow.clinic_flow.therapist;
 
 import com.clinicflow.clinic_flow.appointment.Appointment;
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,6 +45,10 @@ public class Therapist {
     @OneToMany(mappedBy = "therapist", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Appointment> appointments = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id")
+    private Clinics clinic;
 
 
 }
