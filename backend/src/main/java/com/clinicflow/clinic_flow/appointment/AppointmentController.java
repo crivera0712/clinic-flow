@@ -5,7 +5,6 @@ import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.common.PageResponse;
-import com.clinicflow.clinic_flow.patient.PatientService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,10 +30,11 @@ public class AppointmentController {
     public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) LocalDate date
-    ) {
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Long caseId) {
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointments(pageable, date, caseId);
 
         return ResponseEntity.ok(PageResponse.from(result));
     }
@@ -46,7 +46,9 @@ public class AppointmentController {
 
     @GetMapping("/date")
     public ResponseEntity<List<AppointmentUiDto>> getAppointmentsByDate (
-            @RequestParam(required = false) LocalDate date){
+            @RequestParam(required = false) LocalDate date
+    ) {
+
         if (date == null) date =  LocalDate.now();
         var appointments = appointmentService.getAppointmentsByDate(date);
         return ResponseEntity.ok(appointments);

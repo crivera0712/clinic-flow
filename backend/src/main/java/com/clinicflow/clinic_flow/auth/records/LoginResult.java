@@ -1,4 +1,4 @@
-package com.clinicflow.clinic_flow.auth.dtos;
+package com.clinicflow.clinic_flow.auth.records;
 
 import com.clinicflow.clinic_flow.auth.Jwt;
 

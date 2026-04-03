@@ -1,10 +1,16 @@
 package com.clinicflow.clinic_flow.auth;
 
 import com.clinicflow.clinic_flow.auth.dtos.*;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth.records.LoginResult;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionRepository;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
+import com.clinicflow.clinic_flow.cases.CaseService;
 import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
+import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
 import jakarta.transaction.Transactional;
@@ -27,6 +33,7 @@ public class AuthService {
     private final UsersMapper usersMapper;
     private final JwtConfig jwtConfig;
     private final AuthSessionService authSessionService;
+    private final AuthSessionRepository authSessionRepository;
 
     @Transactional
     public LoginResult login(LoginRequest request) {
@@ -84,13 +91,21 @@ public class AuthService {
         return false;
     }
 
-    private LoginResult issueTokenPair(com.clinicflow.clinic_flow.users.Users user) {
+    @Transactional
+    protected LoginResult issueTokenPair(Users user) {
         AuthSessions session = authSessionService.createSession(
                 user,
                 LocalDateTime.now().plusSeconds(jwtConfig.getRefreshTokenExpiration())
         );
-        var accessToken = jwtService.generateAccessToken(user, session.getId());
-        var refreshToken = jwtService.generateRefreshToken(user, session.getId());
+        if (user.getClinic() == null){
+            throw new ClinicNotFoundException("Not able to associate user with clinic");
+        }
+        session.setClinic(user.getClinic());
+        authSessionRepository.save(session);
+        var sessionId = session.getId().toString();
+        var clinicId = user.getClinic().getId();
+        var accessToken = jwtService.generateAccessToken(user, sessionId, clinicId);
+        var refreshToken = jwtService.generateRefreshToken(user, sessionId, clinicId);
         return new LoginResult(accessToken, refreshToken);
     }
 

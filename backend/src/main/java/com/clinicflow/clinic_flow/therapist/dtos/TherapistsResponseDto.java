@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TherapistsResponseDto {
-    public Long id;
+    public Long therapistId;
     public String therapistName;
     public String type;
 }

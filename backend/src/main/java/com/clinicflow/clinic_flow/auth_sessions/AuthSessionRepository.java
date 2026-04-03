@@ -2,5 +2,7 @@ package com.clinicflow.clinic_flow.auth_sessions;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AuthSessionRepository extends JpaRepository <AuthSessions, String> {
+import java.util.UUID;
+
+public interface AuthSessionRepository extends JpaRepository <AuthSessions, UUID> {
 }

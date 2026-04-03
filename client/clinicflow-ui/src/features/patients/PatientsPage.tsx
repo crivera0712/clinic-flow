@@ -10,6 +10,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -23,28 +24,56 @@ import { useEffect, useMemo, useState } from "react";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { useEntityCrud } from "../../hooks/useEntityCrud";
-import { createAppointment } from "../../services/appointmentService";
+import { createAppointment, listAppointments, removeAppointment, updateAppointment } from "../../services/appointmentService";
 import { listBodyRegions } from "../../services/bodyRegionService";
 import { createCase, listCasesByPatient, removeCase, updateCase } from "../../services/caseService";
 import { createPatient, listPatients, removePatient, updatePatient } from "../../services/patientService";
 import { listTherapists } from "../../services/therapistService";
-import type { AppointmentCreateRequest, BodyRegion, CaseCreateRequest, CaseSummary, CaseUpdateRequest, Patient, PatientCreateRequest, PatientUpdateRequest, Therapist } from "../../types/admin";
+import type { AppointmentCreateRequest, AppointmentRecord, AppointmentStatusValue, AppointmentUpdateRequest, BodyRegion, CaseCreateRequest, CaseSummary, CaseUpdateRequest, Patient, PatientCreateRequest, PatientUpdateRequest, Therapist } from "../../types/admin";
 import { AppointmentDialog } from "../appointments/AppointmentDialog";
 import { CaseDialog } from "../cases/CaseDialog";
 import { PatientDialog } from "./PatientDialog";
 
 type PatientDialogState = { mode: "create"; record: null } | { mode: "edit"; record: Patient };
 type CaseDialogState = { mode: "create"; record: null } | { mode: "edit"; record: CaseSummary };
-type AppointmentDialogState = { caseRecord: CaseSummary } | null;
-type DeleteState = { kind: "patient"; record: Patient } | { kind: "case"; record: CaseSummary } | null;
+type AppointmentDialogState =
+  | { mode: "create"; caseRecord: CaseSummary }
+  | { mode: "edit"; caseRecord: CaseSummary; record: AppointmentRecord }
+  | null;
+type DeleteState =
+  | { kind: "patient"; record: Patient }
+  | { kind: "case"; record: CaseSummary }
+  | { kind: "appointment"; caseRecord: CaseSummary; record: AppointmentRecord }
+  | null;
 type SnackbarState = { open: boolean; severity: "success" | "error"; message: string };
+type CaseAppointmentState = { rows: AppointmentRecord[]; loading: boolean; error: string | null; loaded: boolean };
 
 const patientCrudService = { list: listPatients, create: createPatient, update: updatePatient, remove: removePatient };
+const emptyCaseAppointmentState: CaseAppointmentState = { rows: [], loading: false, error: null, loaded: false };
 
 function formatCreatedAt(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(parsed);
+}
+
+function formatScheduledAt(value: string) {
+  const parsed = new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(parsed);
+}
+
+function formatEnumLabel(value: string) {
+  return value.toLowerCase().split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function getStatusChipColor(status: AppointmentStatusValue): "default" | "info" | "warning" | "success" {
+  switch (status) {
+    case "CHECKED_IN": return "info";
+    case "IN_SESSION": return "warning";
+    case "FINISHED": return "success";
+    default: return "default";
+  }
 }
 
 export function PatientsPage() {
@@ -62,6 +91,8 @@ export function PatientsPage() {
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, severity: "success", message: "" });
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [selectedPatientCases, setSelectedPatientCases] = useState<CaseSummary[]>([]);
+  const [expandedCaseIds, setExpandedCaseIds] = useState<number[]>([]);
+  const [caseAppointments, setCaseAppointments] = useState<Record<number, CaseAppointmentState>>({});
   const [casesLoading, setCasesLoading] = useState(false);
   const [casesError, setCasesError] = useState<string | null>(null);
   const [bodyRegions, setBodyRegions] = useState<BodyRegion[]>([]);
@@ -118,6 +149,8 @@ export function PatientsPage() {
   async function refreshSelectedPatientCases() {
     if (selectedPatientId === null) {
       setSelectedPatientCases([]);
+      setExpandedCaseIds([]);
+      setCaseAppointments({});
       return;
     }
     setCasesLoading(true);
@@ -125,8 +158,18 @@ export function PatientsPage() {
     try {
       const cases = await listCasesByPatient(selectedPatientId);
       setSelectedPatientCases(cases);
+      setExpandedCaseIds((current) => current.filter((caseId) => cases.some((caseItem) => caseItem.id === caseId)));
+      setCaseAppointments((current) => {
+        const next: Record<number, CaseAppointmentState> = {};
+        cases.forEach((caseItem) => {
+          next[caseItem.id] = current[caseItem.id] ?? emptyCaseAppointmentState;
+        });
+        return next;
+      });
     } catch (loadError) {
       setSelectedPatientCases([]);
+      setExpandedCaseIds([]);
+      setCaseAppointments({});
       setCasesError(loadError instanceof Error ? loadError.message : "Unable to load cases.");
     } finally {
       setCasesLoading(false);
@@ -137,6 +180,52 @@ export function PatientsPage() {
 
   const bodyRegionNameMap = useMemo(() => new Map(bodyRegions.map((bodyRegion) => [bodyRegion.id, bodyRegion.displayName])), [bodyRegions]);
   const therapistOptions = useMemo(() => therapists.map((therapist) => ({ value: therapist.id, label: `${therapist.therapistName} · ${therapist.type}` })), [therapists]);
+  const therapistMap = useMemo(() => new Map(therapists.map((therapist) => [therapist.id, therapist])), [therapists]);
+
+  async function refreshCaseAppointments(caseId: number, force = false) {
+    const currentState = caseAppointments[caseId];
+    if (!force && currentState?.loaded && !currentState.error) return;
+
+    setCaseAppointments((current) => ({
+      ...current,
+      [caseId]: {
+        ...(current[caseId] ?? emptyCaseAppointmentState),
+        loading: true,
+        error: null,
+      },
+    }));
+
+    try {
+      const result = await listAppointments({ caseId, page: 0, size: 1000 });
+      setCaseAppointments((current) => ({
+        ...current,
+        [caseId]: {
+          rows: result.rows,
+          loading: false,
+          error: null,
+          loaded: true,
+        },
+      }));
+    } catch (loadError) {
+      setCaseAppointments((current) => ({
+        ...current,
+        [caseId]: {
+          ...(current[caseId] ?? emptyCaseAppointmentState),
+          rows: [],
+          loading: false,
+          error: loadError instanceof Error ? loadError.message : "Unable to load appointments.",
+          loaded: true,
+        },
+      }));
+    }
+  }
+
+  function handleCaseAccordionChange(caseId: number, expanded: boolean) {
+    setExpandedCaseIds((current) => (
+      expanded ? Array.from(new Set([...current, caseId])) : current.filter((id) => id !== caseId)
+    ));
+    if (expanded) void refreshCaseAppointments(caseId);
+  }
 
   async function handlePatientDialogSubmit(payload: PatientCreateRequest | PatientUpdateRequest) {
     setPatientDialogError(null);
@@ -179,15 +268,22 @@ export function PatientsPage() {
     }
   }
 
-  async function handleAppointmentDialogSubmit(payload: AppointmentCreateRequest) {
+  async function handleAppointmentDialogSubmit(payload: AppointmentCreateRequest | AppointmentUpdateRequest) {
+    if (!appointmentDialogState) return;
     setAppointmentDialogError(null);
     setAppointmentSubmitting(true);
     try {
-      await createAppointment(payload);
-      setSnackbar({ open: true, severity: "success", message: "Appointment created." });
+      if (appointmentDialogState.mode === "create") {
+        await createAppointment(payload as AppointmentCreateRequest);
+        setSnackbar({ open: true, severity: "success", message: "Appointment created." });
+      } else {
+        await updateAppointment(appointmentDialogState.record.id, payload as AppointmentUpdateRequest);
+        setSnackbar({ open: true, severity: "success", message: "Appointment updated." });
+      }
+      await refreshCaseAppointments(appointmentDialogState.caseRecord.id, true);
       setAppointmentDialogState(null);
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : "Unable to create appointment.";
+      const message = submitError instanceof Error ? submitError.message : `Unable to ${appointmentDialogState.mode === "create" ? "create" : "update"} appointment.`;
       setAppointmentDialogError(message);
       setSnackbar({ open: true, severity: "error", message });
     } finally {
@@ -202,11 +298,15 @@ export function PatientsPage() {
       if (deleteState.kind === "patient") {
         await deleteEntity(deleteState.record.id);
         setSnackbar({ open: true, severity: "success", message: "Patient deleted." });
-      } else {
+      } else if (deleteState.kind === "case") {
         setCaseMutationKind("delete");
         await removeCase(deleteState.record.id);
         await refreshSelectedPatientCases();
         setSnackbar({ open: true, severity: "success", message: "Case deleted." });
+      } else {
+        await removeAppointment(deleteState.record.id);
+        await refreshCaseAppointments(deleteState.caseRecord.id, true);
+        setSnackbar({ open: true, severity: "success", message: "Appointment deleted." });
       }
       setDeleteState(null);
     } catch (deleteRequestError) {
@@ -258,7 +358,7 @@ export function PatientsPage() {
                 <Box>
                   <Typography variant="h5" sx={{ color: adminColors.textStrong, fontWeight: 700 }}>{selectedPatient ? selectedPatient.displayName : "Select a patient"}</Typography>
                   <Typography sx={{ color: adminColors.textSecondary, mt: 0.75 }}>
-                    {selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName} · ${selectedPatientCases.length} case${selectedPatientCases.length === 1 ? "" : "s"}` : "Choose a patient from the list to manage their cases."}
+                  {selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName} · ${selectedPatientCases.length} case${selectedPatientCases.length === 1 ? "" : "s"}` : "Choose a patient from the list to manage their cases."}
                   </Typography>
                 </Box>
                 <Button variant="contained" startIcon={<AddIcon />} disabled={!selectedPatient} onClick={() => { if (selectedPatient) { setCaseDialogError(null); setCaseDialogState({ mode: "create", record: null }); } }}>Add Case</Button>
@@ -279,7 +379,14 @@ export function PatientsPage() {
               ) : (
                 <Stack spacing={1.5}>
                   {selectedPatientCases.map((caseItem) => (
-                    <Accordion key={caseItem.id} disableGutters elevation={0} sx={{ bgcolor: adminColors.panelElevated, color: adminColors.textStrong, border: `1px solid ${adminColors.border}`, borderRadius: "16px !important", "&:before": { display: "none" } }}>
+                    <Accordion
+                      key={caseItem.id}
+                      disableGutters
+                      elevation={0}
+                      expanded={expandedCaseIds.includes(caseItem.id)}
+                      onChange={(_, expanded) => handleCaseAccordionChange(caseItem.id, expanded)}
+                      sx={{ bgcolor: adminColors.panelElevated, color: adminColors.textStrong, border: `1px solid ${adminColors.border}`, borderRadius: "16px !important", "&:before": { display: "none" } }}
+                    >
                       <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: adminColors.textStrong }} />}>
                         <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ width: "100%" }} alignItems={{ md: "center" }}>
                           <Typography sx={{ fontWeight: 700, minWidth: 100 }}>Case #{caseItem.id}</Typography>
@@ -304,9 +411,69 @@ export function PatientsPage() {
                             </Box>
                           </Stack>
                           <Divider sx={{ borderColor: adminColors.borderMuted }} />
+                          <Stack spacing={1.25}>
+                            <Typography variant="subtitle2" sx={{ color: adminColors.textStrong, fontWeight: 700 }}>Appointments</Typography>
+                            {caseAppointments[caseItem.id]?.loading ? (
+                              <Alert severity="info">Loading appointments...</Alert>
+                            ) : caseAppointments[caseItem.id]?.error ? (
+                              <Alert severity="error">{caseAppointments[caseItem.id]?.error}</Alert>
+                            ) : (caseAppointments[caseItem.id]?.rows.length ?? 0) === 0 ? (
+                              <Box sx={{ borderRadius: 3, border: `1px dashed ${adminColors.border}`, color: adminColors.textSecondary, px: 2, py: 2.5 }}>
+                                <Typography>No appointments found for this case.</Typography>
+                              </Box>
+                            ) : (
+                              <Stack spacing={1}>
+                                {(caseAppointments[caseItem.id]?.rows ?? []).map((appointment) => (
+                                  <Box key={appointment.id} sx={{ borderRadius: 3, border: `1px solid ${adminColors.borderMuted}`, bgcolor: adminColors.panelBg, px: 2, py: 1.5 }}>
+                                    <Stack direction={{ xs: "column", lg: "row" }} spacing={1.5} justifyContent="space-between" alignItems={{ lg: "center" }}>
+                                      <Stack spacing={0.75}>
+                                        <Typography sx={{ fontWeight: 600 }}>{formatScheduledAt(appointment.scheduledAt)}</Typography>
+                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} useFlexGap flexWrap="wrap">
+                                          <Typography sx={{ color: adminColors.textSecondary }}>
+                                            {therapistMap.get(appointment.therapistId)?.therapistName ?? `Therapist #${appointment.therapistId}`}
+                                          </Typography>
+                                          <Typography sx={{ color: adminColors.textMuted }}>{formatEnumLabel(appointment.type)}</Typography>
+                                          <Chip
+                                            label={formatEnumLabel(appointment.status)}
+                                            color={getStatusChipColor(appointment.status)}
+                                            size="small"
+                                            variant={appointment.status === "SCHEDULED" ? "outlined" : "filled"}
+                                          />
+                                        </Stack>
+                                      </Stack>
+                                      <Stack direction="row" spacing={1} flexWrap="wrap">
+                                        <Button
+                                          variant="outlined"
+                                          startIcon={<EditOutlinedIcon />}
+                                          onClick={() => {
+                                            setAppointmentDialogError(null);
+                                            setAppointmentDialogState({ mode: "edit", caseRecord: caseItem, record: appointment });
+                                          }}
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          variant="outlined"
+                                          color="error"
+                                          startIcon={<DeleteOutlineIcon />}
+                                          onClick={() => {
+                                            setDeleteError(null);
+                                            setDeleteState({ kind: "appointment", caseRecord: caseItem, record: appointment });
+                                          }}
+                                        >
+                                          Delete
+                                        </Button>
+                                      </Stack>
+                                    </Stack>
+                                  </Box>
+                                ))}
+                              </Stack>
+                            )}
+                          </Stack>
+                          <Divider sx={{ borderColor: adminColors.borderMuted }} />
                           <Stack direction="row" spacing={1} flexWrap="wrap">
                             <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => { setCaseDialogError(null); setCaseDialogState({ mode: "edit", record: caseItem }); }}>Edit Case</Button>
-                            <Button variant="outlined" startIcon={<EventAvailableOutlinedIcon />} disabled={therapists.length === 0 || Boolean(therapistsError)} onClick={() => { setAppointmentDialogError(null); setAppointmentDialogState({ caseRecord: caseItem }); }}>Create Appointment</Button>
+                            <Button variant="outlined" startIcon={<EventAvailableOutlinedIcon />} disabled={therapists.length === 0 || Boolean(therapistsError)} onClick={() => { setAppointmentDialogError(null); setAppointmentDialogState({ mode: "create", caseRecord: caseItem }); }}>Create Appointment</Button>
                             <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => { setDeleteError(null); setDeleteState({ kind: "case", record: caseItem }); }}>Delete Case</Button>
                           </Stack>
                         </Stack>
@@ -321,8 +488,42 @@ export function PatientsPage() {
       </Stack>
       {patientDialogState && <PatientDialog key={patientDialogState.mode === "create" ? "create" : `edit-${patientDialogState.record.id}`} open mode={patientDialogState.mode} initialValue={patientDialogState.record} submitting={mutationKind === "create" || mutationKind === "update"} error={patientDialogError} onClose={() => { if (!(mutationKind === "create" || mutationKind === "update")) setPatientDialogState(null); }} onSubmit={handlePatientDialogSubmit} />}
       {caseDialogState && selectedPatient && <CaseDialog key={caseDialogState.mode === "create" ? `create-${selectedPatient.id}` : `edit-${caseDialogState.record.id}`} open mode={caseDialogState.mode} initialValue={caseDialogState.record} patients={[selectedPatient]} fixedPatient={selectedPatient} bodyRegions={bodyRegions} submitting={caseMutationKind === "create" || caseMutationKind === "update"} error={caseDialogError} onClose={() => { if (!(caseMutationKind === "create" || caseMutationKind === "update")) setCaseDialogState(null); }} onSubmit={handleCaseDialogSubmit} />}
-      {appointmentDialogState && selectedPatient && <AppointmentDialog key={`create-appointment-${appointmentDialogState.caseRecord.id}`} open mode="create" patients={[selectedPatient]} fixedPatient={selectedPatient} fixedCase={appointmentDialogState.caseRecord} initialPatientId={selectedPatient.id} caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: `Case #${appointmentDialogState.caseRecord.id}` }]} therapistOptions={therapistOptions} caseHelperText={`Case #${appointmentDialogState.caseRecord.id} is selected from this patient.`} submitting={appointmentSubmitting} error={appointmentDialogError} onPatientChange={() => {}} onClose={() => { if (!appointmentSubmitting) setAppointmentDialogState(null); }} onSubmit={async (payload) => { await handleAppointmentDialogSubmit(payload as AppointmentCreateRequest); }} />}
-      <ConfirmDeleteDialog open={deleteState !== null} description={deleteState?.kind === "patient" ? `Delete patient "${deleteState.record.displayName}"? This action cannot be undone.` : deleteState?.kind === "case" ? `Delete case #${deleteState.record.id}? This action cannot be undone.` : ""} error={deleteError} loading={mutationKind === "delete" || caseMutationKind === "delete"} onClose={() => { if (!(mutationKind === "delete" || caseMutationKind === "delete")) setDeleteState(null); }} onConfirm={() => void handleDeleteConfirm()} />
+      {appointmentDialogState && selectedPatient && (
+        <AppointmentDialog
+          key={`${appointmentDialogState.mode}-${appointmentDialogState.mode === "create" ? appointmentDialogState.caseRecord.id : appointmentDialogState.record.id}`}
+          open
+          mode={appointmentDialogState.mode}
+          initialValue={appointmentDialogState.mode === "edit" ? appointmentDialogState.record : null}
+          patients={[selectedPatient]}
+          fixedPatient={selectedPatient}
+          fixedCase={appointmentDialogState.caseRecord}
+          initialPatientId={selectedPatient.id}
+          caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: `Case #${appointmentDialogState.caseRecord.id}` }]}
+          therapistOptions={therapistOptions}
+          caseHelperText={`Case #${appointmentDialogState.caseRecord.id} is selected from this patient.`}
+          submitting={appointmentSubmitting}
+          error={appointmentDialogError}
+          onPatientChange={() => {}}
+          onClose={() => { if (!appointmentSubmitting) setAppointmentDialogState(null); }}
+          onSubmit={handleAppointmentDialogSubmit}
+        />
+      )}
+      <ConfirmDeleteDialog
+        open={deleteState !== null}
+        description={
+          deleteState?.kind === "patient"
+            ? `Delete patient "${deleteState.record.displayName}"? This action cannot be undone.`
+            : deleteState?.kind === "case"
+              ? `Delete case #${deleteState.record.id}? This action cannot be undone.`
+              : deleteState?.kind === "appointment"
+                ? `Delete the appointment scheduled for "${formatScheduledAt(deleteState.record.scheduledAt)}"? This action cannot be undone.`
+                : ""
+        }
+        error={deleteError}
+        loading={mutationKind === "delete" || caseMutationKind === "delete" || appointmentSubmitting}
+        onClose={() => { if (!(mutationKind === "delete" || caseMutationKind === "delete" || appointmentSubmitting)) setDeleteState(null); }}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
       <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar((c) => ({ ...c, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert onClose={() => setSnackbar((c) => ({ ...c, open: false }))} severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
       </Snackbar>
