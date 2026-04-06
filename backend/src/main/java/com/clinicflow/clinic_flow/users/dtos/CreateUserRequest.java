@@ -1,6 +1,5 @@
 package com.clinicflow.clinic_flow.users.dtos;
 
-import com.clinicflow.clinic_flow.users.Users;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;

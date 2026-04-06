@@ -41,6 +41,8 @@ const loginFieldSx = {
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const clinicSlug = import.meta.env.VITE_CLINIC_SLUG || "demo";
+  const isDemoClinic = clinicSlug === "demo";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -97,7 +99,12 @@ export default function LoginPage() {
               Sign in
             </Typography>
             <Typography sx={{ mt: 1, color: "#94a3b8" }}>
-              Authenticate with your clinic account to access the live schedule.
+              {isDemoClinic
+                ? "Sign in to the recruiter demo to browse curated, read-only sample data."
+                : "Authenticate with your clinic account to access the live schedule."}
+            </Typography>
+            <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>
+              Clinic: {clinicSlug}
             </Typography>
           </Box>
 

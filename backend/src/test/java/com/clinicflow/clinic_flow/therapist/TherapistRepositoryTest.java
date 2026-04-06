@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.therapist;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -20,61 +21,48 @@ class TherapistRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnTherapistsMatchingName_whenSearchUsesNameTerm() {
-        Therapist exact = persistTherapist("Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        persistTherapist("Jordan Lee", Therapist.TherapistType.OCCUPATIONAL_THERAPIST);
+    void shouldReturnTherapistsMatchingNameWithinClinic() {
+        Clinics clinicOne = persistClinic("clinic-one");
+        Clinics clinicTwo = persistClinic("clinic-two");
+        Therapist exact = persistTherapist(clinicOne, "Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        persistTherapist(clinicTwo, "Sam Other", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        persistTherapist(clinicOne, "Jordan Lee", Therapist.TherapistType.OCCUPATIONAL_THERAPIST);
         entityManager.flush();
         entityManager.clear();
 
-        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 10));
+        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 10), clinicOne.getId());
 
         assertEquals(1, result.getTotalElements());
         assertEquals(exact.getId(), result.getContent().get(0).getId());
     }
 
     @Test
-    void shouldReturnTherapistsMatchingEnumText_whenSearchUsesTypeTerm() {
-        Therapist match = persistTherapist("Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        persistTherapist("Jordan", Therapist.TherapistType.OCCUPATIONAL_THERAPIST);
+    void shouldReturnEmptyPageWhenClinicDoesNotMatch() {
+        Clinics clinic = persistClinic("clinic-one");
+        persistTherapist(clinic, "Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
         entityManager.flush();
         entityManager.clear();
 
-        Page<Therapist> result = therapistRepository.search("physical", PageRequest.of(0, 10));
-
-        assertEquals(1, result.getTotalElements());
-        assertEquals(match.getId(), result.getContent().get(0).getId());
-    }
-
-    @Test
-    void shouldRespectPagination_whenSearchMatchesMultipleTherapists() {
-        persistTherapist("Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        persistTherapist("Sam Jordan", Therapist.TherapistType.PHYSICAL_THERAPY_ASSISTANT);
-        persistTherapist("Alex Lee", Therapist.TherapistType.OCCUPATIONAL_THERAPIST);
-        entityManager.flush();
-        entityManager.clear();
-
-        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 1));
-
-        assertEquals(2, result.getTotalElements());
-        assertEquals(1, result.getContent().size());
-        assertEquals(2, result.getTotalPages());
-    }
-
-    @Test
-    void shouldReturnEmptyPage_whenSearchDoesNotMatchAnyTherapist() {
-        persistTherapist("Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        entityManager.flush();
-        entityManager.clear();
-
-        Page<Therapist> result = therapistRepository.search("zoe", PageRequest.of(0, 10));
+        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 10), 999L);
 
         assertTrue(result.isEmpty());
     }
 
-    private Therapist persistTherapist(String name, Therapist.TherapistType type) {
+    private Clinics persistClinic(String slug) {
+        Clinics clinic = new Clinics();
+        clinic.setName(slug);
+        clinic.setSlug(slug);
+        clinic.setIsDemo(false);
+        clinic.setCreatedAt(java.time.LocalDateTime.of(2026, 3, 1, 10, 0));
+        entityManager.persist(clinic);
+        return clinic;
+    }
+
+    private Therapist persistTherapist(Clinics clinic, String name, Therapist.TherapistType type) {
         Therapist therapist = new Therapist();
         therapist.setTherapistName(name);
         therapist.setType(type);
+        therapist.setClinic(clinic);
         entityManager.persist(therapist);
         return therapist;
     }

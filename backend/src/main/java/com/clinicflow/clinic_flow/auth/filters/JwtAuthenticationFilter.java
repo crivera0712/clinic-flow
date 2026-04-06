@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @AllArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -38,19 +40,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var token = authHeader.replace("Bearer ", "");
         var jwt = jwtService.parseToken(token);
         if (jwt == null) {
+            log.debug("Invalid JWT received path={} method={}", request.getRequestURI(), request.getMethod());
             filterChain.doFilter(request, response);
             return;
         }
 
         if (jwt.isExpired()) {
-            authSessionService.checkRevokedAt(jwt.getSid());
+            log.debug(
+                    "Expired JWT received userId={} sessionId={} clinicId={} path={}",
+                    jwt.getUserId(),
+                    jwt.getSid(),
+                    jwt.getClinicId(),
+                    request.getRequestURI()
+            );
+            authSessionService.checkRevokedAt(jwt.getSid(), jwt.getClinicId());
             filterChain.doFilter(request, response);
             return;
         }
 
-        if ("access".equals(jwt.getTokenType()) && authSessionService.isAccessSessionActive(jwt.getSid())) {
+        if ("access".equals(jwt.getTokenType()) &&
+                authSessionService.isAccessSessionActive(jwt.getSid(), jwt.getClinicId())) {
             var authentication = new UsernamePasswordAuthenticationToken(
-                    new AuthPrincipal(jwt.getUserId(), jwt.getSid(), jwt.getClinicId()),
+                    new AuthPrincipal(jwt.getUserId(), jwt.getUsername(), jwt.getSid(), jwt.getClinicId()),
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
             );
@@ -59,6 +70,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            log.debug(
+                    "Authenticated request userId={} username={} clinicId={} role={} path={}",
+                    jwt.getUserId(),
+                    jwt.getUsername(),
+                    jwt.getClinicId(),
+                    jwt.getRole(),
+                    request.getRequestURI()
+            );
+        } else {
+            log.debug(
+                    "Rejected JWT session userId={} sessionId={} clinicId={} tokenType={} path={}",
+                    jwt.getUserId(),
+                    jwt.getSid(),
+                    jwt.getClinicId(),
+                    jwt.getTokenType(),
+                    request.getRequestURI()
+            );
         }
         filterChain.doFilter(request, response);
     }

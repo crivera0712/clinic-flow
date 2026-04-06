@@ -10,4 +10,6 @@ public class LoginRequest {
 
     @NotBlank(message = "password required")
     private String password;
+
+    private String slug;
 }

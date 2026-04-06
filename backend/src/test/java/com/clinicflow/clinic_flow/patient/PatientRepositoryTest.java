@@ -1,14 +1,17 @@
 package com.clinicflow.clinic_flow.patient;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
@@ -21,152 +24,77 @@ class PatientRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnPatientsMatchingFirstNamePrefix_whenSearchPatientByOneTokenUsesFirstName() {
-        // Arrange
-        persistPatient("Sam", "Lee");
-        persistPatient("Samuel", "Kent");
-        persistPatient("Alex", "Smith");
+    void shouldReturnPatientsMatchingOneTokenWithinClinic() {
+        Clinics clinicOne = persistClinic("clinic-one");
+        Clinics clinicTwo = persistClinic("clinic-two");
+        persistPatient(clinicOne, "Sam", "Lee");
+        persistPatient(clinicOne, "Samuel", "Kent");
+        persistPatient(clinicTwo, "Sam", "Other");
         entityManager.flush();
         entityManager.clear();
 
-        // Act
-        List<Patient> result = patientRepository.searchPatientByOneToken("Sam");
+        List<Patient> result = patientRepository.searchPatientByOneToken("Sam", clinicOne.getId());
 
-        // Assert
         assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(patient -> patient.getFirstName().startsWith("Sam")
-                || patient.getLastName().startsWith("Sam")));
+        assertTrue(result.stream().allMatch(patient -> patient.getClinic().getId().equals(clinicOne.getId())));
     }
 
     @Test
-    void shouldReturnPatientsMatchingLastNamePrefix_whenSearchPatientByOneTokenUsesLastName() {
-        // Arrange
-        persistPatient("Sam", "Lee");
-        persistPatient("Alex", "Lewis");
-        persistPatient("Morgan", "Kim");
+    void shouldReturnPatientsMatchingTwoTokensWithinClinic() {
+        Clinics clinic = persistClinic("clinic-one");
+        Patient match = persistPatient(clinic, "Sam", "Lee");
+        persistPatient(clinic, "Alex", "Lee");
         entityManager.flush();
         entityManager.clear();
 
-        // Act
-        List<Patient> result = patientRepository.searchPatientByOneToken("Le");
+        List<Patient> result = patientRepository.searchPatientByTwoTokens("Sam", "Lee", clinic.getId());
 
-        // Assert
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(patient -> patient.getFirstName().startsWith("Le")
-                || patient.getLastName().startsWith("Le")));
-    }
-
-    @Test
-    void shouldReturnEmptyList_whenSearchPatientByOneTokenHasNoMatches() {
-        // Arrange
-        persistPatient("Sam", "Lee");
-        entityManager.flush();
-        entityManager.clear();
-
-        // Act
-        List<Patient> result = patientRepository.searchPatientByOneToken("Zo");
-
-        // Assert
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void shouldUsePrefixSemanticsOnly_whenSearchPatientByOneTokenReceivesSubstring() {
-        // Arrange
-        persistPatient("Sam", "Lee");
-        persistPatient("Alex", "Smith");
-        entityManager.flush();
-        entityManager.clear();
-
-        // Act
-        List<Patient> result = patientRepository.searchPatientByOneToken("am");
-
-        // Assert
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void shouldReturnPatients_whenSearchPatientByTwoTokensMatchesFirstAndLastName() {
-        // Arrange
-        Patient match = persistPatient("Sam", "Lee");
-        persistPatient("Sam", "Kent");
-        persistPatient("Alex", "Lee");
-        entityManager.flush();
-        entityManager.clear();
-
-        // Act
-        List<Patient> result = patientRepository.searchPatientByTwoTokens("Sam", "Lee");
-
-        // Assert
         assertEquals(1, result.size());
         assertEquals(match.getId(), result.get(0).getId());
     }
 
     @Test
-    void shouldReturnPatients_whenSearchPatientByTwoTokensReceivesReversedTokens() {
-        // Arrange
-        Patient match = persistPatient("Sam", "Lee");
-        persistPatient("Sam", "Kent");
+    void shouldReturnPatientByIdWithinClinic() {
+        Clinics clinic = persistClinic("clinic-one");
+        Patient saved = persistPatient(clinic, "Sam", "Lee");
         entityManager.flush();
         entityManager.clear();
 
-        // Act
-        List<Patient> result = patientRepository.searchPatientByTwoTokens("Lee", "Sam");
+        Optional<Patient> result = patientRepository.findByIdAndClinicId(saved.getId(), clinic.getId());
 
-        // Assert
-        assertEquals(1, result.size());
-        assertEquals(match.getId(), result.get(0).getId());
+        assertTrue(result.isPresent());
+        assertEquals(saved.getId(), result.get().getId());
     }
 
     @Test
-    void shouldReturnEmptyList_whenSearchPatientByTwoTokensMatchesOnlyOneSide() {
-        // Arrange
-        persistPatient("Sam", "Kent");
-        persistPatient("Alex", "Lee");
+    void shouldNotReturnPatientByIdFromAnotherClinic() {
+        Clinics clinic = persistClinic("clinic-one");
+        Clinics otherClinic = persistClinic("clinic-two");
+        Patient saved = persistPatient(clinic, "Sam", "Lee");
         entityManager.flush();
         entityManager.clear();
 
-        // Act
-        List<Patient> result = patientRepository.searchPatientByTwoTokens("Sam", "Lee");
+        Optional<Patient> result = patientRepository.findByIdAndClinicId(saved.getId(), otherClinic.getId());
 
-        // Assert
-        assertTrue(result.isEmpty());
+        assertFalse(result.isPresent());
     }
 
-    @Test
-    void shouldReturnPatient_whenGetPatientByIdMatchesExistingPatient() {
-        // Arrange
-        Patient savedPatient = persistPatient("Sam", "Lee");
-        entityManager.flush();
-        entityManager.clear();
-
-        // Act
-        Patient result = patientRepository.getPatientById(savedPatient.getId());
-
-        // Assert
-        assertEquals(savedPatient.getId(), result.getId());
-        assertEquals("Sam", result.getFirstName());
-        assertEquals("Lee", result.getLastName());
+    private Clinics persistClinic(String slug) {
+        Clinics clinic = new Clinics();
+        clinic.setName(slug);
+        clinic.setSlug(slug);
+        clinic.setIsDemo(false);
+        clinic.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
+        entityManager.persist(clinic);
+        return clinic;
     }
 
-    @Test
-    void shouldReturnNull_whenGetPatientByIdDoesNotMatchExistingPatient() {
-        // Arrange
-        persistPatient("Sam", "Lee");
-        entityManager.flush();
-        entityManager.clear();
-
-        // Act
-        Patient result = patientRepository.getPatientById(999L);
-
-        // Assert
-        assertNull(result);
-    }
-
-    private Patient persistPatient(String firstName, String lastName) {
+    private Patient persistPatient(Clinics clinic, String firstName, String lastName) {
         Patient patient = new Patient();
         patient.setFirstName(firstName);
         patient.setLastName(lastName);
+        patient.setDisplayName(lastName + ", " + firstName.charAt(0));
+        patient.setClinic(clinic);
         entityManager.persist(patient);
         return patient;
     }

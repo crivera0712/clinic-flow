@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.users;
 
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
@@ -126,6 +127,25 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.username").value("sam"))
                 .andExpect(jsonPath("$.roleName").value(Users.RoleName.DISPLAY.toString()));
         verify(usersService).createUser(any());
+    }
+
+    @Test
+    void shouldReturnForbidden_whenPostUserRunsInDemoClinic() throws Exception {
+        String json = """
+                {
+                  "username": "sam",
+                  "passwordHash": "secret1",
+                  "enabled": true,
+                  "role": "ADMIN"
+                }
+                """;
+        when(usersService.createUser(any())).thenThrow(new DemoClinicReadOnlyException());
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Demo clinic is read-only"));
     }
 
     @Test

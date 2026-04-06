@@ -12,6 +12,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { AppointmentDialog } from "./AppointmentDialog";
@@ -50,6 +51,8 @@ function getStatusChipColor(status: AppointmentStatusValue): "default" | "info" 
 }
 
 export function AppointmentsPage() {
+  const { currentUser } = useAuth();
+  const isDemo = currentUser?.isDemo === true;
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
   const [rows, setRows] = useState<AppointmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,8 +221,8 @@ export function AppointmentsPage() {
     {
       field: "actions", headerName: "Actions", flex: 0.8, minWidth: 140, sortable: false, filterable: false, renderCell: (params: GridRenderCellParams<AppointmentRecord>) => (
         <Stack direction="row" spacing={0.5}>
-          <IconButton color="primary" onClick={() => { void prepareEditDialog(params.row); }}><EditOutlinedIcon fontSize="small" /></IconButton>
-          <IconButton color="error" onClick={() => setDeleteTarget(params.row)}><DeleteOutlineIcon fontSize="small" /></IconButton>
+          <IconButton color="primary" disabled={isDemo} onClick={() => { void prepareEditDialog(params.row); }}><EditOutlinedIcon fontSize="small" /></IconButton>
+          <IconButton color="error" disabled={isDemo} onClick={() => setDeleteTarget(params.row)}><DeleteOutlineIcon fontSize="small" /></IconButton>
         </Stack>
       ),
     },
@@ -233,7 +236,7 @@ export function AppointmentsPage() {
             <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>Appointments</Typography>
             <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>Manage daily appointments, therapist assignments, and status updates.</Typography>
           </Box>
-          <Button variant="contained" onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Appointment</Button>
+          <Button variant="contained" disabled={isDemo} onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Appointment</Button>
         </Stack>
         <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
           <Stack spacing={2}>

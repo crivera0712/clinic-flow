@@ -8,4 +8,5 @@ public class LoginResponse {
     private Long id;
     private String username;
     private Users.RoleName roleName;
+    private Boolean isDemo;
 }

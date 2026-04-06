@@ -19,7 +19,6 @@
       <database-info product="MySQL" version="9.5.0" jdbc-version="4.2" driver-name="MySQL Connector/J" driver-version="mysql-connector-j-9.5.0 (Revision: a7b3c94f50efbddb9f0dd69b3e0d1aaa25305cd6)" dbms="MYSQL" exact-version="9.5.0" exact-driver-version="9.5">
         <extra-name-characters>$</extra-name-characters>
         <identifier-quote-string>`</identifier-quote-string>
-        <jdbc-catalog-is-schema>true</jdbc-catalog-is-schema>
       </database-info>
       <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
       <user-name>root</user-name>
@@ -29,7 +28,7 @@
         </introspection-scope>
       </schema-mapping>
     </data-source>
-    <data-source name="postgres@localhost" uuid="2a974124-5a31-45ba-9e91-135a1230f41b">
+    <data-source name="postgres@localhost" uuid="494a8dfb-40aa-489a-8744-00a5604b3bfe">
       <database-info product="PostgreSQL" version="17.2 (Postgres.app)" jdbc-version="4.2" driver-name="PostgreSQL JDBC Driver" driver-version="42.7.3" dbms="POSTGRES" exact-version="17.2" exact-driver-version="42.7">
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
@@ -38,7 +37,7 @@
       <user-name>clinicflow_user</user-name>
       <schema-mapping>
         <introspection-scope>
-          <node kind="database" qname="@">
+          <node kind="database" qname="clinicflow">
             <node kind="schema" qname="@" />
           </node>
         </introspection-scope>

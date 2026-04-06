@@ -1,3 +1,4 @@
+import Alert from "@mui/material/Alert";
 import MenuIcon from "@mui/icons-material/Menu";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -156,6 +157,11 @@ export function AdminLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, px: { xs: 2, md: 4 }, py: 4 }}>
         <Toolbar sx={{ minHeight: 80 }} />
+        {currentUser?.isDemo && (
+          <Alert severity="warning" variant="filled" sx={{ mb: 3, borderRadius: 3 }}>
+            Demo Mode: this admin workspace is read-only. Recruiter sample data cannot be changed.
+          </Alert>
+        )}
         <Outlet />
       </Box>
     </Box>

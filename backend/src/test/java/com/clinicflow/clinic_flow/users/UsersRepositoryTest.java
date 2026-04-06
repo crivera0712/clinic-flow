@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -24,7 +25,7 @@ class UsersRepositoryTest {
     @Test
     void shouldReturnUser_whenFindByUsernameMatchesExistingUser() {
         // Arrange
-        Users user = persistUser("sam", Users.RoleName.DISPLAY);
+        Users user = persistUser("sam", Users.RoleName.DISPLAY, 1L);
         entityManager.flush();
         entityManager.clear();
 
@@ -41,7 +42,7 @@ class UsersRepositoryTest {
     @Test
     void shouldReturnEmptyOptional_whenFindByUsernameDoesNotMatchExistingUser() {
         // Arrange
-        persistUser("sam", Users.RoleName.DISPLAY);
+        persistUser("sam", Users.RoleName.DISPLAY, 1L);
         entityManager.flush();
         entityManager.clear();
 
@@ -52,13 +53,38 @@ class UsersRepositoryTest {
         assertFalse(result.isPresent());
     }
 
-    private Users persistUser(String username, Users.RoleName roleName) {
+    @Test
+    void shouldReturnClinicScopedUser_whenFindByUsernameAndClinicIdMatches() {
+        Users clinicOneUser = persistUser("sam", Users.RoleName.DISPLAY, 1L);
+        persistUser("sam", Users.RoleName.ADMIN, 2L);
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<Users> result = usersRepository.findByUsernameAndClinicId(
+                "sam",
+                clinicOneUser.getClinic().getId()
+        );
+
+        assertTrue(result.isPresent());
+        assertEquals(clinicOneUser.getUsername(), result.get().getUsername());
+        assertEquals(clinicOneUser.getClinic().getId(), result.get().getClinic().getId());
+    }
+
+    private Users persistUser(String username, Users.RoleName roleName, Long clinicId) {
+        Clinics clinic = new Clinics();
+        clinic.setName("Clinic " + clinicId);
+        clinic.setSlug("clinic-" + clinicId);
+        clinic.setIsDemo(false);
+        clinic.setCreatedAt(LocalDateTime.of(2026, 3, 1, 9, 0));
+        entityManager.persist(clinic);
+
         Users user = new Users();
         user.setUsername(username);
         user.setPasswordHash("secret1");
         user.setEnabled(true);
         user.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
         user.setRoleName(roleName);
+        user.setClinic(clinic);
         entityManager.persist(user);
         return user;
     }

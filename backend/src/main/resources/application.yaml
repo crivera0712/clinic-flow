@@ -9,7 +9,11 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
   logging:
+    file:
+      name: logs/cliniflow.log
     level:
+      root: INFO
+      com.clinicflow: DEBUG
       org.springframework.web: DEBUG
       com.fasterxml.jackson: DEBUG
   jwt:
@@ -17,6 +21,7 @@ spring:
     accessTokenExpiration: 900 # 5 mins
     refreshTokenExpiration: 604800 # 7 days
     cookieSecure: false
+
 
 app:
   cors:

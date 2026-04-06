@@ -34,6 +34,10 @@ public class Jwt {
         return claims.get("sid", String.class);
     }
 
+    public String getUsername() {
+        return claims.get("username", String.class);
+    }
+
     @Override
     public String toString() {
         return Jwts.builder().claims(claims).signWith(key).compact();

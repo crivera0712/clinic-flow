@@ -5,16 +5,20 @@ import com.clinicflow.clinic_flow.therapist.dtos.TherapistPatchDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+@Validated
 @AllArgsConstructor
 @RequestMapping("/api/therapists")
 @RestController()
@@ -33,7 +37,7 @@ public class TherapistController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TherapistsResponseDto> getTherapist(@PathVariable Long id) {
+    public ResponseEntity<TherapistsResponseDto> getTherapist(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(therapistService.getTherapistById(id));
     }
 
@@ -45,7 +49,7 @@ public class TherapistController {
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(response.getId())
+                .buildAndExpand(response.getTherapistId())
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
@@ -53,7 +57,7 @@ public class TherapistController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<TherapistsResponseDto> updateTherapist(
-            @PathVariable Long id, @RequestBody TherapistPatchDto patch) {
+            @PathVariable @Positive Long id, @RequestBody TherapistPatchDto patch) {
 
         var patchedTherapist = therapistService.updateTherapist(id, patch);
 
@@ -61,7 +65,7 @@ public class TherapistController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTherapist(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTherapist(@PathVariable @Positive Long id) {
         therapistService.deleteTherapist(id);
         return ResponseEntity.noContent().build();
     }
