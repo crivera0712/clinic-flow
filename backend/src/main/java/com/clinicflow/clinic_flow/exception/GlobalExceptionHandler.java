@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,6 +33,18 @@ public class GlobalExceptionHandler {
                 "errors", errors
         ));
     }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleConstraintViolation(DataIntegrityViolationException ex) {
+        if (ex.getMessage().contains("uq_therapist_name_per_clinic")) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("A therapist with this name already exists in this clinic.");
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation");
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleUnexpected(Exception ex) {
@@ -119,5 +132,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AppointmentNotFoundException.class)
     public ResponseEntity<ErrorDto> handleAppointmentNotFoundException(AppointmentNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DemoClinicReadOnlyException.class)
+    public ResponseEntity<ErrorDto> handleDemoClinicReadOnlyException(DemoClinicReadOnlyException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorDto(ex.getMessage()));
     }
 }

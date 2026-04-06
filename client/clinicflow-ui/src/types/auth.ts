@@ -13,4 +13,5 @@ export interface CurrentUser {
   id: number;
   username: string;
   roleName: RoleName;
+  isDemo: boolean;
 }

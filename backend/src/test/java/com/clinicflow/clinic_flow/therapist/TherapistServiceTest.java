@@ -1,8 +1,13 @@
 package com.clinicflow.clinic_flow.therapist;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistPatchDto;
+import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,7 +24,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -35,39 +39,30 @@ class TherapistServiceTest {
     @Mock
     private TherapistMapper therapistMapper;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private ClinicContextService clinicContextService;
+
     @InjectMocks
     private TherapistService therapistService;
 
     @Test
-    void shouldReturnAllTherapists_whenSearchIsNull() {
+    void shouldReturnAllTherapistsWithinCurrentClinic() {
         Therapist therapist = therapist(1L, "Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
         TherapistsResponseDto response = response(1L, "Taylor", "Physical Therapist");
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(therapistRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(therapist)));
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.findAllByClinicId(7L, pageable)).thenReturn(new PageImpl<>(List.of(therapist)));
         when(therapistMapper.toTherapistResponseDto(therapist)).thenReturn(response);
 
         Page<TherapistsResponseDto> result = therapistService.getTherapists(null, pageable);
 
         assertEquals(List.of(response), result.getContent());
-        verify(therapistRepository).findAll(pageable);
-        verify(therapistRepository, never()).search(any(), eq(pageable));
-    }
-
-    @Test
-    void shouldReturnAllTherapists_whenSearchIsBlank() {
-        Therapist therapist = therapist(1L, "Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        TherapistsResponseDto response = response(1L, "Taylor", "Physical Therapist");
-        Pageable pageable = PageRequest.of(0, 10);
-
-        when(therapistRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(therapist)));
-        when(therapistMapper.toTherapistResponseDto(therapist)).thenReturn(response);
-
-        Page<TherapistsResponseDto> result = therapistService.getTherapists("   ", pageable);
-
-        assertEquals(List.of(response), result.getContent());
-        verify(therapistRepository).findAll(pageable);
-        verify(therapistRepository, never()).search(any(), eq(pageable));
+        verify(therapistRepository).findAllByClinicId(7L, pageable);
+        verify(therapistRepository, never()).search(any(), eq(pageable), any());
     }
 
     @Test
@@ -76,67 +71,116 @@ class TherapistServiceTest {
         TherapistsResponseDto response = response(1L, "Sam Taylor", "Physical Therapist");
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(therapistRepository.search("sam", pageable)).thenReturn(new PageImpl<>(List.of(therapist)));
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.search("sam", pageable, 7L)).thenReturn(new PageImpl<>(List.of(therapist)));
         when(therapistMapper.toTherapistResponseDto(therapist)).thenReturn(response);
 
         Page<TherapistsResponseDto> result = therapistService.getTherapists(" sam ", pageable);
 
         assertEquals(List.of(response), result.getContent());
-        verify(therapistRepository).search("sam", pageable);
-        verify(therapistRepository, never()).findAll(pageable);
+        verify(therapistRepository).search("sam", pageable, 7L);
     }
 
     @Test
-    void shouldReturnTherapistById_whenTherapistExists() {
+    void shouldReturnTherapistByIdWithinClinic() {
         Therapist therapist = therapist(5L, "Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
         TherapistsResponseDto response = response(5L, "Taylor", "Physical Therapist");
 
-        when(therapistRepository.findById(5L)).thenReturn(Optional.of(therapist));
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.of(therapist));
         when(therapistMapper.toTherapistResponseDto(therapist)).thenReturn(response);
 
         TherapistsResponseDto result = therapistService.getTherapistById(5L);
 
         assertSame(response, result);
-        verify(therapistRepository).findById(5L);
+        verify(therapistRepository).findByIdAndClinicId(5L, 7L);
     }
 
     @Test
-    void shouldThrowWhenTherapistByIdMissing() {
-        when(therapistRepository.findById(5L)).thenReturn(Optional.empty());
+    void shouldCreateTherapistWithinCurrentClinic() {
+        TherapistRequestDto request = new TherapistRequestDto("Jordan", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        Therapist mapped = therapist(null, "Jordan", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        Therapist saved = therapist(3L, "Jordan", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        TherapistsResponseDto response = response(3L, "Jordan", "Physical Therapist");
+        Clinics clinic = clinic(7L);
 
-        TherapistNotFoundException exception = assertThrows(TherapistNotFoundException.class,
-                () -> therapistService.getTherapistById(5L));
+        when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
+        when(therapistMapper.toTherapist(request)).thenReturn(mapped);
+        when(therapistRepository.save(mapped)).thenReturn(saved);
+        when(therapistMapper.toTherapistResponseDto(saved)).thenReturn(response);
+
+        TherapistsResponseDto result = therapistService.createTherapist(request);
+
+        assertSame(response, result);
+        assertSame(clinic, mapped.getClinic());
+    }
+
+    @Test
+    void shouldThrowWhenTherapistIsMissing() {
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.empty());
+
+        TherapistNotFoundException exception = assertThrows(
+                TherapistNotFoundException.class,
+                () -> therapistService.getTherapistById(5L)
+        );
 
         assertEquals("Therapist with id 5 not found", exception.getMessage());
     }
 
     @Test
-    void shouldUpdateTherapistNameOnly() {
-        Therapist therapist = therapist(9L, "Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
+    void shouldThrowWhenUpdateTargetsTherapistFromAnotherClinic() {
         TherapistPatchDto patch = new TherapistPatchDto();
         patch.setTherapistName("Jordan");
-        TherapistsResponseDto response = response(9L, "Jordan", "Physical Therapist");
 
-        when(therapistRepository.findById(9L)).thenReturn(Optional.of(therapist));
-        when(therapistRepository.save(therapist)).thenReturn(therapist);
-        when(therapistMapper.toTherapistResponseDto(therapist)).thenReturn(response);
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.empty());
 
-        TherapistsResponseDto result = therapistService.updateTherapist(9L, patch);
+        assertThrows(TherapistNotFoundException.class, () -> therapistService.updateTherapist(5L, patch));
 
-        assertSame(response, result);
-        assertEquals("Jordan", therapist.getTherapistName());
-        assertEquals(Therapist.TherapistType.PHYSICAL_THERAPIST, therapist.getType());
+        verify(therapistRepository, never()).save(any(Therapist.class));
     }
 
     @Test
-    void shouldReturnEmptyPage_whenNoTherapistsFound() {
-        Pageable pageable = PageRequest.of(0, 10);
-        when(therapistRepository.findAll(pageable)).thenReturn(Page.empty(pageable));
+    void shouldThrowWhenDeleteTargetsTherapistFromAnotherClinic() {
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(therapistRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.empty());
 
-        Page<TherapistsResponseDto> result = therapistService.getTherapists(null, pageable);
+        assertThrows(TherapistNotFoundException.class, () -> therapistService.deleteTherapist(5L));
 
-        assertTrue(result.isEmpty());
-        verify(therapistMapper, never()).toTherapistResponseDto(any());
+        verify(therapistRepository, never()).delete(any(Therapist.class));
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicCreatesTherapist() {
+        TherapistRequestDto request = new TherapistRequestDto("Jordan", Therapist.TherapistType.PHYSICAL_THERAPIST);
+
+        when(clinicContextService.requireWritableClinic()).thenThrow(new DemoClinicReadOnlyException());
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> therapistService.createTherapist(request));
+
+        verify(therapistRepository, never()).save(any(Therapist.class));
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicUpdatesTherapist() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        TherapistPatchDto patch = new TherapistPatchDto();
+        patch.setTherapistName("Jordan");
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> therapistService.updateTherapist(5L, patch));
+
+        verify(therapistRepository, never()).findByIdAndClinicId(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicDeletesTherapist() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> therapistService.deleteTherapist(5L));
+
+        verify(therapistRepository, never()).delete(any(Therapist.class));
     }
 
     private Therapist therapist(Long id, String name, Therapist.TherapistType type) {
@@ -149,5 +193,12 @@ class TherapistServiceTest {
 
     private TherapistsResponseDto response(Long id, String name, String type) {
         return new TherapistsResponseDto(id, name, type);
+    }
+
+    private Clinics clinic(Long id) {
+        Clinics clinic = new Clinics();
+        clinic.setId(id);
+        clinic.setSlug("clinic-" + id);
+        return clinic;
     }
 }

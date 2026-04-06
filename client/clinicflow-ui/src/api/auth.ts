@@ -1,8 +1,10 @@
 import { apiRequest } from "./client";
 import type { CurrentUser, JwtResponse, LoginRequest } from "../types/auth";
 
+const clinicSlug = import.meta.env.VITE_CLINIC_SLUG || "demo";
+
 export function login(request: LoginRequest) {
-  return apiRequest<JwtResponse>("/auth/login", {
+  return apiRequest<JwtResponse>(`/auth/${clinicSlug}/login`, {
     method: "POST",
     body: request,
     skipAuth: true,

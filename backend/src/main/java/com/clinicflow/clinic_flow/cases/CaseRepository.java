@@ -20,7 +20,7 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
         c.p_id = :id
     ORDER BY c.created_at
 """, nativeQuery = true)
-    List<Case> getCaseByPatient(@Param("id")Long id, @Param("clinicID") Long clinicID);
+    List<Case> getCaseByPatient(@Param("id")Long id, @Param("clinicId") Long clinicId);
 
     Optional<Case> findByIdAndClinicId(@NotNull(message = "caseId cannot be missing") Long caseId, Long clinicId);
 

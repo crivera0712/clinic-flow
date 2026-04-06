@@ -5,6 +5,7 @@ import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
 import com.clinicflow.clinic_flow.exception.BodyRegionNotFoundException;
 import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -141,6 +142,23 @@ class CaseControllerTest {
                 .andExpect(jsonPath("$.patientId").value(10L))
                 .andExpect(jsonPath("$.bodyRegionId").value(20L));
         verify(caseService).createCase(any());
+    }
+
+    @Test
+    void shouldReturnForbidden_whenPostCaseRunsInDemoClinic() throws Exception {
+        String json = """
+                {
+                  "patientId": 10,
+                  "bodyRegionId": 20
+                }
+                """;
+        when(caseService.createCase(any())).thenThrow(new DemoClinicReadOnlyException());
+
+        mockMvc.perform(post("/api/cases")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Demo clinic is read-only"));
     }
 
     @Test

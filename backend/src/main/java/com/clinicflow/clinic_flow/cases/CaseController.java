@@ -4,14 +4,17 @@ import com.clinicflow.clinic_flow.cases.dtos.CasePatchDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseRequestDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
 
+@Validated
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/cases")
@@ -25,12 +28,12 @@ public class CaseController {
     }
 
     @GetMapping("/patient/{id}")
-    public List<CaseResponseDto> getCasesByPatient(@PathVariable Long id) {
+    public List<CaseResponseDto> getCasesByPatient(@PathVariable @NotNull Long id) {
         return caseService.searchByPatient(id);
     }
 
     @GetMapping("/{id}")
-    public CaseResponseDto getCaseById(@PathVariable Long id) {
+    public CaseResponseDto getCaseById(@PathVariable @NotNull Long id) {
         return caseService.getCase(id);
     }
 

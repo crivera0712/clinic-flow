@@ -6,11 +6,14 @@ import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.common.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -18,7 +21,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
-
+@Validated
 @AllArgsConstructor
 @RequestMapping("/api/appointments")
 @RestController
@@ -40,7 +43,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id}")
-    public AppointmentResponseDto getAppointmentById(@PathVariable Long id) {
+    public AppointmentResponseDto getAppointmentById(@PathVariable @NotNull Long id) {
         return appointmentService.getAppointmentById(id);
     }
 
@@ -73,13 +76,13 @@ public class AppointmentController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<AppointmentResponseDto> updateAppointment(
-            @PathVariable Long id, @RequestBody AppointmentPatchDto request) {
+            @PathVariable @NotNull Long id, @RequestBody AppointmentPatchDto request) {
         var patchAppointment = appointmentService.updateAppointmentById(id,  request);
         return ResponseEntity.ok(patchAppointment);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAppointmentById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAppointmentById(@PathVariable @NotNull Long id) {
         appointmentService.deleteAppointmentById(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,6 +1,7 @@
 package com.clinicflow.clinic_flow.cases;
 
 import com.clinicflow.clinic_flow.body_region.BodyRegion;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.cases.dtos.CasePatchDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseRequestDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
@@ -26,6 +27,7 @@ public class CaseService {
     private final PatientRepository patientRepository;
     private final BodyRegionRepository bodyRegionRepository;
     private final CurrentUserService currentUserService;
+    private final ClinicContextService clinicContextService;
 
     public List<CaseResponseDto> getCases(){
         var clinicId = currentUserService.getCurrentClinicId();
@@ -48,6 +50,7 @@ public class CaseService {
 
     @Transactional
     public CaseResponseDto createCase(CaseRequestDto request){
+        clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
         var patient = patientRepository.findByIdAndClinicId(request.getPatientId(), clinicId).orElseThrow(() ->
                 new PatientNotFoundException(request.getPatientId()));
@@ -69,6 +72,7 @@ public class CaseService {
     @Transactional
 
     public CaseResponseDto updateCase(Long id, CasePatchDto patch){
+        clinicContextService.assertWritableClinic();
         var caseEntity = findCaseOrThrow(id, currentUserService.getCurrentClinicId());
 
         if (patch != null && patch.getBodyRegionId() != null){
@@ -83,6 +87,7 @@ public class CaseService {
 
     @Transactional
     public void deleteCase(Long id){
+        clinicContextService.assertWritableClinic();
         var caseEntity = findCaseOrThrow(id, currentUserService.getCurrentClinicId());
         caseRepository.delete(caseEntity);
     }

@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.patient;
 
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
@@ -189,6 +190,23 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.lastName").value("Lee"))
                 .andExpect(jsonPath("$.displayName").value("Lee, S"));
         verify(patientService).createPatient(any());
+    }
+
+    @Test
+    void shouldReturnForbidden_whenPostPatientRunsInDemoClinic() throws Exception {
+        String json = """
+                {
+                  "firstName": "Sam",
+                  "lastName": "Lee"
+                }
+                """;
+        when(patientService.createPatient(any())).thenThrow(new DemoClinicReadOnlyException());
+
+        mockMvc.perform(post("/api/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Demo clinic is read-only"));
     }
 
     @Test

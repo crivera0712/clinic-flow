@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.therapist;
 
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
@@ -63,7 +64,7 @@ class TherapistControllerTest {
                 .param("size", "10"));
 
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].therapistId").value(1L))
                 .andExpect(jsonPath("$.content[0].therapistName").value("Taylor"))
                 .andExpect(jsonPath("$.content[0].type").value("Physical Therapist"));
         verify(therapistService).getTherapists(eq(null), any(Pageable.class));
@@ -82,7 +83,7 @@ class TherapistControllerTest {
                 .param("size", "10"));
 
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1L));
+                .andExpect(jsonPath("$.content[0].therapistId").value(1L));
         verify(therapistService).getTherapists(eq("   "), any(Pageable.class));
     }
 
@@ -111,7 +112,7 @@ class TherapistControllerTest {
         var response = mockMvc.perform(get("/api/therapists/5"));
 
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(5L))
+                .andExpect(jsonPath("$.therapistId").value(5L))
                 .andExpect(jsonPath("$.therapistName").value("Taylor"));
     }
 
@@ -142,7 +143,24 @@ class TherapistControllerTest {
 
         response.andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/therapists/12")))
-                .andExpect(jsonPath("$.id").value(12L));
+                .andExpect(jsonPath("$.therapistId").value(12L));
+    }
+
+    @Test
+    void shouldReturnForbidden_whenPostTherapistRunsInDemoClinic() throws Exception {
+        String json = """
+                {
+                  "therapistName": "Taylor",
+                  "type": "PHYSICAL_THERAPIST"
+                }
+                """;
+        when(therapistService.createTherapist(any())).thenThrow(new DemoClinicReadOnlyException());
+
+        mockMvc.perform(post("/api/therapists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Demo clinic is read-only"));
     }
 
     @Test
@@ -172,7 +190,7 @@ class TherapistControllerTest {
                 .content(json));
 
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(9L))
+                .andExpect(jsonPath("$.therapistId").value(9L))
                 .andExpect(jsonPath("$.therapistName").value("Jordan"));
         verify(therapistService).updateTherapist(eq(9L), any());
     }

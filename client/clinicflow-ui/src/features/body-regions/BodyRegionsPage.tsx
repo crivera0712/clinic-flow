@@ -13,6 +13,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { createBodyRegion, listBodyRegions, updateBodyRegion } from "../../services/bodyRegionService";
 import type { BodyRegion, BodyRegionCreateRequest, BodyRegionUpdateRequest } from "../../types/admin";
@@ -22,6 +23,8 @@ type DialogState = { mode: "create"; record: null } | { mode: "edit"; record: Bo
 type SnackbarState = { open: boolean; severity: "success" | "error"; message: string };
 
 export function BodyRegionsPage() {
+  const { currentUser } = useAuth();
+  const isDemo = currentUser?.isDemo === true;
   const [rows, setRows] = useState<BodyRegion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export function BodyRegionsPage() {
     },
     {
       field: "actions", headerName: "Actions", flex: 0.6, minWidth: 100, sortable: false, filterable: false, renderCell: (params: GridRenderCellParams<BodyRegion>) => (
-        <IconButton color="primary" onClick={() => { setDialogError(null); setDialogState({ mode: "edit", record: params.row }); }}>
+        <IconButton color="primary" disabled={isDemo} onClick={() => { setDialogError(null); setDialogState({ mode: "edit", record: params.row }); }}>
           <EditOutlinedIcon fontSize="small" />
         </IconButton>
       ),
@@ -105,7 +108,7 @@ export function BodyRegionsPage() {
             <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>Body Regions</Typography>
             <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>Manage body region codes and activation state.</Typography>
           </Box>
-          <Button variant="contained" onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Body Region</Button>
+          <Button variant="contained" disabled={isDemo} onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Body Region</Button>
         </Stack>
         <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
           <Stack spacing={2}>

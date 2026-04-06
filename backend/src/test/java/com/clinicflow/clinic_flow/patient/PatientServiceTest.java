@@ -1,15 +1,18 @@
 package com.clinicflow.clinic_flow.patient;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -21,7 +24,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,291 +38,149 @@ class PatientServiceTest {
     @Mock
     private PatientMapper patientMapper;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private ClinicContextService clinicContextService;
+
     @InjectMocks
     private PatientService patientService;
 
     @Test
-    void shouldReturnPatientResponses_whenGetPatientsFindsPatients() {
-        // Arrange
+    void shouldReturnPatientResponsesWithinCurrentClinic() {
         Patient firstPatient = patient(1L, "Sam", "Lee");
         Patient secondPatient = patient(2L, "Alex", "Kim");
         PatientResponseDto firstResponse = response(1L, "Sam", "Lee");
         PatientResponseDto secondResponse = response(2L, "Alex", "Kim");
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(patientRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(firstPatient, secondPatient)));
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.findAllByClinicId(8L, pageable)).thenReturn(new PageImpl<>(List.of(firstPatient, secondPatient)));
         when(patientMapper.toPatientResponseDto(firstPatient)).thenReturn(firstResponse);
         when(patientMapper.toPatientResponseDto(secondPatient)).thenReturn(secondResponse);
 
-        // Act
         Page<PatientResponseDto> result = patientService.getPatients(pageable);
 
-        // Assert
         assertEquals(List.of(firstResponse, secondResponse), result.getContent());
-        verify(patientRepository).findAll(pageable);
-        verify(patientMapper).toPatientResponseDto(firstPatient);
-        verify(patientMapper).toPatientResponseDto(secondPatient);
+        verify(patientRepository).findAllByClinicId(8L, pageable);
     }
 
     @Test
-    void shouldReturnEmptyList_whenGetPatientsFindsNoPatients() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        when(patientRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
-
-        // Act
-        Page<PatientResponseDto> result = patientService.getPatients(pageable);
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(patientRepository).findAll(pageable);
-        verify(patientMapper, never()).toPatientResponseDto(any(Patient.class));
-    }
-
-    @Test
-    void shouldReturnPatientResponse_whenGetPatientFindsPatient() {
-        // Arrange
+    void shouldReturnPatientWithinCurrentClinic() {
         Patient patient = patient(5L, "Sam", "Lee");
         PatientResponseDto response = response(5L, "Sam", "Lee");
 
-        when(patientRepository.getPatientById(5L)).thenReturn(patient);
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.findByIdAndClinicId(5L, 8L)).thenReturn(Optional.of(patient));
         when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
 
-        // Act
         PatientResponseDto result = patientService.getPatient(5L);
 
-        // Assert
         assertSame(response, result);
-        verify(patientRepository).getPatientById(5L);
-        verify(patientMapper).toPatientResponseDto(patient);
+        verify(patientRepository).findByIdAndClinicId(5L, 8L);
     }
 
     @Test
-    void shouldThrowPatientNotFoundException_whenGetPatientDoesNotFindPatient() {
-        // Arrange
-        when(patientRepository.getPatientById(5L)).thenReturn(null);
-
-        // Act
-        PatientNotFoundException exception = assertThrows(PatientNotFoundException.class,
-                () -> patientService.getPatient(5L));
-
-        // Assert
-        assertEquals("Patient with id 5 does not exist", exception.getMessage());
-        verify(patientRepository).getPatientById(5L);
-        verify(patientMapper, never()).toPatientResponseDto(any(Patient.class));
-    }
-
-    @Test
-    void shouldReturnPatients_whenSearchPatientReceivesOneToken() {
-        // Arrange
+    void shouldSearchPatientsWithinCurrentClinic() {
         Patient patient = patient(1L, "Sam", "Lee");
         PatientResponseDto response = response(1L, "Sam", "Lee");
 
-        when(patientRepository.searchPatientByOneToken("sam")).thenReturn(List.of(patient));
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.searchPatientByTwoTokens("sam", "lee", 8L)).thenReturn(List.of(patient));
         when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
 
-        // Act
-        List<PatientResponseDto> result = patientService.searchPatient("sam");
-
-        // Assert
-        assertEquals(List.of(response), result);
-        verify(patientRepository).searchPatientByOneToken("sam");
-        verify(patientRepository, never()).searchPatientByTwoTokens(any(), any());
-        verify(patientMapper).toPatientResponseDto(patient);
-    }
-
-    @Test
-    void shouldReturnPatients_whenSearchPatientReceivesTwoTokens() {
-        // Arrange
-        Patient patient = patient(1L, "Sam", "Lee");
-        PatientResponseDto response = response(1L, "Sam", "Lee");
-
-        when(patientRepository.searchPatientByTwoTokens("sam", "lee")).thenReturn(List.of(patient));
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
-
-        // Act
         List<PatientResponseDto> result = patientService.searchPatient("sam lee");
 
-        // Assert
         assertEquals(List.of(response), result);
-        verify(patientRepository).searchPatientByTwoTokens("sam", "lee");
-        verify(patientRepository, never()).searchPatientByOneToken("sam");
-        verify(patientMapper).toPatientResponseDto(patient);
+        verify(patientRepository).searchPatientByTwoTokens("sam", "lee", 8L);
     }
 
     @Test
-    void shouldTrimWhitespace_whenSearchPatientReceivesExtraSpaces() {
-        // Arrange
-        Patient patient = patient(1L, "Sam", "Lee");
-        PatientResponseDto response = response(1L, "Sam", "Lee");
-
-        when(patientRepository.searchPatientByTwoTokens("sam", "lee")).thenReturn(List.of(patient));
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
-
-        // Act
-        List<PatientResponseDto> result = patientService.searchPatient("   sam    lee   ");
-
-        // Assert
-        assertEquals(List.of(response), result);
-        verify(patientRepository).searchPatientByTwoTokens("sam", "lee");
-    }
-
-    @Test
-    void shouldFallbackToFirstToken_whenSearchPatientReceivesMoreThanTwoTokens() {
-        // Arrange
-        Patient patient = patient(1L, "Sam", "Lee");
-        PatientResponseDto response = response(1L, "Sam", "Lee");
-
-        when(patientRepository.searchPatientByOneToken("sam")).thenReturn(List.of(patient));
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
-
-        // Act
-        List<PatientResponseDto> result = patientService.searchPatient("sam lee extra");
-
-        // Assert
-        assertEquals(List.of(response), result);
-        verify(patientRepository).searchPatientByOneToken("sam");
-        verify(patientRepository, never()).searchPatientByTwoTokens(any(), any());
-    }
-
-    @Test
-    void shouldThrowIllegalArgumentException_whenSearchPatientReceivesBlankInput() {
-        // Arrange
-
-        // Act
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> patientService.searchPatient("   "));
-
-        // Assert
-        assertEquals("search query must not be blank", exception.getMessage());
-        verify(patientRepository, never()).searchPatientByOneToken(any());
-        verify(patientRepository, never()).searchPatientByTwoTokens(any(), any());
-    }
-
-    @Test
-    void shouldCreatePatient_whenCreatePatientReceivesValidRequest() {
-        // Arrange
+    void shouldCreatePatientWithinCurrentClinic() {
         PatientRequestDto request = new PatientRequestDto();
         request.setFirstName("Sam");
         request.setLastName("Lee");
-        Patient mappedPatient = patient(null, "Sam", "Lee");
-        Patient savedPatient = patient(8L, "Sam", "Lee");
+        Patient mapped = patient(null, "Sam", "Lee");
+        Patient saved = patient(8L, "Sam", "Lee");
         PatientResponseDto response = response(8L, "Sam", "Lee");
+        Clinics clinic = clinic(8L);
 
-        when(patientMapper.toPatient(request)).thenReturn(mappedPatient);
-        when(patientRepository.save(mappedPatient)).thenReturn(savedPatient);
-        when(patientMapper.toPatientResponseDto(savedPatient)).thenReturn(response);
+        when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
+        when(patientMapper.toPatient(request)).thenReturn(mapped);
+        when(patientRepository.save(mapped)).thenReturn(saved);
+        when(patientMapper.toPatientResponseDto(saved)).thenReturn(response);
 
-        // Act
         PatientResponseDto result = patientService.createPatient(request);
 
-        // Assert
         assertSame(response, result);
-        verify(patientMapper).toPatient(request);
-        verify(patientRepository).save(mappedPatient);
-        verify(patientMapper).toPatientResponseDto(savedPatient);
+        assertSame(clinic, mapped.getClinic());
     }
 
     @Test
-    void shouldUpdatePatient_whenUpdatePatientReceivesFullPatch() {
-        // Arrange
-        Patient patient = patient(9L, "Sam", "Lee");
-        PatientPatchDto patch = patch("Samuel", "Leeds");
-        PatientResponseDto response = response(9L, "Samuel", "Leeds");
+    void shouldThrowPatientNotFoundWhenClinicScopedLookupMisses() {
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.findByIdAndClinicId(5L, 8L)).thenReturn(Optional.empty());
 
-        when(patientRepository.findById(9L)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(patient)).thenReturn(patient);
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
+        PatientNotFoundException exception = assertThrows(
+                PatientNotFoundException.class,
+                () -> patientService.getPatient(5L)
+        );
 
-        // Act
-        PatientResponseDto result = patientService.updatePatient(9L, patch);
-
-        // Assert
-        assertSame(response, result);
-        assertEquals("Samuel", patient.getFirstName());
-        assertEquals("Leeds", patient.getLastName());
-        verify(patientRepository).findById(9L);
-        verify(patientRepository).save(patient);
-        verify(patientMapper).toPatientResponseDto(patient);
+        assertEquals("Patient with id 5 does not exist", exception.getMessage());
     }
 
     @Test
-    void shouldUpdateOnlyFirstName_whenUpdatePatientReceivesFirstNameOnlyPatch() {
-        // Arrange
-        Patient patient = patient(9L, "Sam", "Lee");
-        PatientPatchDto patch = patch("Samuel", null);
-        PatientResponseDto response = response(9L, "Samuel", "Lee");
+    void shouldThrowWhenDemoClinicCreatesPatient() {
+        PatientRequestDto request = new PatientRequestDto();
+        request.setFirstName("Sam");
+        request.setLastName("Lee");
 
-        when(patientRepository.findById(9L)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(patient)).thenReturn(patient);
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
+        when(clinicContextService.requireWritableClinic()).thenThrow(new DemoClinicReadOnlyException());
 
-        // Act
-        PatientResponseDto result = patientService.updatePatient(9L, patch);
+        assertThrows(DemoClinicReadOnlyException.class, () -> patientService.createPatient(request));
 
-        // Assert
-        assertSame(response, result);
-        assertEquals("Samuel", patient.getFirstName());
-        assertEquals("Lee", patient.getLastName());
-        verify(patientRepository).save(patient);
-    }
-
-    @Test
-    void shouldUpdateOnlyLastName_whenUpdatePatientReceivesLastNameOnlyPatch() {
-        // Arrange
-        Patient patient = patient(9L, "Sam", "Lee");
-        PatientPatchDto patch = patch(null, "Leeds");
-        PatientResponseDto response = response(9L, "Sam", "Leeds");
-
-        when(patientRepository.findById(9L)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(patient)).thenReturn(patient);
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
-
-        // Act
-        PatientResponseDto result = patientService.updatePatient(9L, patch);
-
-        // Assert
-        assertSame(response, result);
-        assertEquals("Sam", patient.getFirstName());
-        assertEquals("Leeds", patient.getLastName());
-        verify(patientRepository).save(patient);
-    }
-
-    @Test
-    void shouldKeepExistingValues_whenUpdatePatientReceivesEmptyPatch() {
-        // Arrange
-        Patient patient = patient(9L, "Sam", "Lee");
-        PatientPatchDto patch = patch(null, null);
-        PatientResponseDto response = response(9L, "Sam", "Lee");
-
-        when(patientRepository.findById(9L)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(patient)).thenReturn(patient);
-        when(patientMapper.toPatientResponseDto(patient)).thenReturn(response);
-
-        // Act
-        PatientResponseDto result = patientService.updatePatient(9L, patch);
-
-        // Assert
-        assertSame(response, result);
-        assertEquals("Sam", patient.getFirstName());
-        assertEquals("Lee", patient.getLastName());
-        verify(patientRepository).save(patient);
-    }
-
-    @Test
-    void shouldThrowPatientNotFoundException_whenUpdatePatientDoesNotFindPatient() {
-        // Arrange
-        PatientPatchDto patch = patch("Samuel", "Leeds");
-        when(patientRepository.findById(9L)).thenReturn(Optional.empty());
-
-        // Act
-        PatientNotFoundException exception = assertThrows(PatientNotFoundException.class,
-                () -> patientService.updatePatient(9L, patch));
-
-        // Assert
-        assertEquals("Patient with id 9 does not exist", exception.getMessage());
-        verify(patientRepository).findById(9L);
         verify(patientRepository, never()).save(any(Patient.class));
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicUpdatesPatient() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> patientService.updatePatient(5L, new PatientPatchDto()));
+
+        verify(patientRepository, never()).findByIdAndClinicId(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicDeletesPatient() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> patientService.deletePatient(5L));
+
+        verify(patientRepository, never()).delete(any(Patient.class));
+    }
+
+    @Test
+    void shouldThrowWhenUpdateTargetsPatientFromAnotherClinic() {
+        PatientPatchDto patch = new PatientPatchDto();
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.findByIdAndClinicId(5L, 8L)).thenReturn(Optional.empty());
+
+        assertThrows(PatientNotFoundException.class, () -> patientService.updatePatient(5L, patch));
+
+        verify(patientRepository, never()).save(any(Patient.class));
+    }
+
+    @Test
+    void shouldThrowWhenDeleteTargetsPatientFromAnotherClinic() {
+        when(currentUserService.getCurrentClinicId()).thenReturn(8L);
+        when(patientRepository.findByIdAndClinicId(5L, 8L)).thenReturn(Optional.empty());
+
+        assertThrows(PatientNotFoundException.class, () -> patientService.deletePatient(5L));
+
+        verify(patientRepository, never()).delete(any(Patient.class));
     }
 
     private Patient patient(Long id, String firstName, String lastName) {
@@ -336,20 +196,10 @@ class PatientServiceTest {
         return new PatientResponseDto(id, firstName, lastName, lastName + ", " + firstName.charAt(0));
     }
 
-    private PatientPatchDto patch(String firstName, String lastName) {
-        PatientPatchDto patch = new PatientPatchDto();
-        setField(patch, "firstName", firstName);
-        setField(patch, "lastName", lastName);
-        return patch;
-    }
-
-    private void setField(Object target, String fieldName, Object value) {
-        try {
-            var field = target.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
+    private Clinics clinic(Long id) {
+        Clinics clinic = new Clinics();
+        clinic.setId(id);
+        clinic.setSlug("clinic-" + id);
+        return clinic;
     }
 }

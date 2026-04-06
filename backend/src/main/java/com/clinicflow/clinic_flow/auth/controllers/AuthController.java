@@ -9,14 +9,17 @@ import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequestMapping("/api/auth")
 @AllArgsConstructor
@@ -26,11 +29,13 @@ public class AuthController {
     private final AuthService authService;
     private final JwtConfig jwtConfig;
 
-    @PostMapping("/login")
+    @PostMapping("/{clinicSlug}/login")
     public ResponseEntity<JwtResponse> login(
             @Valid @RequestBody LoginRequest request,
+            @PathVariable @NotBlank String clinicSlug,
             HttpServletResponse response
     ) {
+        request.setSlug(clinicSlug);
         var result = authService.login(request);
 
         writeRefreshCookie(response, result.refreshToken().toString());
@@ -43,8 +48,9 @@ public class AuthController {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         var principal = (AuthPrincipal) auth.getPrincipal();
         var sid = principal.sid();
+        var clinicId = principal.clinicId();
 
-        authService.logout(sid);
+        authService.logout(sid, clinicId);
         clearRefreshCookie(response);
 
         return ResponseEntity.noContent().build();
@@ -74,8 +80,10 @@ public class AuthController {
 
     @PostMapping("/validate")
     public boolean validate(@RequestHeader("Authorization") String authHeader){
-        // **Todo check for revoked & expiry
-        return authService.validateToken(authHeader);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return false;
+        }
+        return authService.validateToken(authHeader.substring(7));
     }
 
     @GetMapping("/me")

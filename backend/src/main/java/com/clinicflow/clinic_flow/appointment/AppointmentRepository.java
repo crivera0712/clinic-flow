@@ -40,11 +40,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("date") LocalDate date,
             @Param("clinicId") Long clinicId);
 
-    Page<Appointment> findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
-            LocalDateTime startInclusive,
-            LocalDateTime endExclusive,
-            Pageable pageable,
-            Long clinicId
+    Page<Appointment> findByClinicIdAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+            Long clinic_id, LocalDateTime scheduledAt, LocalDateTime scheduledAt2, Pageable pageable
     );
 
     Page<Appointment> findByClinicIdAndPtCaseIdOrderByScheduledAtDesc(Long clinicId, Long caseId, Pageable pageable);
@@ -52,8 +49,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     Optional<Appointment> findByScheduledAtAndClinicIdAndTherapistId(
             LocalDateTime scheduledAt,  Long clinicId, Long therapistId
     );
-
-    Page<Appointment> findByIdAndClinicIdAndPageable(Long id, Long clinicId, Pageable pageable);
 
     Optional<Appointment> findByIdAndClinicId(Long id, Long clinicId);
 

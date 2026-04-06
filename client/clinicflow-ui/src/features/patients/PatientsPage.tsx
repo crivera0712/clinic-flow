@@ -21,6 +21,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { useEntityCrud } from "../../hooks/useEntityCrud";
@@ -77,6 +78,8 @@ function getStatusChipColor(status: AppointmentStatusValue): "default" | "info" 
 }
 
 export function PatientsPage() {
+  const { currentUser } = useAuth();
+  const isDemo = currentUser?.isDemo === true;
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
@@ -325,8 +328,8 @@ export function PatientsPage() {
     {
       field: "actions", headerName: "Actions", flex: 0.7, minWidth: 130, sortable: false, filterable: false, renderCell: (params: GridRenderCellParams<Patient>) => (
         <Stack direction="row" spacing={0.5}>
-          <IconButton color="primary" onClick={(event) => { event.stopPropagation(); setPatientDialogError(null); setPatientDialogState({ mode: "edit", record: params.row }); }}><EditOutlinedIcon fontSize="small" /></IconButton>
-          <IconButton color="error" onClick={(event) => { event.stopPropagation(); setDeleteError(null); setDeleteState({ kind: "patient", record: params.row }); }}><DeleteOutlineIcon fontSize="small" /></IconButton>
+          <IconButton color="primary" disabled={isDemo} onClick={(event) => { event.stopPropagation(); setPatientDialogError(null); setPatientDialogState({ mode: "edit", record: params.row }); }}><EditOutlinedIcon fontSize="small" /></IconButton>
+          <IconButton color="error" disabled={isDemo} onClick={(event) => { event.stopPropagation(); setDeleteError(null); setDeleteState({ kind: "patient", record: params.row }); }}><DeleteOutlineIcon fontSize="small" /></IconButton>
         </Stack>
       ),
     },
@@ -340,7 +343,7 @@ export function PatientsPage() {
             <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>Patients</Typography>
             <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>Manage patient records and the cases attached to each patient.</Typography>
           </Box>
-          <Button variant="contained" onClick={() => { setPatientDialogError(null); setPatientDialogState({ mode: "create", record: null }); }}>Add Patient</Button>
+          <Button variant="contained" disabled={isDemo} onClick={() => { setPatientDialogError(null); setPatientDialogState({ mode: "create", record: null }); }}>Add Patient</Button>
         </Stack>
         <Stack direction={{ xs: "column", lg: "row" }} spacing={3} alignItems="stretch">
           <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}`, flex: { lg: "0 0 48%" }, minWidth: 0 }}>
@@ -361,7 +364,7 @@ export function PatientsPage() {
                   {selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName} · ${selectedPatientCases.length} case${selectedPatientCases.length === 1 ? "" : "s"}` : "Choose a patient from the list to manage their cases."}
                   </Typography>
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} disabled={!selectedPatient} onClick={() => { if (selectedPatient) { setCaseDialogError(null); setCaseDialogState({ mode: "create", record: null }); } }}>Add Case</Button>
+                <Button variant="contained" startIcon={<AddIcon />} disabled={isDemo || !selectedPatient} onClick={() => { if (selectedPatient) { setCaseDialogError(null); setCaseDialogState({ mode: "create", record: null }); } }}>Add Case</Button>
               </Stack>
               {bodyRegionsError && <Alert severity="error">{bodyRegionsError}</Alert>}
               {therapistsError && <Alert severity="error">{therapistsError}</Alert>}
@@ -445,6 +448,7 @@ export function PatientsPage() {
                                         <Button
                                           variant="outlined"
                                           startIcon={<EditOutlinedIcon />}
+                                          disabled={isDemo}
                                           onClick={() => {
                                             setAppointmentDialogError(null);
                                             setAppointmentDialogState({ mode: "edit", caseRecord: caseItem, record: appointment });
@@ -456,6 +460,7 @@ export function PatientsPage() {
                                           variant="outlined"
                                           color="error"
                                           startIcon={<DeleteOutlineIcon />}
+                                          disabled={isDemo}
                                           onClick={() => {
                                             setDeleteError(null);
                                             setDeleteState({ kind: "appointment", caseRecord: caseItem, record: appointment });
@@ -472,9 +477,9 @@ export function PatientsPage() {
                           </Stack>
                           <Divider sx={{ borderColor: adminColors.borderMuted }} />
                           <Stack direction="row" spacing={1} flexWrap="wrap">
-                            <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => { setCaseDialogError(null); setCaseDialogState({ mode: "edit", record: caseItem }); }}>Edit Case</Button>
-                            <Button variant="outlined" startIcon={<EventAvailableOutlinedIcon />} disabled={therapists.length === 0 || Boolean(therapistsError)} onClick={() => { setAppointmentDialogError(null); setAppointmentDialogState({ mode: "create", caseRecord: caseItem }); }}>Create Appointment</Button>
-                            <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => { setDeleteError(null); setDeleteState({ kind: "case", record: caseItem }); }}>Delete Case</Button>
+                            <Button variant="outlined" startIcon={<EditOutlinedIcon />} disabled={isDemo} onClick={() => { setCaseDialogError(null); setCaseDialogState({ mode: "edit", record: caseItem }); }}>Edit Case</Button>
+                            <Button variant="outlined" startIcon={<EventAvailableOutlinedIcon />} disabled={isDemo || therapists.length === 0 || Boolean(therapistsError)} onClick={() => { setAppointmentDialogError(null); setAppointmentDialogState({ mode: "create", caseRecord: caseItem }); }}>Create Appointment</Button>
+                            <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} disabled={isDemo} onClick={() => { setDeleteError(null); setDeleteState({ kind: "case", record: caseItem }); }}>Delete Case</Button>
                           </Stack>
                         </Stack>
                       </AccordionDetails>

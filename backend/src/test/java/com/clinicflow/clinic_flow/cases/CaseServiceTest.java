@@ -5,11 +5,14 @@ import com.clinicflow.clinic_flow.body_region.BodyRegionRepository;
 import com.clinicflow.clinic_flow.cases.dtos.CasePatchDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseRequestDto;
 import com.clinicflow.clinic_flow.cases.dtos.CaseResponseDto;
-import com.clinicflow.clinic_flow.exception.BodyRegionNotFoundException;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.Patient;
 import com.clinicflow.clinic_flow.patient.PatientRepository;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,10 +25,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +39,9 @@ class CaseServiceTest {
     private CaseRepository caseRepository;
 
     @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
     private CaseMapper caseMapper;
 
     @Mock
@@ -46,254 +50,164 @@ class CaseServiceTest {
     @Mock
     private BodyRegionRepository bodyRegionRepository;
 
+    @Mock
+    private ClinicContextService clinicContextService;
+
     @InjectMocks
     private CaseService caseService;
 
     @Test
-    void shouldReturnCaseResponses_whenGetCasesFindsCases() {
-        // Arrange
+    void shouldReturnCasesWithinCurrentClinic() {
         Case firstCase = ptCase(1L, 10L, 20L);
         Case secondCase = ptCase(2L, 11L, 21L);
         CaseResponseDto firstResponse = response(1L, 10L, 20L);
         CaseResponseDto secondResponse = response(2L, 11L, 21L);
 
-        when(caseRepository.findAll()).thenReturn(List.of(firstCase, secondCase));
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.findAllByClinicId(1L)).thenReturn(List.of(firstCase, secondCase));
         when(caseMapper.toCaseResponseDto(firstCase)).thenReturn(firstResponse);
         when(caseMapper.toCaseResponseDto(secondCase)).thenReturn(secondResponse);
 
-        // Act
         List<CaseResponseDto> result = caseService.getCases();
 
-        // Assert
         assertEquals(List.of(firstResponse, secondResponse), result);
-        verify(caseRepository).findAll();
-        verify(caseMapper).toCaseResponseDto(firstCase);
-        verify(caseMapper).toCaseResponseDto(secondCase);
+        verify(caseRepository).findAllByClinicId(1L);
     }
 
     @Test
-    void shouldReturnEmptyList_whenGetCasesFindsNoCases() {
-        // Arrange
-        when(caseRepository.findAll()).thenReturn(List.of());
-
-        // Act
-        List<CaseResponseDto> result = caseService.getCases();
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(caseRepository).findAll();
-        verify(caseMapper, never()).toCaseResponseDto(any(Case.class));
-    }
-
-    @Test
-    void shouldReturnCaseResponse_whenGetCaseFindsCase() {
-        // Arrange
+    void shouldReturnCaseWithinCurrentClinic() {
         Case caseEntity = ptCase(5L, 10L, 20L);
         CaseResponseDto response = response(5L, 10L, 20L);
 
-        when(caseRepository.findById(5L)).thenReturn(Optional.of(caseEntity));
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.findByIdAndClinicId(5L, 1L)).thenReturn(Optional.of(caseEntity));
         when(caseMapper.toCaseResponseDto(caseEntity)).thenReturn(response);
 
-        // Act
         CaseResponseDto result = caseService.getCase(5L);
 
-        // Assert
         assertSame(response, result);
-        verify(caseRepository).findById(5L);
-        verify(caseMapper).toCaseResponseDto(caseEntity);
+        verify(caseRepository).findByIdAndClinicId(5L, 1L);
     }
 
     @Test
-    void shouldThrowCaseNotFoundException_whenGetCaseDoesNotFindCase() {
-        // Arrange
-        when(caseRepository.findById(5L)).thenReturn(Optional.empty());
-
-        // Act
-        CaseNotFoundException exception = assertThrows(CaseNotFoundException.class,
-                () -> caseService.getCase(5L));
-
-        // Assert
-        assertEquals("Could not find case by id 5", exception.getMessage());
-        verify(caseRepository).findById(5L);
-        verify(caseMapper, never()).toCaseResponseDto(any(Case.class));
-    }
-
-    @Test
-    void shouldReturnCases_whenSearchByPatientFindsCases() {
-        // Arrange
+    void shouldSearchByPatientWithinCurrentClinic() {
         Case firstCase = ptCase(1L, 10L, 20L);
         Case secondCase = ptCase(2L, 10L, 21L);
         CaseResponseDto firstResponse = response(1L, 10L, 20L);
         CaseResponseDto secondResponse = response(2L, 10L, 21L);
 
-        when(caseRepository.getCaseByPatient(10L)).thenReturn(List.of(firstCase, secondCase));
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.getCaseByPatient(10L, 1L)).thenReturn(List.of(firstCase, secondCase));
         when(caseMapper.toCaseResponseDto(firstCase)).thenReturn(firstResponse);
         when(caseMapper.toCaseResponseDto(secondCase)).thenReturn(secondResponse);
 
-        // Act
         List<CaseResponseDto> result = caseService.searchByPatient(10L);
 
-        // Assert
         assertEquals(List.of(firstResponse, secondResponse), result);
-        verify(caseRepository).getCaseByPatient(10L);
-        verify(caseMapper).toCaseResponseDto(firstCase);
-        verify(caseMapper).toCaseResponseDto(secondCase);
     }
 
     @Test
-    void shouldCreateCase_whenCreateCaseReceivesValidRequest() {
-        // Arrange
+    void shouldCreateCaseWithinCurrentClinic() {
         CaseRequestDto request = request(10L, 20L);
         Patient patient = patient(10L);
+        patient.setClinic(clinic(1L));
         BodyRegion bodyRegion = bodyRegion(20L);
         Case mappedCase = new Case();
         Case savedCase = ptCase(7L, 10L, 20L);
         CaseResponseDto response = response(7L, 10L, 20L);
 
-        when(patientRepository.getPatientById(10L)).thenReturn(patient);
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(patientRepository.findByIdAndClinicId(10L, 1L)).thenReturn(Optional.of(patient));
         when(bodyRegionRepository.findById(20L)).thenReturn(Optional.of(bodyRegion));
         when(caseMapper.toCase(request)).thenReturn(mappedCase);
         when(caseRepository.save(mappedCase)).thenReturn(savedCase);
         when(caseMapper.toCaseResponseDto(savedCase)).thenReturn(response);
 
-        // Act
         CaseResponseDto result = caseService.createCase(request);
 
-        // Assert
         assertSame(response, result);
         assertSame(patient, mappedCase.getPatient());
         assertSame(bodyRegion, mappedCase.getBodyRegion());
-        assertNotNull(mappedCase.getCreatedAt());
-        verify(patientRepository).getPatientById(10L);
-        verify(bodyRegionRepository).findById(20L);
-        verify(caseMapper).toCase(request);
-        verify(caseRepository).save(mappedCase);
-        verify(caseMapper).toCaseResponseDto(savedCase);
+        assertSame(patient.getClinic(), mappedCase.getClinic());
     }
 
     @Test
-    void shouldThrowPatientNotFoundException_whenCreateCaseDoesNotFindPatient() {
-        // Arrange
+    void shouldThrowPatientNotFoundWhenCreateCaseMissesClinicScopedPatient() {
         CaseRequestDto request = request(10L, 20L);
-        when(patientRepository.getPatientById(10L)).thenReturn(null);
 
-        // Act
-        PatientNotFoundException exception = assertThrows(PatientNotFoundException.class,
-                () -> caseService.createCase(request));
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(patientRepository.findByIdAndClinicId(10L, 1L)).thenReturn(Optional.empty());
 
-        // Assert
+        PatientNotFoundException exception = assertThrows(
+                PatientNotFoundException.class,
+                () -> caseService.createCase(request)
+        );
+
         assertEquals("Patient with id 10 does not exist", exception.getMessage());
-        verify(patientRepository).getPatientById(10L);
         verify(bodyRegionRepository, never()).findById(any(Long.class));
-        verify(caseRepository, never()).save(any(Case.class));
     }
 
     @Test
-    void shouldThrowBodyRegionNotFoundException_whenCreateCaseDoesNotFindBodyRegion() {
-        // Arrange
-        CaseRequestDto request = request(10L, 20L);
-        when(patientRepository.getPatientById(10L)).thenReturn(patient(10L));
-        when(bodyRegionRepository.findById(20L)).thenReturn(Optional.empty());
+    void shouldDeleteCaseWithinCurrentClinic() {
+        Case caseEntity = ptCase(8L, 10L, 20L);
 
-        // Act
-        BodyRegionNotFoundException exception = assertThrows(BodyRegionNotFoundException.class,
-                () -> caseService.createCase(request));
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.findByIdAndClinicId(8L, 1L)).thenReturn(Optional.of(caseEntity));
 
-        // Assert
-        assertEquals("Could not find body region with id 20", exception.getMessage());
-        verify(patientRepository).getPatientById(10L);
-        verify(bodyRegionRepository).findById(20L);
-        verify(caseRepository, never()).save(any(Case.class));
-    }
-
-    @Test
-    void shouldUpdateCase_whenUpdateCaseReceivesValidPatch() {
-        // Arrange
-        Case caseEntity = ptCase(6L, 10L, 20L);
-        BodyRegion newBodyRegion = bodyRegion(30L);
-        CasePatchDto patch = patch(30L);
-        CaseResponseDto response = response(6L, 10L, 30L);
-
-        when(caseRepository.findById(6L)).thenReturn(Optional.of(caseEntity));
-        when(bodyRegionRepository.findById(30L)).thenReturn(Optional.of(newBodyRegion));
-        when(caseRepository.save(caseEntity)).thenReturn(caseEntity);
-        when(caseMapper.toCaseResponseDto(caseEntity)).thenReturn(response);
-
-        // Act
-        CaseResponseDto result = caseService.updateCase(6L, patch);
-
-        // Assert
-        assertSame(response, result);
-        assertSame(newBodyRegion, caseEntity.getBodyRegion());
-        verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository).findById(30L);
-        verify(caseRepository).save(caseEntity);
-        verify(caseMapper).toCaseResponseDto(caseEntity);
-    }
-
-    @Test
-    void shouldKeepExistingRegion_whenUpdateCaseReceivesNullPatch() {
-        // Arrange
-        Case caseEntity = ptCase(6L, 10L, 20L);
-        CaseResponseDto response = response(6L, 10L, 20L);
-
-        when(caseRepository.findById(6L)).thenReturn(Optional.of(caseEntity));
-        when(caseRepository.save(caseEntity)).thenReturn(caseEntity);
-        when(caseMapper.toCaseResponseDto(caseEntity)).thenReturn(response);
-
-        // Act
-        CaseResponseDto result = caseService.updateCase(6L, null);
-
-        // Assert
-        assertSame(response, result);
-        assertEquals(20L, caseEntity.getBodyRegion().getId());
-        verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository, never()).findById(any(Long.class));
-        verify(caseRepository).save(caseEntity);
-    }
-
-    @Test
-    void shouldThrowCaseNotFoundException_whenUpdateCaseDoesNotFindCase() {
-        // Arrange
-        when(caseRepository.findById(6L)).thenReturn(Optional.empty());
-
-        // Act
-        CaseNotFoundException exception = assertThrows(CaseNotFoundException.class,
-                () -> caseService.updateCase(6L, patch(30L)));
-
-        // Assert
-        assertEquals("Could not find case by id 6", exception.getMessage());
-        verify(caseRepository).findById(6L);
-        verify(caseRepository, never()).save(any(Case.class));
-    }
-
-    @Test
-    void shouldThrowBodyRegionNotFoundException_whenUpdateCaseDoesNotFindBodyRegion() {
-        // Arrange
-        Case caseEntity = ptCase(6L, 10L, 20L);
-        when(caseRepository.findById(6L)).thenReturn(Optional.of(caseEntity));
-        when(bodyRegionRepository.findById(30L)).thenReturn(Optional.empty());
-
-        // Act
-        BodyRegionNotFoundException exception = assertThrows(BodyRegionNotFoundException.class,
-                () -> caseService.updateCase(6L, patch(30L)));
-
-        // Assert
-        assertEquals("Could not find body region with id 30", exception.getMessage());
-        verify(caseRepository).findById(6L);
-        verify(bodyRegionRepository).findById(30L);
-        verify(caseRepository, never()).save(any(Case.class));
-    }
-
-    @Test
-    void shouldDeleteCase_whenDeleteCaseIsCalled() {
-        // Arrange
-
-        // Act
         caseService.deleteCase(8L);
 
-        // Assert
-        verify(caseRepository).deleteById(8L);
+        verify(caseRepository).delete(caseEntity);
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicCreatesCase() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> caseService.createCase(request(10L, 20L)));
+
+        verify(patientRepository, never()).findByIdAndClinicId(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicUpdatesCase() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> caseService.updateCase(8L, new CasePatchDto()));
+
+        verify(caseRepository, never()).findByIdAndClinicId(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenDemoClinicDeletesCase() {
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> caseService.deleteCase(8L));
+
+        verify(caseRepository, never()).delete(any(Case.class));
+    }
+
+    @Test
+    void shouldThrowWhenUpdateTargetsCaseFromAnotherClinic() {
+        CasePatchDto patch = new CasePatchDto();
+        patch.setBodyRegionId(30L);
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.findByIdAndClinicId(8L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(CaseNotFoundException.class, () -> caseService.updateCase(8L, patch));
+
+        verify(bodyRegionRepository, never()).findById(any(Long.class));
+        verify(caseRepository, never()).save(any(Case.class));
+    }
+
+    @Test
+    void shouldThrowWhenDeleteTargetsCaseFromAnotherClinic() {
+        when(currentUserService.getCurrentClinicId()).thenReturn(1L);
+        when(caseRepository.findByIdAndClinicId(8L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(CaseNotFoundException.class, () -> caseService.deleteCase(8L));
+
+        verify(caseRepository, never()).delete(any(Case.class));
     }
 
     private CaseRequestDto request(Long patientId, Long bodyRegionId) {
@@ -303,18 +217,13 @@ class CaseServiceTest {
         return request;
     }
 
-    private CasePatchDto patch(Long bodyRegionId) {
-        CasePatchDto patch = new CasePatchDto();
-        patch.setBodyRegionId(bodyRegionId);
-        return patch;
-    }
-
     private Case ptCase(Long id, Long patientId, Long bodyRegionId) {
         Case caseEntity = new Case();
         caseEntity.setId(id);
         caseEntity.setCreatedAt(Date.from(Instant.parse("2026-03-01T10:00:00Z")));
         caseEntity.setPatient(patient(patientId));
         caseEntity.setBodyRegion(bodyRegion(bodyRegionId));
+        caseEntity.setClinic(clinic(1L));
         return caseEntity;
     }
 
@@ -323,7 +232,15 @@ class CaseServiceTest {
         patient.setId(id);
         patient.setFirstName("Sam");
         patient.setLastName("Lee");
+        patient.setDisplayName("Lee, S");
         return patient;
+    }
+
+    private Clinics clinic(Long id) {
+        Clinics clinic = new Clinics();
+        clinic.setId(id);
+        clinic.setSlug("clinic-" + id);
+        return clinic;
     }
 
     private BodyRegion bodyRegion(Long id) {

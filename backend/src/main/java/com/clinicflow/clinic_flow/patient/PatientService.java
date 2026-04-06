@@ -2,7 +2,7 @@ package com.clinicflow.clinic_flow.patient;
 
 // **TODO implement entity graphs?
 
-import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
@@ -22,7 +22,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
     private final CurrentUserService currentUserService;
-    private final ClinicsRepository clinicsRepository;
+    private final ClinicContextService clinicContextService;
 
     public Page<PatientResponseDto> getPatients(Pageable pageable) {
         var clinicId = currentUserService.getCurrentClinicId();
@@ -69,8 +69,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponseDto createPatient (PatientRequestDto request) {
-        var clinicId = currentUserService.getCurrentClinicId();
-        var clinic = clinicsRepository.getReferenceById(clinicId);
+        var clinic = clinicContextService.requireWritableClinic();
 
         Patient patient = patientMapper.toPatient(request);
         String dpn = buildDisplayName(request.getFirstName(), request.getLastName());
@@ -83,6 +82,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponseDto updatePatient (Long id, PatientPatchDto request) {
+        clinicContextService.assertWritableClinic();
         var  clinicId = currentUserService.getCurrentClinicId();
         var patient = findByIdAndClinicIdOrElse(id, clinicId);
 
@@ -103,6 +103,7 @@ public class PatientService {
 
     @Transactional
     public void deletePatient (Long id) {
+        clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
         var patient = findByIdAndClinicIdOrElse(id, clinicId);
 

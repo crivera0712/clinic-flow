@@ -1,6 +1,9 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
 import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
 import com.clinicflow.clinic_flow.users.dtos.UserPatchDto;
@@ -38,6 +41,12 @@ class UsersServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private ClinicContextService clinicContextService;
+
     @InjectMocks
     private UsersService usersService;
 
@@ -49,7 +58,8 @@ class UsersServiceTest {
         UsersResponseDto firstResponse = response(1L, "sam", Users.RoleName.DISPLAY);
         UsersResponseDto secondResponse = response(2L, "alex", Users.RoleName.ADMIN);
 
-        when(usersRepository.findAll()).thenReturn(List.of(firstUser, secondUser));
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findAllByClinicId(4L)).thenReturn(List.of(firstUser, secondUser));
         when(usersMapper.toUsersResponseDto(firstUser)).thenReturn(firstResponse);
         when(usersMapper.toUsersResponseDto(secondUser)).thenReturn(secondResponse);
 
@@ -58,7 +68,7 @@ class UsersServiceTest {
 
         // Assert
         assertEquals(List.of(firstResponse, secondResponse), result);
-        verify(usersRepository).findAll();
+        verify(usersRepository).findAllByClinicId(4L);
         verify(usersMapper).toUsersResponseDto(firstUser);
         verify(usersMapper).toUsersResponseDto(secondUser);
     }
@@ -66,14 +76,15 @@ class UsersServiceTest {
     @Test
     void shouldReturnEmptyList_whenGetUsersFindsNoUsers() {
         // Arrange
-        when(usersRepository.findAll()).thenReturn(List.of());
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findAllByClinicId(4L)).thenReturn(List.of());
 
         // Act
         List<UsersResponseDto> result = usersService.getUsers();
 
         // Assert
         assertTrue(result.isEmpty());
-        verify(usersRepository).findAll();
+        verify(usersRepository).findAllByClinicId(4L);
         verify(usersMapper, never()).toUsersResponseDto(any(Users.class));
     }
 
@@ -83,7 +94,8 @@ class UsersServiceTest {
         Users user = user(5L, "sam", Users.RoleName.DISPLAY);
         UsersResponseDto response = response(5L, "sam", Users.RoleName.DISPLAY);
 
-        when(usersRepository.findById(5L)).thenReturn(Optional.of(user));
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findByIdAndClinicId(5L, 4L)).thenReturn(Optional.of(user));
         when(usersMapper.toUsersResponseDto(user)).thenReturn(response);
 
         // Act
@@ -91,14 +103,15 @@ class UsersServiceTest {
 
         // Assert
         assertSame(response, result);
-        verify(usersRepository).findById(5L);
+        verify(usersRepository).findByIdAndClinicId(5L, 4L);
         verify(usersMapper).toUsersResponseDto(user);
     }
 
     @Test
     void shouldThrowUserNotFoundException_whenGetUserByIdDoesNotFindUser() {
         // Arrange
-        when(usersRepository.findById(5L)).thenReturn(Optional.empty());
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findByIdAndClinicId(5L, 4L)).thenReturn(Optional.empty());
 
         // Act
         UserNotFoundException exception = assertThrows(UserNotFoundException.class,
@@ -106,7 +119,7 @@ class UsersServiceTest {
 
         // Assert
         assertEquals("User with id 5 not found", exception.getMessage());
-        verify(usersRepository).findById(5L);
+        verify(usersRepository).findByIdAndClinicId(5L, 4L);
         verify(usersMapper, never()).toUsersResponseDto(any(Users.class));
     }
 
@@ -117,8 +130,10 @@ class UsersServiceTest {
         Users mappedUser = user(null, "sam", null);
         Users savedUser = user(9L, "sam", Users.RoleName.DISPLAY);
         UsersResponseDto response = response(9L, "sam", Users.RoleName.DISPLAY);
+        Clinics clinic = clinic(4L);
 
-        when(usersRepository.findByUsername("sam")).thenReturn(Optional.empty());
+        when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
+        when(usersRepository.findByUsernameAndClinicId("sam", 4L)).thenReturn(Optional.empty());
         when(usersMapper.toEntity(request)).thenReturn(mappedUser);
         when(passwordEncoder.encode("secret1")).thenReturn("encoded-secret1");
         when(usersRepository.save(mappedUser)).thenReturn(savedUser);
@@ -132,7 +147,9 @@ class UsersServiceTest {
         assertEquals(Users.RoleName.DISPLAY, mappedUser.getRoleName());
         assertEquals("encoded-secret1", mappedUser.getPasswordHash());
         assertNotNull(mappedUser.getCreatedAt());
-        verify(usersRepository).findByUsername("sam");
+        assertSame(clinic, mappedUser.getClinic());
+        verify(clinicContextService).requireWritableClinic();
+        verify(usersRepository).findByUsernameAndClinicId("sam", 4L);
         verify(usersMapper).toEntity(request);
         verify(passwordEncoder).encode("secret1");
         verify(usersRepository).save(mappedUser);
@@ -143,8 +160,12 @@ class UsersServiceTest {
     void shouldThrowConflict_whenCreateUserFindsExistingUsername() {
         // Arrange
         CreateUserRequest request = createRequest("sam", "secret1", true, null);
+        Clinics clinic = clinic(4L);
+        Users existingUser = user(3L, "sam", Users.RoleName.DISPLAY);
+        existingUser.setClinic(clinic);
 
-        when(usersRepository.findByUsername("sam")).thenReturn(Optional.of(user(3L, "sam", Users.RoleName.DISPLAY)));
+        when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
+        when(usersRepository.findByUsernameAndClinicId("sam", 4L)).thenReturn(Optional.of(existingUser));
 
         // Act
         UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class,
@@ -152,8 +173,42 @@ class UsersServiceTest {
 
         // Assert
         assertEquals("Username sam already exists", exception.getMessage());
-        verify(usersRepository).findByUsername("sam");
+        verify(clinicContextService).requireWritableClinic();
+        verify(usersRepository).findByUsernameAndClinicId("sam", 4L);
         verify(usersMapper, never()).toEntity(any(CreateUserRequest.class));
+        verify(usersRepository, never()).save(any(Users.class));
+    }
+
+    @Test
+    void shouldAllowSameUsernameInDifferentClinic() {
+        CreateUserRequest request = createRequest("sam", "secret1", true, null);
+        Users mappedUser = user(null, "sam", null);
+        Users savedUser = user(10L, "sam", Users.RoleName.DISPLAY);
+        UsersResponseDto response = response(10L, "sam", Users.RoleName.DISPLAY);
+        Clinics clinic = clinic(9L);
+
+        when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
+        when(usersRepository.findByUsernameAndClinicId("sam", 9L)).thenReturn(Optional.empty());
+        when(usersMapper.toEntity(request)).thenReturn(mappedUser);
+        when(passwordEncoder.encode("secret1")).thenReturn("encoded-secret1");
+        when(usersRepository.save(mappedUser)).thenReturn(savedUser);
+        when(usersMapper.toUsersResponseDto(savedUser)).thenReturn(response);
+
+        UsersResponseDto result = usersService.createUser(request);
+
+        assertSame(response, result);
+        assertSame(clinic, mappedUser.getClinic());
+        verify(usersRepository).findByUsernameAndClinicId("sam", 9L);
+    }
+
+    @Test
+    void shouldRejectUserCreationInDemoClinic() {
+        CreateUserRequest request = createRequest("sam", "secret1", true, null);
+
+        when(clinicContextService.requireWritableClinic()).thenThrow(new DemoClinicReadOnlyException());
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> usersService.createUser(request));
+
         verify(usersRepository, never()).save(any(Users.class));
     }
 
@@ -164,7 +219,8 @@ class UsersServiceTest {
         UserPatchDto patch = patch(Users.RoleName.ADMIN);
         UsersResponseDto response = response(4L, "sam", Users.RoleName.ADMIN);
 
-        when(usersRepository.findById(4L)).thenReturn(Optional.of(user));
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findByIdAndClinicId(4L, 4L)).thenReturn(Optional.of(user));
         when(usersRepository.save(user)).thenReturn(user);
         when(usersMapper.toUsersResponseDto(user)).thenReturn(response);
 
@@ -174,7 +230,7 @@ class UsersServiceTest {
         // Assert
         assertSame(response, result);
         assertEquals(Users.RoleName.ADMIN, user.getRoleName());
-        verify(usersRepository).findById(4L);
+        verify(usersRepository).findByIdAndClinicId(4L, 4L);
         verify(usersRepository).save(user);
         verify(usersMapper).toUsersResponseDto(user);
     }
@@ -183,7 +239,8 @@ class UsersServiceTest {
     void shouldThrowUserNotFoundException_whenUpdateUserDoesNotFindUser() {
         // Arrange
         UserPatchDto patch = patch(Users.RoleName.ADMIN);
-        when(usersRepository.findById(4L)).thenReturn(Optional.empty());
+        when(currentUserService.getCurrentClinicId()).thenReturn(4L);
+        when(usersRepository.findByIdAndClinicId(4L, 4L)).thenReturn(Optional.empty());
 
         // Act
         UserNotFoundException exception = assertThrows(UserNotFoundException.class,
@@ -191,7 +248,7 @@ class UsersServiceTest {
 
         // Assert
         assertEquals("User with id 4 not found", exception.getMessage());
-        verify(usersRepository).findById(4L);
+        verify(usersRepository).findByIdAndClinicId(4L, 4L);
         verify(usersRepository, never()).save(any(Users.class));
     }
 
@@ -226,5 +283,12 @@ class UsersServiceTest {
         response.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
         response.setRoleName(role);
         return response;
+    }
+
+    private Clinics clinic(Long id) {
+        Clinics clinic = new Clinics();
+        clinic.setId(id);
+        clinic.setSlug("clinic-" + id);
+        return clinic;
     }
 }
