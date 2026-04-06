@@ -1,3 +1,4 @@
+import Alert from "@mui/material/Alert";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -89,6 +90,14 @@ function ScheduleShell() {
             <Typography sx={{ color: "#94a3b8" }}>
               Use the admin panel to manage appointments, body regions, patients, and therapists.
             </Typography>
+          </Box>
+        )}
+
+        {currentUser?.isDemo && (
+          <Box sx={{ mx: 2, mt: 2 }}>
+            <Alert severity="warning" variant="filled" sx={{ borderRadius: 3 }}>
+              Demo Mode: this clinic uses read-only sample data. Editing is disabled.
+            </Alert>
           </Box>
         )}
 

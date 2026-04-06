@@ -3,6 +3,7 @@ package com.clinicflow.clinic_flow.body_region;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionPatchDto;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionRequestDto;
 import com.clinicflow.clinic_flow.body_region.dtos.BodyRegionResponseDto;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.BodyRegionNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class BodyRegionService {
     private final BodyRegionRepository bodyRegionRepository;
     private final BodyRegionMapper bodyRegionMapper;
+    private final ClinicContextService clinicContextService;
 
 
     public Page<BodyRegionResponseDto> getBodyRegions(String search, Pageable pageable){
@@ -39,6 +41,7 @@ public class BodyRegionService {
 
     @Transactional
     public BodyRegionResponseDto createBodyRegion(BodyRegionRequestDto bodyRegionRequestDto){
+        clinicContextService.assertWritableClinic();
         BodyRegion bodyRegion = bodyRegionMapper.toBodyRegion(bodyRegionRequestDto);
         var result = bodyRegionRepository.save(bodyRegion);
         return bodyRegionMapper.toBodyRegionResponseDto(result);
@@ -46,6 +49,7 @@ public class BodyRegionService {
 
     @Transactional
     public BodyRegionResponseDto updateBodyRegion(Long id, BodyRegionPatchDto patch){
+        clinicContextService.assertWritableClinic();
         var patchBr = bodyRegionRepository.findById(id).orElseThrow( () ->
                 new BodyRegionNotFoundException(id));
 
@@ -65,6 +69,7 @@ public class BodyRegionService {
 
     @Transactional
     public void deleteBodyRegion(Long id) {
+        clinicContextService.assertWritableClinic();
         var bodyRegion = bodyRegionRepository.findById(id).orElseThrow(() ->
                 new BodyRegionNotFoundException(id));
         bodyRegionRepository.delete(bodyRegion);

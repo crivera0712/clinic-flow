@@ -13,6 +13,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { createTherapist, listTherapists, removeTherapist, updateTherapist } from "../../services/therapistService";
@@ -23,6 +24,8 @@ type DialogState = { mode: "create"; record: null } | { mode: "edit"; record: Th
 type SnackbarState = { open: boolean; severity: "success" | "error"; message: string };
 
 export function TherapistsPage() {
+  const { currentUser } = useAuth();
+  const isDemo = currentUser?.isDemo === true;
   const [rows, setRows] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +61,9 @@ export function TherapistsPage() {
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
-    return rows.filter((row) => [row.therapistName, row.type].some((value) => value.toLowerCase().includes(search)));
+    return rows.filter((row) =>
+      [row.therapistName, row.type].some((value) => String(value ?? "").toLowerCase().includes(search)),
+    );
   }, [rows, search]);
 
   async function handleSubmit(payload: TherapistCreateRequest | TherapistUpdateRequest) {
@@ -107,8 +112,8 @@ export function TherapistsPage() {
     {
       field: "actions", headerName: "Actions", flex: 0.8, minWidth: 140, sortable: false, filterable: false, renderCell: (params: GridRenderCellParams<Therapist>) => (
         <Stack direction="row" spacing={0.5}>
-          <IconButton color="primary" onClick={() => { setDialogError(null); setDialogState({ mode: "edit", record: params.row }); }}><EditOutlinedIcon fontSize="small" /></IconButton>
-          <IconButton color="error" onClick={() => { setDeleteError(null); setDeleteTarget(params.row); }}><DeleteOutlineIcon fontSize="small" /></IconButton>
+          <IconButton color="primary" disabled={isDemo} onClick={() => { setDialogError(null); setDialogState({ mode: "edit", record: params.row }); }}><EditOutlinedIcon fontSize="small" /></IconButton>
+          <IconButton color="error" disabled={isDemo} onClick={() => { setDeleteError(null); setDeleteTarget(params.row); }}><DeleteOutlineIcon fontSize="small" /></IconButton>
         </Stack>
       ),
     },
@@ -122,14 +127,27 @@ export function TherapistsPage() {
             <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>Therapists</Typography>
             <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>Manage therapist names and role types.</Typography>
           </Box>
-          <Button variant="contained" onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Therapist</Button>
+          <Button variant="contained" disabled={isDemo} onClick={() => { setDialogError(null); setDialogState({ mode: "create", record: null }); }}>Add Therapist</Button>
         </Stack>
         <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
           <Stack spacing={2}>
             <TextField value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search by therapist name or type" fullWidth sx={{ maxWidth: 420, ...adminTextFieldSx }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
             {error && <Alert severity="error">{error}</Alert>}
             <Box sx={{ height: 620 }}>
-              <DataGrid rows={filteredRows} columns={columns} loading={loading} pagination paginationMode="client" rowCount={filteredRows.length} paginationModel={paginationModel} onPaginationModelChange={setPaginationModel} pageSizeOptions={[5, 10, 20, 50]} disableRowSelectionOnClick sx={adminDataGridSx} />
+              <DataGrid
+                rows={filteredRows}
+                getRowId={(row) => row.id}
+                columns={columns}
+                loading={loading}
+                pagination
+                paginationMode="client"
+                rowCount={filteredRows.length}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                pageSizeOptions={[5, 10, 20, 50]}
+                disableRowSelectionOnClick
+                sx={adminDataGridSx}
+              />
             </Box>
           </Stack>
         </Paper>

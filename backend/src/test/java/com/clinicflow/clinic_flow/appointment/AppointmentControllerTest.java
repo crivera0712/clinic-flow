@@ -6,6 +6,9 @@ import com.clinicflow.clinic_flow.patient.PatientService;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
 import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
+import com.clinicflow.clinic_flow.exception.AppointmentNotFoundException;
+import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -146,6 +149,16 @@ class AppointmentControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenAppointmentBelongsToAnotherClinic() throws Exception {
+        when(appointmentService.getAppointmentById(5L))
+                .thenThrow(new AppointmentNotFoundException("Appointment not found for this clinic"));
+
+        mockMvc.perform(get("/api/appointments/5"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Appointment not found for this clinic"));
+    }
+
+    @Test
     void shouldReturnAppointmentsForDate_whenGetAppointmentsByDateReceivesDateParam() throws Exception {
         // Arrange
         LocalDate date = LocalDate.of(2026, 2, 13);
@@ -232,6 +245,26 @@ class AppointmentControllerTest {
     }
 
     @Test
+    void shouldReturnForbidden_whenPostAppointmentRunsInDemoClinic() throws Exception {
+        String json = """
+                {
+                  "scheduledAt": "2026-02-13T09:00:00",
+                  "status": "SCHEDULED",
+                  "type": "EVALUATION",
+                  "therapistId": 3,
+                  "caseId": 4
+                }
+                """;
+        when(appointmentService.createAppointment(any())).thenThrow(new DemoClinicReadOnlyException());
+
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Demo clinic is read-only"));
+    }
+
+    @Test
     void shouldReturnBadRequest_whenPostAppointmentReceivesMalformedJson() throws Exception {
         // Arrange
         String malformedJson = """
@@ -298,6 +331,26 @@ class AppointmentControllerTest {
         // Assert
         response.andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPostAppointmentUsesForeignClinicCase() throws Exception {
+        String json = """
+                {
+                  "scheduledAt": "2026-02-13T09:00:00",
+                  "status": "SCHEDULED",
+                  "type": "EVALUATION",
+                  "therapistId": 3,
+                  "caseId": 4
+                }
+                """;
+        when(appointmentService.createAppointment(any())).thenThrow(new CaseNotFoundException(4L));
+
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Could not find case by id 4"));
     }
 
     @Test

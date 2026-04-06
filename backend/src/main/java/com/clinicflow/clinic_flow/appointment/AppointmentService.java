@@ -2,13 +2,12 @@ package com.clinicflow.clinic_flow.appointment;
 
 import com.clinicflow.clinic_flow.appointment.dtos.*;
 import com.clinicflow.clinic_flow.cases.Case;
-import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.*;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.cases.CaseRepository;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
-import com.clinicflow.clinic_flow.users.CurrentUserServiceImpl;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,7 +30,7 @@ public class AppointmentService {
     private final CaseRepository caseRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final CurrentUserService currentUserService;
-    private final ClinicsRepository clinicsRepository;
+    private final ClinicContextService clinicContextService;
 
     public Page<AppointmentResponseDto> getAllAppointments(
             Pageable pageable, LocalDate date, Long caseId
@@ -45,11 +44,11 @@ public class AppointmentService {
         } else if (date == null) {
             result = appointmentRepository.findAllByClinicId(clinicId, pageable);
         } else {
-            result = appointmentRepository.findByScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+            result = appointmentRepository.findByClinicIdAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                    clinicId,
                     date.atStartOfDay(),
                     date.plusDays(1).atStartOfDay(),
-                    pageable,
-                    clinicId
+                    pageable
             );
         }
         return result
@@ -65,8 +64,8 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
 
-        var clinicId = currentUserService.getCurrentClinicId();
-        var clinic = clinicsRepository.getReferenceById(clinicId);
+        var clinic = clinicContextService.requireWritableClinic();
+        var clinicId = clinic.getId();
 
         Optional<Appointment> apptCheck =
                 appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(
@@ -107,6 +106,7 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto updateAppointmentById(Long id, AppointmentPatchDto request) {
+        clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
 
         var appointment = findAppointmentOrThrow(id, clinicId);
@@ -136,6 +136,7 @@ public class AppointmentService {
     }
 
     public void deleteAppointmentById(Long id){
+        clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
         var appointment = findAppointmentOrThrow(id, clinicId);
 

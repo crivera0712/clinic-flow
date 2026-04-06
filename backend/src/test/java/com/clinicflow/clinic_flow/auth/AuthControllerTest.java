@@ -27,6 +27,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -79,7 +80,7 @@ class AuthControllerTest {
         when(jwtConfig.isCookieSecure()).thenReturn(true);
         when(authService.login(any(LoginRequest.class))).thenReturn(new LoginResult(accessToken, refreshToken));
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/auth/demo-clinic/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -90,7 +91,11 @@ class AuthControllerTest {
                 .andExpect(cookie().path("refreshToken", "/api/auth/refresh"))
                 .andExpect(cookie().maxAge("refreshToken", 3600));
 
-        verify(authService).login(any(LoginRequest.class));
+        verify(authService).login(argThat(loginRequest ->
+                "sam".equals(loginRequest.getUsername())
+                        && "secret1".equals(loginRequest.getPassword())
+                        && "demo-clinic".equals(loginRequest.getSlug())
+        ));
     }
 
     @Test
@@ -102,7 +107,7 @@ class AuthControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/auth/demo-clinic/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
@@ -119,7 +124,7 @@ class AuthControllerTest {
 
         when(authService.login(any(LoginRequest.class))).thenThrow(new BadCredentialsException("Bad credentials"));
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/auth/demo-clinic/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -129,7 +134,7 @@ class AuthControllerTest {
     void shouldLogout_whenAuthenticatedUserExists() throws Exception {
         when(jwtConfig.isCookieSecure()).thenReturn(false);
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(new AuthPrincipal(7L, "session-123"), null, List.of())
+                new UsernamePasswordAuthenticationToken(new AuthPrincipal(7L, "sam", "session-123", 2L), null, List.of())
         );
 
         mockMvc.perform(post("/api/auth/logout"))
@@ -140,7 +145,7 @@ class AuthControllerTest {
                 .andExpect(cookie().path("refreshToken", "/api/auth/refresh"))
                 .andExpect(cookie().maxAge("refreshToken", 0));
 
-        verify(authService).logout("session-123");
+        verify(authService).logout("session-123", 2L);
     }
 
     @Test
@@ -199,13 +204,13 @@ class AuthControllerTest {
 
     @Test
     void shouldReturnValidationResult_whenValidateEndpointIsCalled() throws Exception {
-        when(authService.validateToken("Bearer access-token")).thenReturn(true);
+        when(authService.validateToken("access-token")).thenReturn(true);
 
         mockMvc.perform(post("/api/auth/validate").header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));
 
-        verify(authService).validateToken("Bearer access-token");
+        verify(authService).validateToken("access-token");
     }
 
     @Test
@@ -214,6 +219,7 @@ class AuthControllerTest {
         response.setId(11L);
         response.setUsername("sam");
         response.setRoleName(Users.RoleName.ADMIN);
+        response.setIsDemo(true);
 
         when(authService.me()).thenReturn(response);
 
@@ -221,7 +227,8 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(11L))
                 .andExpect(jsonPath("$.username").value("sam"))
-                .andExpect(jsonPath("$.roleName").value("ADMIN"));
+                .andExpect(jsonPath("$.roleName").value("ADMIN"))
+                .andExpect(jsonPath("$.isDemo").value(true));
     }
 
     @Test

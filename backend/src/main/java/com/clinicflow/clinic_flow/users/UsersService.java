@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
 import com.clinicflow.clinic_flow.users.dtos.*;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
@@ -24,24 +25,30 @@ public class UsersService implements UserDetailsService {
     private final UsersRepository usersRepository;
     private final UsersMapper usersMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUserService currentUserService;
+    private final ClinicContextService clinicContextService;
 
 
     public List<UsersResponseDto> getUsers(){
-        return usersRepository.findAll()
+        var clinicId = currentUserService.getCurrentClinicId();
+        return usersRepository.findAllByClinicId(clinicId)
                 .stream()
                 .map(usersMapper::toUsersResponseDto)
                 .toList();
     }
 
     public UsersResponseDto getUserById(Long id){
+        var clinicId = currentUserService.getCurrentClinicId();
         return usersMapper.toUsersResponseDto(
-                usersRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id))
+                usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new UserNotFoundException(id))
         );
     }
 
     @Transactional
     public UsersResponseDto createUser(@NonNull CreateUserRequest request){
-        Optional<Users> userCheck = usersRepository.findByUsername(request.getUsername());
+        var clinic = clinicContextService.requireWritableClinic();
+        var clinicId = clinic.getId();
+        Optional<Users> userCheck = usersRepository.findByUsernameAndClinicId(request.getUsername(), clinicId);
         if (userCheck.isPresent()) {
             throw new UserAlreadyExistsException(request.getUsername());
         }
@@ -52,6 +59,7 @@ public class UsersService implements UserDetailsService {
         user.setCreatedAt(LocalDateTime.now());
         user.setRoleName(Users.RoleName.DISPLAY);
         user.setEnabled(Boolean.TRUE);
+        user.setClinic(clinic);
 
         var newUser = usersRepository.save(user);
 
@@ -60,8 +68,9 @@ public class UsersService implements UserDetailsService {
 
     @Transactional
     public UsersResponseDto updateUser(Long id, @NonNull UserPatchDto patch) {
-        var user = usersRepository.findById(id).orElseThrow( () ->
-        new UserNotFoundException(id));
+        var clinicId = currentUserService.getCurrentClinicId();
+        var user = usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() ->
+                new UserNotFoundException(id));
 
         user.setRoleName(patch.getRoleName());
 
@@ -71,7 +80,7 @@ public class UsersService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user =  usersRepository.findByUsername(username).orElseThrow( () ->
+        var user = usersRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException(username));
 
         return new User(
