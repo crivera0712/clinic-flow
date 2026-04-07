@@ -50,6 +50,16 @@ function getStatusChipColor(status: AppointmentStatusValue): "default" | "info" 
   }
 }
 
+function getStatusChipSx(status: AppointmentStatusValue) {
+  if (status !== "SCHEDULED") return undefined;
+  return {
+    color: adminColors.textStrong,
+    borderColor: "rgba(148, 163, 184, 0.4)",
+    backgroundColor: "rgba(148, 163, 184, 0.12)",
+    fontWeight: 600,
+  };
+}
+
 export function AppointmentsPage() {
   const { currentUser } = useAuth();
   const isDemo = currentUser?.isDemo === true;
@@ -215,7 +225,13 @@ export function AppointmentsPage() {
     { field: "type", headerName: "Type", flex: 0.8, minWidth: 160, valueFormatter: (value) => formatEnumLabel(String(value)) },
     {
       field: "status", headerName: "Status", flex: 0.8, minWidth: 160, renderCell: (params: GridRenderCellParams<AppointmentRecord, AppointmentStatusValue>) => (
-        <Chip label={formatEnumLabel(params.value ?? "SCHEDULED")} color={getStatusChipColor(params.value ?? "SCHEDULED")} size="small" variant={params.value === "SCHEDULED" ? "outlined" : "filled"} />
+        <Chip
+          label={formatEnumLabel(params.value ?? "SCHEDULED")}
+          color={getStatusChipColor(params.value ?? "SCHEDULED")}
+          size="small"
+          variant={params.value === "SCHEDULED" ? "outlined" : "filled"}
+          sx={getStatusChipSx(params.value ?? "SCHEDULED")}
+        />
       ),
     },
     {

@@ -1,4 +1,5 @@
 import type { SxProps, Theme } from "@mui/material/styles";
+import type { TextFieldProps } from "@mui/material/TextField";
 
 export const adminColors = {
   pageBg: "#020617",
@@ -28,9 +29,18 @@ export const adminTextFieldSx: SxProps<Theme> = {
   "& .MuiInputBase-input": {
     color: adminColors.textStrong,
   },
+  "& .MuiSelect-select": {
+    color: adminColors.textStrong,
+  },
   "& .MuiInputBase-input::placeholder": {
     color: adminColors.textMuted,
     opacity: 1,
+  },
+  "& .MuiFormHelperText-root": {
+    color: adminColors.textSecondary,
+  },
+  "& .MuiFormHelperText-root.Mui-error": {
+    color: "#fca5a5",
   },
   "& .MuiSvgIcon-root": {
     color: adminColors.textSecondary,
@@ -47,12 +57,47 @@ export const adminTextFieldSx: SxProps<Theme> = {
     "&.Mui-focused fieldset": {
       borderColor: adminColors.accent,
     },
+    "&.Mui-disabled": {
+      color: adminColors.textSecondary,
+      backgroundColor: "rgba(15, 23, 42, 0.3)",
+    },
+    "&.Mui-disabled .MuiInputBase-input": {
+      WebkitTextFillColor: adminColors.textSecondary,
+    },
+    "&.Mui-disabled .MuiSelect-select": {
+      WebkitTextFillColor: adminColors.textSecondary,
+    },
   },
   "& .MuiOutlinedInput-input:-webkit-autofill": {
     WebkitBoxShadow: "0 0 0 100px rgba(15, 23, 42, 0.45) inset",
     WebkitTextFillColor: adminColors.textStrong,
     caretColor: adminColors.textStrong,
     borderRadius: "inherit",
+  },
+};
+
+export const adminSelectProps: TextFieldProps["SelectProps"] = {
+  MenuProps: {
+    PaperProps: {
+      sx: {
+        backgroundColor: adminColors.panelElevated,
+        color: adminColors.textStrong,
+        border: `1px solid ${adminColors.border}`,
+        backgroundImage: "none",
+        "& .MuiMenuItem-root": {
+          color: adminColors.textStrong,
+        },
+        "& .MuiMenuItem-root:hover": {
+          backgroundColor: "rgba(56, 189, 248, 0.12)",
+        },
+        "& .MuiMenuItem-root.Mui-selected": {
+          backgroundColor: "rgba(56, 189, 248, 0.18)",
+        },
+        "& .MuiMenuItem-root.Mui-selected:hover": {
+          backgroundColor: "rgba(56, 189, 248, 0.24)",
+        },
+      },
+    },
   },
 };
 

@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import { adminColors, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { adminColors, adminSelectProps, adminTextFieldSx } from "../../components/admin/adminStyles";
 import type {
   AppointmentCreateRequest,
   AppointmentRecord,
@@ -97,24 +97,24 @@ export function AppointmentDialog({
           {fixedPatient ? (
             <TextField label="Patient" value={fixedPatient.displayName} fullWidth disabled helperText="Patient is locked to the selected case." sx={adminTextFieldSx} />
           ) : (
-            <TextField select label="Patient" value={patientId} onChange={(e) => handlePatientSelection(e.target.value)} required fullWidth sx={adminTextFieldSx}>
+            <TextField select label="Patient" value={patientId} onChange={(e) => handlePatientSelection(e.target.value)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
               {patients.map((patient) => <MenuItem key={patient.id} value={String(patient.id)}>{patient.displayName}</MenuItem>)}
             </TextField>
           )}
           {fixedCase ? (
             <TextField label="Case" value={`Case #${fixedCase.id}`} fullWidth disabled helperText={caseHelperText ?? "Case is locked to the selected case."} sx={adminTextFieldSx} />
           ) : (
-            <TextField select label="Case" value={caseId} onChange={(e) => setCaseId(e.target.value)} required fullWidth disabled={!patientId || caseOptionsLoading} helperText={caseHelperText} sx={adminTextFieldSx}>
+            <TextField select label="Case" value={caseId} onChange={(e) => setCaseId(e.target.value)} required fullWidth disabled={!patientId || caseOptionsLoading} helperText={caseHelperText} sx={adminTextFieldSx} SelectProps={adminSelectProps}>
               {caseOptions.map((option) => <MenuItem key={option.value} value={String(option.value)}>{option.label}</MenuItem>)}
             </TextField>
           )}
-          <TextField select label="Therapist" value={therapistId} onChange={(e) => setTherapistId(e.target.value)} required fullWidth sx={adminTextFieldSx}>
+          <TextField select label="Therapist" value={therapistId} onChange={(e) => setTherapistId(e.target.value)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
             {therapistOptions.map((option) => <MenuItem key={option.value} value={String(option.value)}>{option.label}</MenuItem>)}
           </TextField>
-          <TextField select label="Type" value={type} onChange={(e) => setType(e.target.value as AppointmentTypeValue)} required fullWidth sx={adminTextFieldSx}>
+          <TextField select label="Type" value={type} onChange={(e) => setType(e.target.value as AppointmentTypeValue)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
             {appointmentTypeOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
-          <TextField select label="Status" value={status} onChange={(e) => setStatus(e.target.value as AppointmentStatusValue)} required fullWidth disabled={mode === "create"} helperText={mode === "create" ? "New appointments are created as Scheduled." : undefined} sx={adminTextFieldSx}>
+          <TextField select label="Status" value={status} onChange={(e) => setStatus(e.target.value as AppointmentStatusValue)} required fullWidth disabled={mode === "create"} helperText={mode === "create" ? "New appointments are created as Scheduled." : undefined} sx={adminTextFieldSx} SelectProps={adminSelectProps}>
             {appointmentStatusOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
           <DialogActions sx={{ px: 0, pb: 0 }}>

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,20 +68,14 @@ public class AppointmentService {
         var clinic = clinicContextService.requireWritableClinic();
         var clinicId = clinic.getId();
 
-        Optional<Appointment> apptCheck =
-                appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(
-                        request.getScheduledAt(), clinicId, request.getTherapistId()
-                );
+        Therapist therapist = findTherapistOrThrow(request.getTherapistId(), clinicId);
+        Case ptCase =  findCaseOrThrow(request.getCaseId(), clinicId);
 
-        if (apptCheck.isPresent()) {
+        if (hasAppointmentConflict(clinicId, ptCase.getPatient().getId(), request.getScheduledAt(), therapist.getId())) {
             throw new AppointmentAtTimeExistsException(request.getScheduledAt());
         }
 
         Appointment appointment = appointmentMapper.requestToAppointmentEntityDto(request);
-
-        Therapist therapist = findTherapistOrThrow(request.getTherapistId(), clinicId);
-
-        Case ptCase =  findCaseOrThrow(request.getCaseId(), clinicId);
 
         appointment.setStatus(Appointment.Status.SCHEDULED);
         appointment.setTherapist(therapist);
@@ -149,9 +144,9 @@ public class AppointmentService {
             AppointmentPatchDto request,
             Long clinicId
     ) {
-
         var therapist = appointment.getTherapist();
         var scheduledAt = appointment.getScheduledAt();
+        var ptCase = appointment.getPtCase();
 
         if (request.getTherapistId() != null) {
             therapist = findTherapistOrThrow(request.getTherapistId(), clinicId);
@@ -161,21 +156,19 @@ public class AppointmentService {
             scheduledAt = request.getScheduledAt();
         }
 
-        if (request.getTherapistId() != null || request.getScheduledAt() != null) {
+        if (request.getCaseId() != null) {
+            ptCase = findCaseOrThrow(request.getCaseId(), clinicId);
+        }
 
-            var apptCheck = appointmentRepository
-                    .findByScheduledAtAndClinicIdAndTherapistId(
-                            scheduledAt,
-                            clinicId,
-                            therapist.getId()
-                    );
-
-            if (apptCheck.isPresent()) {
-                var existing = apptCheck.get();
-
-                if (!existing.getId().equals(appointment.getId())) {
-                    throw new AppointmentAtTimeExistsException(scheduledAt);
-                }
+        if (request.getTherapistId() != null || request.getScheduledAt() != null || request.getCaseId() != null) {
+            if (hasAppointmentConflictExcludingCurrent(
+                    clinicId,
+                    ptCase.getPatient().getId(),
+                    scheduledAt,
+                    therapist.getId(),
+                    appointment.getId()
+            )) {
+                throw new AppointmentAtTimeExistsException(scheduledAt);
             }
         }
 
@@ -201,4 +194,41 @@ public class AppointmentService {
         );
     }
 
+    private boolean hasAppointmentConflict(Long clinicId, Long patientId, LocalDateTime scheduledAt, Long therapistId) {
+        var apptCheck = appointmentRepository
+                .findByScheduledAtAndClinicIdAndTherapistId(
+                        scheduledAt,
+                        clinicId,
+                        therapistId
+                );
+        if (apptCheck.isPresent()) {
+            return true;
+        }
+        return appointmentRepository.existsPatientAppointmentConflict(clinicId, patientId, scheduledAt);
+    }
+
+    private boolean hasAppointmentConflictExcludingCurrent(
+            Long clinicId,
+            Long patientId,
+            LocalDateTime scheduledAt,
+            Long therapistId,
+            Long appointmentId
+    ) {
+        var apptCheck = appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(
+                scheduledAt,
+                clinicId,
+                therapistId
+        );
+
+        if (apptCheck.isPresent() && !apptCheck.get().getId().equals(appointmentId)) {
+            return true;
+        }
+
+        return appointmentRepository.existsPatientAppointmentConflictExcludingAppointment(
+                clinicId,
+                patientId,
+                scheduledAt,
+                appointmentId
+        );
+    }
 }

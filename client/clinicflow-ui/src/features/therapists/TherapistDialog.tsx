@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import { adminColors, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { adminColors, adminSelectProps, adminTextFieldSx } from "../../components/admin/adminStyles";
 import type { Therapist, TherapistCreateRequest, TherapistTypeValue, TherapistUpdateRequest } from "../../types/admin";
 import { therapistTypeOptions } from "../../types/admin";
 
@@ -46,7 +46,7 @@ export function TherapistDialog({ open, mode, initialValue, submitting = false, 
         <Stack component="form" spacing={2.5} sx={{ pt: 1 }} onSubmit={handleSubmit}>
           {error && <Alert severity="error">{error}</Alert>}
           <TextField label="Therapist Name" value={therapistName} onChange={(e) => setTherapistName(e.target.value)} required fullWidth autoFocus sx={adminTextFieldSx} />
-          <TextField select label="Therapist Type" value={type} onChange={(e) => setType(e.target.value as TherapistTypeValue)} required fullWidth sx={adminTextFieldSx}>
+          <TextField select label="Therapist Type" value={type} onChange={(e) => setType(e.target.value as TherapistTypeValue)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
             {therapistTypeOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
           </TextField>
           <DialogActions sx={{ px: 0, pb: 0 }}>
