@@ -52,11 +52,9 @@ public class AuthService {
             log.warn("Login failed for user {}", user.getUsername());
             throw new BadCredentialsException("Bad credentials");
         }
-        var tokens = issueTokenPair(user);
-        var sid = tokens.accessToken().getSid();
 
         log.info("Login success for user={} clinicId={}", user.getUsername(),  clinicId);
-        return tokens;
+        return issueTokenPair(user);
     }
 
     @Transactional
