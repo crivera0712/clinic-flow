@@ -1,0 +1,9 @@
+.git
+.idea
+target
+logs
+.DS_Store
+*.iml
+.env
+.env.*
+src/main/resources/.env

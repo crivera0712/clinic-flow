@@ -1,0 +1,4 @@
+ALTER TABLE body_regions
+    ALTER COLUMN is_active TYPE BOOLEAN USING is_active::BOOLEAN,
+    ALTER COLUMN is_active SET DEFAULT FALSE,
+    ALTER COLUMN is_active SET NOT NULL;
