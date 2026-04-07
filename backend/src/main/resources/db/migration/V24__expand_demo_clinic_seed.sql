@@ -46,7 +46,7 @@ seed_therapists (therapist_name, therapist_type) AS (
         ('Helena Harper', 'PHYSICAL_THERAPY_ASSISTANT')
 )
 INSERT INTO therapists (therapist_name, therapist_type, clinic_id)
-SELECT st.therapist_name, st.therapist_type::therapist_type_enum, dc.clinic_id
+SELECT st.therapist_name, st.therapist_type, dc.clinic_id
 FROM demo_clinic dc
 CROSS JOIN seed_therapists st
 WHERE NOT EXISTS (
