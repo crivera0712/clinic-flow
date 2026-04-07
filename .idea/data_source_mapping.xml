@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="DataSourcePerFileMappings">
-    <file url="file://$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/AppointmentRepository.java" value="494a8dfb-40aa-489a-8744-00a5604b3bfe" />
-    <file url="file://$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/cases/CaseRepository.java" value="494a8dfb-40aa-489a-8744-00a5604b3bfe" />
-    <file url="file://$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/patient/PatientRepository.java" value="494a8dfb-40aa-489a-8744-00a5604b3bfe" />
-    <file url="file://$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/therapist/TherapistRepository.java" value="494a8dfb-40aa-489a-8744-00a5604b3bfe" />
-  </component>
-</project>
