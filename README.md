@@ -120,29 +120,7 @@ export DB_URL=jdbc:postgresql://localhost:5432/clinicflow
 export DB_USER=postgres
 export DB_PASSWORD=postgres
 export JWT_SECRET=change-me-to-a-long-random-secret
-```
 
-### Run the Backend
-
-```bash
-git clone <repo-url>
-cd clinic-flow/backend
-./mvnw flyway:migrate
-./mvnw spring-boot:run
-```
-
-Backend URL:
-
-```text
-http://localhost:8080
-```
-
-### Optional: Run the Frontend
-
-```bash
-cd client/clinicflow-ui
-npm install
-npm run dev
 ```
 
 ## API Overview
