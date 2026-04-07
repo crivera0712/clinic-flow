@@ -159,7 +159,7 @@ export function AdminLayout() {
         <Toolbar sx={{ minHeight: 80 }} />
         {currentUser?.isDemo && (
           <Alert severity="warning" variant="filled" sx={{ mb: 3, borderRadius: 3 }}>
-            Demo Mode: this admin workspace is read-only. Recruiter sample data cannot be changed.
+            Demo Mode: this admin workspace is read-only.
           </Alert>
         )}
         <Outlet />

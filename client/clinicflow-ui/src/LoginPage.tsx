@@ -100,7 +100,7 @@ export default function LoginPage() {
             </Typography>
             <Typography sx={{ mt: 1, color: "#94a3b8" }}>
               {isDemoClinic
-                ? "Sign in to the recruiter demo to browse curated, read-only sample data."
+                ? "Sign in to explore the demo workspace and read-only sample data."
                 : "Authenticate with your clinic account to access the live schedule."}
             </Typography>
             <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>

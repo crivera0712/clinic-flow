@@ -11,6 +11,21 @@ This repo includes:
 - `backend/` - Spring Boot API
 - `client/clinicflow-ui/` - React/Vite client
 
+## Deployment
+
+Current demo deployment:
+
+- Live demo : [https://clinic-flow-4hei.onrender.com](https://clinic-flow-4hei.onrender.com)
+- EC2 runs PostgreSQL and the backend Docker container
+- Caddy terminates TLS for `clinic-flow-api.duckdns.org`
+- Render hosts the frontend static site
+
+### Demo Sandbox
+
+- Seeded users: `demo_admin` and `demo_display`
+- The demo clinic is read-only after login, so seeded records can be explored safely without allowing writes
+
+
 ## Design Goals
 
 - Keep clinic data isolated by tenant
@@ -80,13 +95,6 @@ Core tables:
 - `auth_sessions`
 
 Flyway migrations live in `backend/src/main/resources/db/migration`.
-
-### Demo Sandbox
-
-- Clinic slug: `demo`
-- Seeded users: `demo_admin` and `demo_display`
-- The demo clinic is read-only after login, so seeded records can be explored safely without allowing writes
-- Seeded records use a Resident Evil protagonist/support cast across patients, therapists, cases, and appointments
 
 ## Multi-Clinic Tenancy
 
@@ -184,10 +192,4 @@ Run tests:
 ```bash
 cd backend
 ./mvnw test
-```
-
-Create new Flyway migrations in:
-
-```text
-backend/src/main/resources/db/migration
 ```
