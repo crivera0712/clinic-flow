@@ -184,6 +184,13 @@ V0__add_new_table.sql
 
 Notable migrations in this repository add clinic tenancy, user accounts, auth sessions, and demo seed data.
 
+### Demo Sandbox
+
+- Clinic slug: `demo`
+- Seeded users: `demo_admin` and `demo_display`
+- The demo clinic is read-only after login, so seeded records can be explored safely without allowing writes
+- Seeded records use a Resident Evil protagonist/support cast across patients, therapists, cases, and appointments
+
 ## Multi-Clinic Tenancy
 
 Tenant isolation is enforced explicitly in the data model and application layer.
