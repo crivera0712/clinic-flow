@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: clinic-flow
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  logging:
+    file:
+      name: logs/cliniflow.log
+    level:
+      root: INFO
+      com.clinicflow: DEBUG
+      org.springframework.web: DEBUG
+      com.fasterxml.jackson: DEBUG
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: 900 # 5 mins
+    refreshTokenExpiration: 604800 # 7 days
+    cookieSecure: false
+
+
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
