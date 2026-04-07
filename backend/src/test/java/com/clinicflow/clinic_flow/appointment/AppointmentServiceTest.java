@@ -13,6 +13,7 @@ import com.clinicflow.clinic_flow.exception.AppointmentAtTimeExistsException;
 import com.clinicflow.clinic_flow.exception.AppointmentNotFoundException;
 import com.clinicflow.clinic_flow.exception.CaseNotFoundException;
 import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
+import com.clinicflow.clinic_flow.patient.Patient;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
@@ -155,10 +156,11 @@ class AppointmentServiceTest {
         Clinics clinic = clinic(7L);
 
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, 7L, 3L)).thenReturn(Optional.empty());
         when(appointmentMapper.requestToAppointmentEntityDto(request)).thenReturn(mappedAppointment);
         when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.of(therapist));
         when(caseRepository.findByIdAndClinicId(4L, 7L)).thenReturn(Optional.of(ptCase));
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, 7L, 3L)).thenReturn(Optional.empty());
+        when(appointmentRepository.existsPatientAppointmentConflict(7L, 104L, scheduledAt)).thenReturn(false);
         when(appointmentRepository.save(mappedAppointment)).thenReturn(savedAppointment);
         when(appointmentMapper.entityToAppointmentResponseDto(savedAppointment)).thenReturn(response);
 
@@ -183,6 +185,8 @@ class AppointmentServiceTest {
         );
 
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic(7L));
+        when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.of(therapistWithId(3L)));
+        when(caseRepository.findByIdAndClinicId(4L, 7L)).thenReturn(Optional.of(caseWithId(4L)));
         when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, 7L, 3L))
                 .thenReturn(Optional.of(new Appointment()));
 
@@ -203,8 +207,6 @@ class AppointmentServiceTest {
         Clinics clinic = clinic(7L);
 
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, 7L, 3L)).thenReturn(Optional.empty());
-        when(appointmentMapper.requestToAppointmentEntityDto(request)).thenReturn(new Appointment());
         when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.empty());
 
         assertThrows(TherapistNotFoundException.class, () -> appointmentService.createAppointment(request));
@@ -228,8 +230,6 @@ class AppointmentServiceTest {
         Therapist therapist = therapistWithId(3L);
 
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic);
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, 7L, 3L)).thenReturn(Optional.empty());
-        when(appointmentMapper.requestToAppointmentEntityDto(request)).thenReturn(new Appointment());
         when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.of(therapist));
         when(caseRepository.findByIdAndClinicId(4L, 7L)).thenReturn(Optional.empty());
 
@@ -274,6 +274,8 @@ class AppointmentServiceTest {
         when(caseRepository.findByIdAndClinicId(17L, 7L)).thenReturn(Optional.of(ptCase));
         when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(request.getScheduledAt(), 7L, 16L))
                 .thenReturn(Optional.empty());
+        when(appointmentRepository.existsPatientAppointmentConflictExcludingAppointment(7L, 117L, request.getScheduledAt(), 9L))
+                .thenReturn(false);
         when(appointmentRepository.save(appointment)).thenReturn(appointment);
         when(appointmentMapper.entityToAppointmentResponseDto(appointment)).thenReturn(response);
 
@@ -352,6 +354,7 @@ class AppointmentServiceTest {
         Appointment appointment = appointmentWithId(9L);
         appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
         appointment.setTherapist(therapistWithId(5L));
+        appointment.setPtCase(caseWithId(6L));
         AppointmentPatchDto request = patchRequest(
                 LocalDateTime.of(2026, 2, 14, 11, 30), null, 16L, Appointment.Status.FINISHED);
 
@@ -377,13 +380,99 @@ class AppointmentServiceTest {
         when(currentUserService.getCurrentClinicId()).thenReturn(7L);
         when(appointmentRepository.findByIdAndClinicId(9L, 7L)).thenReturn(Optional.of(appointment));
         when(therapistRepository.findByIdAndClinicId(16L, 7L)).thenReturn(Optional.of(therapist));
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(request.getScheduledAt(), 7L, 16L))
-                .thenReturn(Optional.empty());
         when(caseRepository.findByIdAndClinicId(17L, 7L)).thenReturn(Optional.empty());
 
         assertThrows(CaseNotFoundException.class, () -> appointmentService.updateAppointmentById(9L, request));
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    void shouldAllowStatusOnlyPatchWithoutCaseId() {
+        Appointment appointment = appointmentWithId(9L);
+        appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
+        appointment.setTherapist(therapistWithId(5L));
+        appointment.setPtCase(caseWithId(6L));
+        AppointmentPatchDto request = patchRequest(null, null, null, Appointment.Status.FINISHED);
+        AppointmentResponseDto response = responseDto(9L);
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(appointmentRepository.findByIdAndClinicId(9L, 7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(appointment)).thenReturn(appointment);
+        when(appointmentMapper.entityToAppointmentResponseDto(appointment)).thenReturn(response);
+
+        AppointmentResponseDto result = appointmentService.updateAppointmentById(9L, request);
+
+        assertSame(response, result);
+        assertEquals(Appointment.Status.FINISHED, appointment.getStatus());
+        verify(caseRepository, never()).findByIdAndClinicId(any(), any());
+    }
+
+    @Test
+    void shouldCheckConflictWhenOnlyScheduledTimeChanges() {
+        Appointment appointment = appointmentWithId(9L);
+        appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
+        appointment.setTherapist(therapistWithId(5L));
+        appointment.setPtCase(caseWithId(6L));
+        AppointmentPatchDto request = patchRequest(
+                LocalDateTime.of(2026, 2, 14, 11, 30), null, null, Appointment.Status.FINISHED);
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(appointmentRepository.findByIdAndClinicId(9L, 7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(request.getScheduledAt(), 7L, 5L))
+                .thenReturn(Optional.of(appointmentWithId(12L)));
+
+        assertThrows(AppointmentAtTimeExistsException.class, () -> appointmentService.updateAppointmentById(9L, request));
+    }
+
+    @Test
+    void shouldCheckPatientConflictWhenOnlyCaseChanges() {
+        Appointment appointment = appointmentWithId(9L);
+        appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
+        appointment.setTherapist(therapistWithId(5L));
+        appointment.setPtCase(caseWithId(6L));
+        AppointmentPatchDto request = patchRequest(null, 17L, null, Appointment.Status.FINISHED);
+        Case newCase = caseWithId(17L);
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(appointmentRepository.findByIdAndClinicId(9L, 7L)).thenReturn(Optional.of(appointment));
+        when(caseRepository.findByIdAndClinicId(17L, 7L)).thenReturn(Optional.of(newCase));
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(LocalDateTime.of(2026, 2, 13, 9, 0), 7L, 5L))
+                .thenReturn(Optional.of(appointment));
+        when(appointmentRepository.existsPatientAppointmentConflictExcludingAppointment(
+                7L,
+                117L,
+                LocalDateTime.of(2026, 2, 13, 9, 0),
+                9L
+        )).thenReturn(true);
+
+        assertThrows(AppointmentAtTimeExistsException.class, () -> appointmentService.updateAppointmentById(9L, request));
+    }
+
+    @Test
+    void shouldNotTreatCurrentAppointmentAsPatientConflict() {
+        Appointment appointment = appointmentWithId(9L);
+        appointment.setScheduledAt(LocalDateTime.of(2026, 2, 13, 9, 0));
+        appointment.setTherapist(therapistWithId(5L));
+        appointment.setPtCase(caseWithId(6L));
+        AppointmentPatchDto request = patchRequest(
+                LocalDateTime.of(2026, 2, 13, 9, 0), 6L, 5L, Appointment.Status.FINISHED);
+        AppointmentResponseDto response = responseDto(9L);
+
+        when(currentUserService.getCurrentClinicId()).thenReturn(7L);
+        when(appointmentRepository.findByIdAndClinicId(9L, 7L)).thenReturn(Optional.of(appointment));
+        when(therapistRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.of(appointment.getTherapist()));
+        when(caseRepository.findByIdAndClinicId(6L, 7L)).thenReturn(Optional.of(appointment.getPtCase()));
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(request.getScheduledAt(), 7L, 5L))
+                .thenReturn(Optional.of(appointment));
+        when(appointmentRepository.existsPatientAppointmentConflictExcludingAppointment(7L, 106L, request.getScheduledAt(), 9L))
+                .thenReturn(false);
+        when(appointmentRepository.save(appointment)).thenReturn(appointment);
+        when(appointmentMapper.entityToAppointmentResponseDto(appointment)).thenReturn(response);
+
+        AppointmentResponseDto result = appointmentService.updateAppointmentById(9L, request);
+
+        assertSame(response, result);
     }
 
     private Appointment appointmentWithId(Long id) {
@@ -405,7 +494,14 @@ class AppointmentServiceTest {
     private Case caseWithId(Long id) {
         Case ptCase = new Case();
         ptCase.setId(id);
+        ptCase.setPatient(patientWithId(100L + id));
         return ptCase;
+    }
+
+    private Patient patientWithId(Long id) {
+        Patient patient = new Patient();
+        patient.setId(id);
+        return patient;
     }
 
     private Clinics clinic(Long id) {

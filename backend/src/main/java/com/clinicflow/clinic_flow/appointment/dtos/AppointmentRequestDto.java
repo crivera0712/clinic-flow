@@ -26,7 +26,6 @@ public class AppointmentRequestDto {
     @NotNull(message = "therapistId cannot be missing")
     private Long therapistId;
 
-    @NotNull(message = "appointment status cannot be null")
     private Appointment.Status status;
 
     @NotNull(message = "appointment type cannot be null")

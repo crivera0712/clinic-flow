@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import { adminColors, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { adminColors, adminSelectProps, adminTextFieldSx } from "../../components/admin/adminStyles";
 import type { BodyRegion, CaseCreateRequest, CaseSummary, CaseUpdateRequest, Patient } from "../../types/admin";
 
 type CaseDialogProps = {
@@ -52,11 +52,11 @@ export function CaseDialog({ open, mode, initialValue, patients, bodyRegions, fi
           {fixedPatient ? (
             <TextField label="Patient" value={fixedPatient.displayName} fullWidth disabled helperText="Cases are created from the selected patient." sx={adminTextFieldSx} />
           ) : (
-            <TextField select label="Patient" value={patientId} onChange={(e) => setPatientId(e.target.value)} required fullWidth disabled={mode === "edit"} helperText={mode === "edit" ? "Patient cannot be changed after the case is created." : undefined} sx={adminTextFieldSx}>
+            <TextField select label="Patient" value={patientId} onChange={(e) => setPatientId(e.target.value)} required fullWidth disabled={mode === "edit"} helperText={mode === "edit" ? "Patient cannot be changed after the case is created." : undefined} sx={adminTextFieldSx} SelectProps={adminSelectProps}>
               {patients.map((patient) => <MenuItem key={patient.id} value={String(patient.id)}>{patient.displayName}</MenuItem>)}
             </TextField>
           )}
-          <TextField select label="Body Region" value={bodyRegionId} onChange={(e) => setBodyRegionId(e.target.value)} required fullWidth sx={adminTextFieldSx}>
+          <TextField select label="Body Region" value={bodyRegionId} onChange={(e) => setBodyRegionId(e.target.value)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
             {bodyRegions.map((bodyRegion) => <MenuItem key={bodyRegion.id} value={String(bodyRegion.id)}>{bodyRegion.displayName}</MenuItem>)}
           </TextField>
           <DialogActions sx={{ px: 0, pb: 0 }}>

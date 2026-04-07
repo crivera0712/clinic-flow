@@ -54,4 +54,39 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
 
     Page<Appointment> findAllByClinicId(Long clinicId, Pageable pageable);
+
+
+    @Query(value = """
+    SELECT EXISTS (
+        SELECT 1
+        FROM appointments AS a
+        JOIN cases AS c ON c.c_id = a.c_id
+        WHERE a.clinic_id = :clinicId
+          AND c.p_id = :patientId
+          AND a.scheduled_at = :scheduledAt
+    )
+    """, nativeQuery = true)
+    boolean existsPatientAppointmentConflict(
+            @Param("clinicId") Long clinicId,
+            @Param("patientId") Long patientId,
+            @Param("scheduledAt") LocalDateTime scheduledAt
+    );
+
+    @Query(value = """
+    SELECT EXISTS (
+        SELECT 1
+        FROM appointments AS a
+        JOIN cases AS c ON c.c_id = a.c_id
+        WHERE a.clinic_id = :clinicId
+          AND c.p_id = :patientId
+          AND a.scheduled_at = :scheduledAt
+          AND a.apt_id <> :appointmentId
+    )
+    """, nativeQuery = true)
+    boolean existsPatientAppointmentConflictExcludingAppointment(
+            @Param("clinicId") Long clinicId,
+            @Param("patientId") Long patientId,
+            @Param("scheduledAt") LocalDateTime scheduledAt,
+            @Param("appointmentId") Long appointmentId
+    );
 }

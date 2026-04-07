@@ -5,9 +5,57 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02bbc7b6-c96b-4d79-a5f0-215a3ef010e1" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client/clinicflow-ui/.nvmrc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/2a974124-5a31-45ba-9e91-135a1230f41b 2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/clinicflow.FmJeFA.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/clinicflow.FmJeFA/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/clinicflow.FmJeFA/schema/pg_catalog.0S1ZNQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/clinicflow.FmJeFA/schema/public.abK9xQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/clinicflow.FmJeFA/schema/public.abK9xQ.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/postgres.edMnLQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/postgres.edMnLQ/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/494a8dfb-40aa-489a-8744-00a5604b3bfe/storage_v2/_src_/database/postgres.edMnLQ/schema/pg_catalog.0S1ZNQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce58d864-42e9-4bc8-9e39-8626c84c1114.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce58d864-42e9-4bc8-9e39-8626c84c1114/storage_v2/_src_/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce58d864-42e9-4bc8-9e39-8626c84c1114/storage_v2/_src_/schema/mysql.osA4Bg.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce58d864-42e9-4bc8-9e39-8626c84c1114/storage_v2/_src_/schema/performance_schema.kIw0nw.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce58d864-42e9-4bc8-9e39-8626c84c1114/storage_v2/_src_/schema/sys.zb4BAA.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/clinic_management.-heL5g.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/clinic_management.-heL5g.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/mysql.osA4Bg.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/performance_schema.kIw0nw.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f5805029-9f99-4e69-a1a9-70df265932bb/storage_v2/_src_/schema/sys.zb4BAA.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/data_source_mapping.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/db-forest-config.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jpa.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/auth/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.dockerignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.dockerignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/AppointmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/AppointmentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/AppointmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/AppointmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/dtos/AppointmentRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinicflow/clinic_flow/appointment/dtos/AppointmentRequestDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/clinicflow/clinic_flow/appointment/AppointmentServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/.dockerignore" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/.dockerignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/components/admin/adminStyles.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/components/admin/adminStyles.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/features/appointments/AppointmentDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/features/appointments/AppointmentDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/features/appointments/AppointmentsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/features/appointments/AppointmentsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/features/cases/CaseDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/features/cases/CaseDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/clinicflow-ui/src/features/therapists/TherapistDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/clinicflow-ui/src/features/therapists/TherapistDialog.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -269,6 +317,7 @@
       <workItem from="1774145197542" duration="44196000" />
       <workItem from="1774412458209" duration="87638000" />
       <workItem from="1775240601657" duration="38255000" />
+      <workItem from="1775529156709" duration="5735000" />
     </task>
     <servers />
   </component>

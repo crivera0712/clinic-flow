@@ -4,6 +4,7 @@ backend/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 .env
+.env.*
 
 ### STS ###
 .apt_generated
@@ -15,6 +16,7 @@ backend/.mvn/wrapper/maven-wrapper.jar
 .sts4-cache
 
 ### IntelliJ IDEA ###
+.idea/
 backend/.idea
 *.iws
 *.iml
@@ -32,4 +34,8 @@ build/
 
 ### VS Code ###
 .vscode/
+backend/.env
+backend/.env.local
+client/clinicflow-ui/.env
+client/clinicflow-ui/.env.*
 backend/src/main/resources/.env
