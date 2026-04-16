@@ -392,8 +392,7 @@ export function PatientsPage() {
                     >
                       <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: adminColors.textStrong }} />}>
                         <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ width: "100%" }} alignItems={{ md: "center" }}>
-                          <Typography sx={{ fontWeight: 700, minWidth: 100 }}>Case #{caseItem.id}</Typography>
-                          <Typography sx={{ color: adminColors.textSecondary, flexGrow: 1 }}>{bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Body Region #${caseItem.bodyRegionId}`}</Typography>
+                          <Typography sx={{ fontWeight: 700, flexGrow: 1 }}>{bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Body Region #${caseItem.bodyRegionId}`}</Typography>
                           <Typography sx={{ color: adminColors.textMuted }}>Created {formatCreatedAt(caseItem.createdAt)}</Typography>
                         </Stack>
                       </AccordionSummary>
@@ -503,9 +502,9 @@ export function PatientsPage() {
           fixedPatient={selectedPatient}
           fixedCase={appointmentDialogState.caseRecord}
           initialPatientId={selectedPatient.id}
-          caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: `Case #${appointmentDialogState.caseRecord.id}` }]}
+          caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: bodyRegionNameMap.get(appointmentDialogState.caseRecord.bodyRegionId) ?? "Selected case" }]}
           therapistOptions={therapistOptions}
-          caseHelperText={`Case #${appointmentDialogState.caseRecord.id} is selected from this patient.`}
+          caseHelperText="Case is selected from this patient."
           submitting={appointmentSubmitting}
           error={appointmentDialogError}
           onPatientChange={() => {}}

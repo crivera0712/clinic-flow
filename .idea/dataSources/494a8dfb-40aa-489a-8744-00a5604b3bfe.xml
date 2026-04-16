@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataSource name="postgres@localhost">
-  <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.54">
+  <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.55">
     <root id="1">
       <DateStyle>mdy</DateStyle>
       <Grants>16399||-9223372036854775808|c|G
@@ -4727,7 +4727,7 @@ false Zulu
       <UnderlyingIndexId>16494</UnderlyingIndexId>
     </key>
     <column id="331" parent="283" name="clinic_id">
-      <IdentityKind>by-default</IdentityKind>
+      <GeneratedKind>unknown-migrated</GeneratedKind>
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StateNumber>839</StateNumber>

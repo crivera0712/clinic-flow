@@ -37,4 +37,6 @@ public interface TherapistRepository extends JpaRepository<Therapist, Long> {
     Optional <Therapist> findByIdAndClinicId(@NotNull(message = "therapistId cannot be missing") Long therapistId, Long clinicId);
 
     Page<Therapist> findAllByClinicId(Long clinicId, Pageable pageable);
+
+    List<Therapist> findAllByClinicId(Long clinicId);
 }

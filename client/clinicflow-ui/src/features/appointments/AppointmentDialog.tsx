@@ -102,7 +102,7 @@ export function AppointmentDialog({
             </TextField>
           )}
           {fixedCase ? (
-            <TextField label="Case" value={`Case #${fixedCase.id}`} fullWidth disabled helperText={caseHelperText ?? "Case is locked to the selected case."} sx={adminTextFieldSx} />
+            <TextField label="Case" value={caseOptions.find((o) => o.value === fixedCase.id)?.label ?? ""} fullWidth disabled helperText={caseHelperText ?? "Case is locked to the selected case."} sx={adminTextFieldSx} />
           ) : (
             <TextField select label="Case" value={caseId} onChange={(e) => setCaseId(e.target.value)} required fullWidth disabled={!patientId || caseOptionsLoading} helperText={caseHelperText} sx={adminTextFieldSx} SelectProps={adminSelectProps}>
               {caseOptions.map((option) => <MenuItem key={option.value} value={String(option.value)}>{option.label}</MenuItem>)}

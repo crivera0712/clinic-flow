@@ -143,7 +143,7 @@ export function AppointmentsPage() {
   const therapistMap = useMemo(() => new Map(therapists.map((therapist) => [therapist.id, therapist])), [therapists]);
   const bodyRegionNameMap = useMemo(() => new Map(bodyRegions.map((bodyRegion) => [bodyRegion.id, bodyRegion.displayName])), [bodyRegions]);
   const caseMap = useMemo(() => new Map(Object.values(caseCache).map((caseItem) => [caseItem.id, caseItem])), [caseCache]);
-  const caseOptions = useMemo(() => dialogCases.map((caseItem) => ({ value: caseItem.id, label: `Case #${caseItem.id} · ${patientNameMap.get(caseItem.patientId) ?? `Patient #${caseItem.patientId}`} · ${bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Region #${caseItem.bodyRegionId}`}` })), [dialogCases, patientNameMap, bodyRegionNameMap]);
+  const caseOptions = useMemo(() => dialogCases.map((caseItem) => ({ value: caseItem.id, label: `${patientNameMap.get(caseItem.patientId) ?? `Patient #${caseItem.patientId}`} · ${bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Region #${caseItem.bodyRegionId}`}` })), [dialogCases, patientNameMap, bodyRegionNameMap]);
   const therapistOptions = useMemo(() => therapists.map((therapist) => ({ value: therapist.id, label: `${therapist.therapistName} · ${therapist.type}` })), [therapists]);
 
   async function loadCasesForPatient(patientId: number | null) {
@@ -217,8 +217,8 @@ export function AppointmentsPage() {
     {
       field: "caseId", headerName: "Case", flex: 1.4, minWidth: 260, renderCell: (params: GridRenderCellParams<AppointmentRecord, number>) => {
         const caseItem = caseMap.get(params.value ?? -1);
-        if (!caseItem) return `Case #${params.value}`;
-        return `Case #${caseItem.id} · ${patientNameMap.get(caseItem.patientId) ?? `Patient #${caseItem.patientId}`} · ${bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Region #${caseItem.bodyRegionId}`}`;
+        if (!caseItem) return "—";
+        return `${patientNameMap.get(caseItem.patientId) ?? `Patient #${caseItem.patientId}`} · ${bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Region #${caseItem.bodyRegionId}`}`;
       },
     },
     { field: "therapistId", headerName: "Therapist", flex: 1.1, minWidth: 220, renderCell: (params: GridRenderCellParams<AppointmentRecord, number>) => therapistMap.get(params.value ?? -1)?.therapistName ?? `Therapist #${params.value}` },
