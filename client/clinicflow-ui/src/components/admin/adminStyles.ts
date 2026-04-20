@@ -4,7 +4,7 @@ import type { TextFieldProps } from "@mui/material/TextField";
 export const adminColors = {
   pageBg: "#020617",
   panelBg: "rgba(15, 23, 42, 0.92)",
-  panelElevated: "rgba(30, 41, 59, 0.92)",
+  panelElevated: "rgb(30, 41, 59)",
   panelSelected: "rgba(30, 41, 59, 0.96)",
   border: "rgba(148, 163, 184, 0.16)",
   borderMuted: "rgba(148, 163, 184, 0.08)",

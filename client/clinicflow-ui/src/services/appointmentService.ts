@@ -35,3 +35,18 @@ export function updateAppointment(id: number, payload: AppointmentUpdateRequest)
 export function removeAppointment(id: number) {
   return apiRequest<void>(`/appointments/${id}`, { method: "DELETE" });
 }
+
+export async function listAppointmentsByTherapist(
+  therapistId: number,
+  params: { date?: string; page?: number; size?: number } = {},
+): Promise<EntityListResult<AppointmentRecord>> {
+  const searchParams = new URLSearchParams({
+    page: String(params.page ?? 0),
+    size: String(params.size ?? 1000),
+  });
+  if (params.date) searchParams.set("date", params.date);
+  const response = await apiRequest<PageResponse<AppointmentRecord>>(
+    `/appointments/therapist/${therapistId}?${searchParams.toString()}`,
+  );
+  return { rows: response.content, rowCount: response.totalElements };
+}

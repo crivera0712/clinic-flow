@@ -62,6 +62,27 @@ public class AppointmentService {
         return appointmentMapper.entityToAppointmentResponseDto(appointment);
     }
 
+    public Page<AppointmentResponseDto> getAllAppointmentsByTherapist(
+            Pageable pageable, Long therapistId, LocalDate date) {
+
+        var clinicId = currentUserService.getCurrentClinicId();
+        Page<Appointment> result;
+
+        if (date != null) {
+            result = appointmentRepository
+                    .findByTherapistIdAndClinicIdAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+                            therapistId, clinicId,
+                            date.atStartOfDay(),
+                            date.plusDays(1).atStartOfDay(),
+                            pageable
+                    );
+        } else {
+            result = appointmentRepository.findAllByTherapistIdAndClinicId(therapistId, clinicId, pageable);
+        }
+
+        return result.map(appointmentMapper::entityToAppointmentResponseDto);
+    }
+
     @Transactional
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
 

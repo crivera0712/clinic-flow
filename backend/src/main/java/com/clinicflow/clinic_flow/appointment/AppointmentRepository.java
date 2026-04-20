@@ -56,6 +56,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Page<Appointment> findAllByClinicId(Long clinicId, Pageable pageable);
 
+    Page<Appointment> findAllByTherapistIdAndClinicId(Long therapistId, Long clinicId, Pageable pageable);
+
+    Page<Appointment> findByTherapistIdAndClinicIdAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+            Long therapistId, Long clinicId, LocalDateTime start, LocalDateTime end, Pageable pageable
+    );
+
     @Modifying
     @Query("DELETE FROM Appointment a WHERE a.clinic.id = :clinicId")
     void deleteAllByClinicId(@Param("clinicId") Long clinicId);

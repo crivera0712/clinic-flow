@@ -57,6 +57,18 @@ public class AppointmentController {
         return ResponseEntity.ok(appointments);
     }
 
+    @GetMapping("/therapist/{therapistId}")
+    public ResponseEntity<PageResponse<AppointmentResponseDto>> getAllAppointmentsByTherapistId(
+            @PathVariable @NotNull Long therapistId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) LocalDate date) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AppointmentResponseDto> result = appointmentService.getAllAppointmentsByTherapist(pageable, therapistId, date);
+        return ResponseEntity.ok(PageResponse.from(result));
+    }
+
     @PostMapping()
     public ResponseEntity<AppointmentResponseDto> createAppointment(
             @RequestBody @Valid AppointmentRequestDto request) {
