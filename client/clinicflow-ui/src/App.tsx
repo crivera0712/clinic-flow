@@ -9,8 +9,9 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
-import { Link as RouterLink, Navigate, Route, Routes } from "react-router-dom";
+import { Link as RouterLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
+import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { AppointmentsPage } from "./features/appointments/AppointmentsPage";
@@ -140,6 +141,15 @@ function AuthenticatedApp() {
 
 function App() {
   const { status } = useAuth();
+  const { pathname } = useLocation();
+
+  if (pathname.startsWith("/register")) {
+    return (
+      <Routes>
+        <Route path="/register/:clinicSlug" element={<RegisterPage />} />
+      </Routes>
+    );
+  }
 
   if (status === "bootstrapping") {
     return (

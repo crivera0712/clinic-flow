@@ -80,7 +80,7 @@ class AuthControllerTest {
         when(jwtConfig.isCookieSecure()).thenReturn(true);
         when(authService.login(any(LoginRequest.class))).thenReturn(new LoginResult(accessToken, refreshToken));
 
-        mockMvc.perform(post("/api/auth/demo-clinic/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -94,7 +94,6 @@ class AuthControllerTest {
         verify(authService).login(argThat(loginRequest ->
                 "sam".equals(loginRequest.getUsername())
                         && "secret1".equals(loginRequest.getPassword())
-                        && "demo-clinic".equals(loginRequest.getSlug())
         ));
     }
 
@@ -107,7 +106,7 @@ class AuthControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/demo-clinic/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
@@ -124,7 +123,7 @@ class AuthControllerTest {
 
         when(authService.login(any(LoginRequest.class))).thenThrow(new BadCredentialsException("Bad credentials"));
 
-        mockMvc.perform(post("/api/auth/demo-clinic/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());

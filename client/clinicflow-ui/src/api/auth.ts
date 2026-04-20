@@ -1,10 +1,17 @@
 import { apiRequest } from "./client";
-import type { CurrentUser, JwtResponse, LoginRequest } from "../types/auth";
-
-const clinicSlug = import.meta.env.VITE_CLINIC_SLUG || "demo";
+import type { CurrentUser, JwtResponse, LoginRequest, RegisterRequest } from "../types/auth";
 
 export function login(request: LoginRequest) {
-  return apiRequest<JwtResponse>(`/auth/${clinicSlug}/login`, {
+  return apiRequest<JwtResponse>("/auth/login", {
+    method: "POST",
+    body: request,
+    skipAuth: true,
+    retryOn401: false,
+  });
+}
+
+export function register(clinicSlug: string, request: RegisterRequest) {
+  return apiRequest<void>(`/auth/${clinicSlug}/register`, {
     method: "POST",
     body: request,
     skipAuth: true,

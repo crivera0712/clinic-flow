@@ -7,13 +7,12 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useNavigate, useParams } from "react-router-dom";
+import { register } from "./api/auth";
 import { ApiError } from "./api/client";
-import { useAuth } from "./auth/AuthContext";
 
-const loginFieldSx = {
-  "& .MuiInputLabel-root": {
-    color: "#94a3b8",
-  },
+const fieldSx = {
+  "& .MuiInputLabel-root": { color: "#94a3b8" },
   "& .MuiInputLabel-root.MuiInputLabel-shrink": {
     px: 0.75,
     backgroundColor: "rgba(15, 23, 42, 0.92)",
@@ -21,15 +20,9 @@ const loginFieldSx = {
   "& .MuiOutlinedInput-root": {
     color: "#e2e8f0",
     backgroundColor: "rgba(15, 23, 42, 0.45)",
-    "& fieldset": {
-      borderColor: "rgba(148, 163, 184, 0.28)",
-    },
-    "&:hover fieldset": {
-      borderColor: "rgba(56, 189, 248, 0.55)",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#38bdf8",
-    },
+    "& fieldset": { borderColor: "rgba(148, 163, 184, 0.28)" },
+    "&:hover fieldset": { borderColor: "rgba(56, 189, 248, 0.55)" },
+    "&.Mui-focused fieldset": { borderColor: "#38bdf8" },
   },
   "& .MuiOutlinedInput-input:-webkit-autofill": {
     WebkitBoxShadow: "0 0 0 100px rgba(15, 23, 42, 0.45) inset",
@@ -39,8 +32,9 @@ const loginFieldSx = {
   },
 };
 
-export default function LoginPage() {
-  const { login } = useAuth();
+export default function RegisterPage() {
+  const { clinicSlug } = useParams<{ clinicSlug: string }>();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -48,16 +42,18 @@ export default function LoginPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!clinicSlug) return;
     setSubmitting(true);
     setError(null);
 
     try {
-      await login({ username, password });
+      await register(clinicSlug, { username, passwordHash: password });
+      navigate("/", { replace: true });
     } catch (submitError) {
       if (submitError instanceof ApiError) {
         setError(submitError.message);
       } else {
-        setError("Unable to sign in right now.");
+        setError("Unable to create account right now.");
       }
     } finally {
       setSubmitting(false);
@@ -94,10 +90,10 @@ export default function LoginPage() {
               Clinic Flow
             </Typography>
             <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>
-              Sign in
+              Create account
             </Typography>
             <Typography sx={{ mt: 1, color: "#94a3b8" }}>
-              Sign in to access your clinic schedule.
+              Register for <strong>{clinicSlug}</strong>. You'll be able to sign in after your account is created.
             </Typography>
           </Box>
 
@@ -106,11 +102,11 @@ export default function LoginPage() {
           <TextField
             label="Username"
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={loginFieldSx}
+            sx={fieldSx}
             fullWidth
             required
           />
@@ -119,17 +115,17 @@ export default function LoginPage() {
             label="Password"
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={loginFieldSx}
+            sx={fieldSx}
             fullWidth
             required
           />
 
           <Button type="submit" variant="contained" size="large" disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : "Login"}
+            {submitting ? <CircularProgress size={24} color="inherit" /> : "Create account"}
           </Button>
         </Stack>
       </Paper>

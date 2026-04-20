@@ -6,6 +6,8 @@ import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.dtos.JwtResponse;
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
+import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
+import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -29,18 +31,23 @@ public class AuthController {
     private final AuthService authService;
     private final JwtConfig jwtConfig;
 
-    @PostMapping("/{clinicSlug}/login")
+    @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(
             @Valid @RequestBody LoginRequest request,
-            @PathVariable @NotBlank String clinicSlug,
             HttpServletResponse response
     ) {
-        request.setSlug(clinicSlug);
         var result = authService.login(request);
-
         writeRefreshCookie(response, result.refreshToken().toString());
-
         return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
+    }
+
+    @PostMapping("/{clinicSlug}/register")
+    public ResponseEntity<UsersResponseDto> register(
+            @PathVariable @NotBlank String clinicSlug,
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        var created = authService.register(clinicSlug, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PostMapping("/logout")
