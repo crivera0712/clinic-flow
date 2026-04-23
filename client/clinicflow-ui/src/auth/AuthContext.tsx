@@ -130,6 +130,16 @@ function useProvideAuth(): AuthContextValue {
   }
 
   useEffect(() => {
+    if (status !== "authenticated" || !accessToken) return;
+    const payload = parseJwtPayload(accessToken);
+    if (!payload?.exp) return;
+    const msUntilRefresh = payload.exp * 1000 - Date.now() - 2 * 60 * 1000;
+    if (msUntilRefresh <= 0) return;
+    const id = setTimeout(() => { refresh(); }, msUntilRefresh);
+    return () => clearTimeout(id);
+  }, [accessToken, status]);
+
+  useEffect(() => {
     configureApiClient({
       getAccessToken: () => accessTokenRef.current,
       refreshAccessToken: refresh,
