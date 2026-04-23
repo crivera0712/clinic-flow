@@ -108,7 +108,7 @@ public class AuthController {
         var cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(jwtConfig.isCookieSecure())
-                .sameSite("Lax")
+                .sameSite(jwtConfig.isCookieSecure() ? "None" : "Lax")
                 .path("/api/auth/refresh")
                 .maxAge(jwtConfig.getRefreshTokenExpiration())
                 .build();
@@ -119,7 +119,7 @@ public class AuthController {
         var cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(jwtConfig.isCookieSecure())
-                .sameSite("Lax")
+                .sameSite(jwtConfig.isCookieSecure() ? "None" : "Lax")
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();
