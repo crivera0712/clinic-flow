@@ -1,14 +1,11 @@
 import Alert from "@mui/material/Alert";
-import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
-import { Link as RouterLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
@@ -24,25 +21,6 @@ function ScheduleShell() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#020617" }}>
-      <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(2, 6, 23, 0.82)", backdropFilter: "blur(16px)" }}>
-        <Toolbar sx={{ gap: 2, minHeight: 48 }}>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="overline" sx={{ color: "#38bdf8", letterSpacing: "0.22em" }}>
-              Clinic Flow
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Schedule Board
-            </Typography>
-          </Box>
-
-          {currentUser?.roleName === "ADMIN" && (
-            <Button component={RouterLink} to="/admin/appointments" color="inherit" variant="outlined">
-              Admin Panel
-            </Button>
-          )}
-        </Toolbar>
-      </AppBar>
-
       <Container maxWidth={false} disableGutters>
         {currentUser?.roleName === "ADMIN" && (
           <Box
