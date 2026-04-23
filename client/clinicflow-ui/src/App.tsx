@@ -2,7 +2,6 @@ import Alert from "@mui/material/Alert";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
@@ -21,12 +20,12 @@ import { TherapistsPage } from "./features/therapists/TherapistsPage";
 import { useAuth } from "./auth/AuthContext";
 
 function ScheduleShell() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#020617" }}>
       <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(2, 6, 23, 0.82)", backdropFilter: "blur(16px)" }}>
-        <Toolbar sx={{ gap: 2, minHeight: 80 }}>
+        <Toolbar sx={{ gap: 2, minHeight: 48 }}>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="overline" sx={{ color: "#38bdf8", letterSpacing: "0.22em" }}>
               Clinic Flow
@@ -36,40 +35,11 @@ function ScheduleShell() {
             </Typography>
           </Box>
 
-          {currentUser && (
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip
-                label={currentUser.roleName}
-                color={currentUser.roleName === "ADMIN" ? "secondary" : "default"}
-                sx={{
-                  color: "#e2e8f0",
-                  bgcolor: currentUser.roleName === "ADMIN" ? undefined : "rgba(148, 163, 184, 0.14)",
-                }}
-              />
-              <Chip
-                label={currentUser.username}
-                variant="outlined"
-                sx={{
-                  color: "#e2e8f0",
-                  borderColor: "rgba(148, 163, 184, 0.35)",
-                  bgcolor: "rgba(15, 23, 42, 0.72)",
-                  "& .MuiChip-label": {
-                    color: "inherit",
-                  },
-                }}
-              />
-            </Stack>
-          )}
-
           {currentUser?.roleName === "ADMIN" && (
             <Button component={RouterLink} to="/admin/appointments" color="inherit" variant="outlined">
               Admin Panel
             </Button>
           )}
-
-          <Button color="inherit" onClick={() => void logout()}>
-            Logout
-          </Button>
         </Toolbar>
       </AppBar>
 
