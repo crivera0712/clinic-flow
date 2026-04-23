@@ -122,13 +122,14 @@ export function TherapistAppointmentsPanel({ therapist }: Props) {
   // Load appointments when therapist or date changes
   useEffect(() => {
     if (therapist === null) { setAppointments([]); return; }
+    const currentTherapist = therapist;
     let active = true;
 
     async function load() {
       setAppointmentsLoading(true);
       setAppointmentsError(null);
       try {
-        const result = await listAppointmentsByTherapist(therapist.id, { date: dateFilter || undefined });
+        const result = await listAppointmentsByTherapist(currentTherapist.id, { date: dateFilter || undefined });
         if (active) setAppointments(result.rows);
       } catch (e) {
         if (active) setAppointmentsError(e instanceof Error ? e.message : "Unable to load appointments.");
