@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -77,7 +78,8 @@ class AuthControllerTest {
         when(accessToken.toString()).thenReturn("access-token");
         when(refreshToken.toString()).thenReturn("refresh-token");
         when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
-        when(jwtConfig.isCookieSecure()).thenReturn(true);
+        when(jwtConfig.isCookieSecure()).thenReturn(false);
+        when(jwtConfig.getCookieSameSite()).thenReturn("Lax");
         when(authService.login(any(LoginRequest.class))).thenReturn(new LoginResult(accessToken, refreshToken));
 
         mockMvc.perform(post("/api/auth/login")
@@ -87,9 +89,10 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value("access-token"))
                 .andExpect(cookie().value("refreshToken", "refresh-token"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
-                .andExpect(cookie().secure("refreshToken", true))
+                .andExpect(cookie().secure("refreshToken", false))
                 .andExpect(cookie().path("refreshToken", "/api/auth/refresh"))
-                .andExpect(cookie().maxAge("refreshToken", 3600));
+                .andExpect(cookie().maxAge("refreshToken", 3600))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("SameSite=Lax")));
 
         verify(authService).login(argThat(loginRequest ->
                 "sam".equals(loginRequest.getUsername())
@@ -132,6 +135,7 @@ class AuthControllerTest {
     @Test
     void shouldLogout_whenAuthenticatedUserExists() throws Exception {
         when(jwtConfig.isCookieSecure()).thenReturn(false);
+        when(jwtConfig.getCookieSameSite()).thenReturn("Lax");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new AuthPrincipal(7L, "sam", "session-123", 2L), null, List.of())
         );
@@ -159,13 +163,16 @@ class AuthControllerTest {
         when(authService.refreshToken(refreshJwt)).thenReturn(new LoginResult(accessJwt, newRefreshJwt));
         when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
         when(jwtConfig.isCookieSecure()).thenReturn(true);
+        when(jwtConfig.getCookieSameSite()).thenReturn("None");
         when(accessJwt.toString()).thenReturn("new-access-token");
         when(newRefreshJwt.toString()).thenReturn("new-refresh-token");
 
         mockMvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("new-access-token"))
-                .andExpect(cookie().value("refreshToken", "new-refresh-token"));
+                .andExpect(cookie().value("refreshToken", "new-refresh-token"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("SameSite=None")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("Secure")));
 
         verify(authService).refreshToken(refreshJwt);
     }

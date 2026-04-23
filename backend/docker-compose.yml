@@ -29,6 +29,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-clinicflow}
       JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me}
       SPRING_JWT_COOKIESECURE: ${SPRING_JWT_COOKIESECURE:-false}
+      SPRING_JWT_COOKIESAMESITE: ${SPRING_JWT_COOKIESAMESITE:-Lax}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
     ports:
       - "8080:8080"
