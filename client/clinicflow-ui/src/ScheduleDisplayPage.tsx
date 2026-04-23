@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchAppointmentsByDate } from "./api/displayBoard";
+import { useAuth } from "./auth/AuthContext";
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
@@ -171,6 +174,8 @@ function ScheduleCard({ item }: { item: CardItem }) {
 }
 
 export default function ScheduleDisplayPage() {
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
     const [appointments, setAppointments] = useState<AppointmentDisplay[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -241,9 +246,27 @@ export default function ScheduleDisplayPage() {
         <Stack sx={{ minHeight: "100vh", bgcolor: "#0f172a", p: 2 }} spacing={5}>
             {/* HEADER */}
             <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff" }}>
-                    Mill Valley Physical Therapy
-                </Typography>
+                <Stack spacing={1} alignItems="flex-start">
+                    <Typography sx={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff" }}>
+                        Mill Valley Physical Therapy
+                    </Typography>
+                    {currentUser?.roleName === "ADMIN" && (
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => navigate("/admin")}
+                            sx={{
+                                color: "#94a3b8",
+                                borderColor: "rgba(148,163,184,0.3)",
+                                "&:hover": { borderColor: "#94a3b8", bgcolor: "rgba(148,163,184,0.08)" },
+                                textTransform: "none",
+                                fontWeight: 600,
+                            }}
+                        >
+                            Admin Panel
+                        </Button>
+                    )}
+                </Stack>
 
                 <Box sx={{ textAlign: "right" }}>
                     <Typography sx={{ fontSize: "1.875rem", fontWeight: 600, color: "grey.100" }}>
