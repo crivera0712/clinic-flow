@@ -324,7 +324,7 @@ export function PatientsPage() {
   const columns: GridColDef<Patient>[] = [
     { field: "firstName", headerName: "First Name", flex: 1, minWidth: 140 },
     { field: "lastName", headerName: "Last Name", flex: 1, minWidth: 140 },
-    { field: "displayName", headerName: "Display Name", flex: 1.1, minWidth: 170 },
+    { field: "displayName", headerName: "Name", flex: 1.1, minWidth: 170 },
     {
       field: "actions", headerName: "Actions", flex: 0.7, minWidth: 130, sortable: false, filterable: false, renderCell: (params: GridRenderCellParams<Patient>) => (
         <Stack direction="row" spacing={0.5}>
@@ -373,9 +373,7 @@ export function PatientsPage() {
                 <Box sx={{ flexGrow: 1, display: "grid", placeItems: "center", borderRadius: 3, border: `1px dashed ${adminColors.border}`, color: adminColors.textSecondary, px: 3, py: 8, textAlign: "center" }}>
                   <Typography>Select a patient to view and manage their cases.</Typography>
                 </Box>
-              ) : casesLoading ? (
-                <Alert severity="info">Loading cases for {selectedPatient.displayName}...</Alert>
-              ) : selectedPatientCases.length === 0 ? (
+              ) : casesLoading ? null : selectedPatientCases.length === 0 ? (
                 <Box sx={{ flexGrow: 1, display: "grid", placeItems: "center", borderRadius: 3, border: `1px dashed ${adminColors.border}`, color: adminColors.textSecondary, px: 3, py: 8, textAlign: "center" }}>
                   <Typography>No cases found for this patient.</Typography>
                 </Box>
@@ -392,8 +390,7 @@ export function PatientsPage() {
                     >
                       <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: adminColors.textStrong }} />}>
                         <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ width: "100%" }} alignItems={{ md: "center" }}>
-                          <Typography sx={{ fontWeight: 700, minWidth: 100 }}>Case #{caseItem.id}</Typography>
-                          <Typography sx={{ color: adminColors.textSecondary, flexGrow: 1 }}>{bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Body Region #${caseItem.bodyRegionId}`}</Typography>
+                          <Typography sx={{ fontWeight: 700, flexGrow: 1 }}>{bodyRegionNameMap.get(caseItem.bodyRegionId) ?? `Body Region #${caseItem.bodyRegionId}`}</Typography>
                           <Typography sx={{ color: adminColors.textMuted }}>Created {formatCreatedAt(caseItem.createdAt)}</Typography>
                         </Stack>
                       </AccordionSummary>
@@ -503,9 +500,9 @@ export function PatientsPage() {
           fixedPatient={selectedPatient}
           fixedCase={appointmentDialogState.caseRecord}
           initialPatientId={selectedPatient.id}
-          caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: `Case #${appointmentDialogState.caseRecord.id}` }]}
+          caseOptions={[{ value: appointmentDialogState.caseRecord.id, label: bodyRegionNameMap.get(appointmentDialogState.caseRecord.bodyRegionId) ?? "Selected case" }]}
           therapistOptions={therapistOptions}
-          caseHelperText={`Case #${appointmentDialogState.caseRecord.id} is selected from this patient.`}
+          caseHelperText="Case is selected from this patient."
           submitting={appointmentSubmitting}
           error={appointmentDialogError}
           onPatientChange={() => {}}

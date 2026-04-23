@@ -2,6 +2,7 @@ package com.clinicflow.clinic_flow.appointment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -54,6 +55,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
 
     Page<Appointment> findAllByClinicId(Long clinicId, Pageable pageable);
+
+    Page<Appointment> findAllByTherapistIdAndClinicId(Long therapistId, Long clinicId, Pageable pageable);
+
+    Page<Appointment> findByTherapistIdAndClinicIdAndScheduledAtGreaterThanEqualAndScheduledAtLessThan(
+            Long therapistId, Long clinicId, LocalDateTime start, LocalDateTime end, Pageable pageable
+    );
+
+    @Modifying
+    @Query("DELETE FROM Appointment a WHERE a.clinic.id = :clinicId")
+    void deleteAllByClinicId(@Param("clinicId") Long clinicId);
 
 
     @Query(value = """

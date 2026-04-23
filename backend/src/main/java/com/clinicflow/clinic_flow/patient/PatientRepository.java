@@ -4,6 +4,7 @@ import com.clinicflow.clinic_flow.therapist.TherapistMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.parameters.P;
@@ -46,4 +47,10 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
             @Param("clinicId") Long clinicId);
 
     Page<Patient> findAllByClinicId(Long clinicId, Pageable pageable);
+
+    List<Patient> findAllByClinicId(Long clinicId);
+
+    @Modifying
+    @Query("DELETE FROM Patient p WHERE p.clinic.id = :clinicId")
+    void deleteAllByClinicId(@Param("clinicId") Long clinicId);
 }

@@ -8,9 +8,12 @@ import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
 import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
+import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
+import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
+import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -37,24 +40,39 @@ public class AuthService {
 
     @Transactional
     public LoginResult login(LoginRequest request) {
+        log.info("Login attempt for username={}", request.getUsername());
 
-        log.info("Login attempt for username ={}", request.getUsername());
-
-        var clinic = clinicsRepository.findClinicsBySlug(request.getSlug()).orElseThrow(
-                () -> new ClinicNotFoundException("Error logging in")
-        );
-        var clinicId = clinic.getId();
-
-        var user = usersRepository.findByUsernameAndClinicId(request.getUsername(), clinicId)
+        var user = usersRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Bad credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            log.warn("Login failed for user {}", user.getUsername());
+            log.warn("Login failed for user={}", user.getUsername());
             throw new BadCredentialsException("Bad credentials");
         }
 
-        log.info("Login success for user={} clinicId={}", user.getUsername(),  clinicId);
+        log.info("Login success for user={} clinicId={}", user.getUsername(), user.getClinic().getId());
         return issueTokenPair(user);
+    }
+
+    @Transactional
+    public UsersResponseDto register(String clinicSlug, CreateUserRequest request) {
+        log.info("Register attempt for username={} clinicSlug={}", request.getUsername(), clinicSlug);
+
+        var clinic = clinicsRepository.findClinicsBySlug(clinicSlug)
+                .orElseThrow(() -> new ClinicNotFoundException("Clinic not found"));
+
+        if (usersRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new UserAlreadyExistsException(request.getUsername());
+        }
+
+        var user = usersMapper.toEntity(request);
+        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
+        user.setCreatedAt(java.time.LocalDateTime.now());
+        user.setRoleName(Users.RoleName.DISPLAY);
+        user.setEnabled(Boolean.TRUE);
+        user.setClinic(clinic);
+
+        return usersMapper.toUsersResponseDto(usersRepository.save(user));
     }
 
     @Transactional

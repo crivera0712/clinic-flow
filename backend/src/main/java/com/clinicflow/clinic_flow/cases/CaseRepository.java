@@ -3,6 +3,7 @@ package com.clinicflow.clinic_flow.cases;
 import com.clinicflow.clinic_flow.patient.Patient;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,4 +26,8 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     Optional<Case> findByIdAndClinicId(@NotNull(message = "caseId cannot be missing") Long caseId, Long clinicId);
 
     List<Case> findAllByClinicId(Long clinicId);
+
+    @Modifying
+    @Query("DELETE FROM Case c WHERE c.clinic.id = :clinicId")
+    void deleteAllByClinicId(@Param("clinicId") Long clinicId);
 }

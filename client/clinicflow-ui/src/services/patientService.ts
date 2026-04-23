@@ -11,7 +11,7 @@ import type {
 function withDisplayName(patient: Omit<Patient, "displayName"> & { displayName?: string }): Patient {
   return {
     ...patient,
-    displayName: patient.displayName ?? `${patient.firstName} ${patient.lastName}`.trim(),
+    displayName: `${patient.firstName} ${patient.lastName}`.trim(),
   };
 }
 

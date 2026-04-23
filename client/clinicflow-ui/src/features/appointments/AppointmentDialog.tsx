@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
+import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -30,6 +31,7 @@ type AppointmentDialogProps = {
   fixedPatient?: Patient | null;
   fixedCase?: CaseSummary | null;
   initialPatientId?: number | null;
+  initialTherapistId?: number | null;
   caseOptions: SelectOption[];
   therapistOptions: SelectOption[];
   caseOptionsLoading?: boolean;
@@ -54,6 +56,7 @@ export function AppointmentDialog({
   fixedPatient = null,
   fixedCase = null,
   initialPatientId = null,
+  initialTherapistId = null,
   caseOptions,
   therapistOptions,
   caseOptionsLoading = false,
@@ -67,7 +70,7 @@ export function AppointmentDialog({
   const [scheduledAt, setScheduledAt] = useState(toDateTimeInputValue(initialValue?.scheduledAt));
   const [patientId, setPatientId] = useState(String(fixedPatient?.id ?? initialPatientId ?? ""));
   const [caseId, setCaseId] = useState(String(fixedCase?.id ?? initialValue?.caseId ?? ""));
-  const [therapistId, setTherapistId] = useState(String(initialValue?.therapistId ?? ""));
+  const [therapistId, setTherapistId] = useState(String(initialValue?.therapistId ?? initialTherapistId ?? ""));
   const [status, setStatus] = useState<AppointmentStatusValue>(initialValue?.status ?? "SCHEDULED");
   const [type, setType] = useState<AppointmentTypeValue>(initialValue?.type ?? "EVALUATION");
 
@@ -97,12 +100,20 @@ export function AppointmentDialog({
           {fixedPatient ? (
             <TextField label="Patient" value={fixedPatient.displayName} fullWidth disabled helperText="Patient is locked to the selected case." sx={adminTextFieldSx} />
           ) : (
-            <TextField select label="Patient" value={patientId} onChange={(e) => handlePatientSelection(e.target.value)} required fullWidth sx={adminTextFieldSx} SelectProps={adminSelectProps}>
-              {patients.map((patient) => <MenuItem key={patient.id} value={String(patient.id)}>{patient.displayName}</MenuItem>)}
-            </TextField>
+            <Autocomplete
+              options={patients}
+              getOptionLabel={(p) => p.displayName}
+value={patients.find((p) => String(p.id) === patientId) ?? null}
+              onChange={(_, next) => handlePatientSelection(next ? String(next.id) : "")}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+              renderInput={(params) => (
+                <TextField {...params} label="Patient" required fullWidth sx={adminTextFieldSx} />
+              )}
+              slotProps={{ paper: { sx: { bgcolor: adminColors.panelElevated, color: adminColors.textStrong } } }}
+            />
           )}
           {fixedCase ? (
-            <TextField label="Case" value={`Case #${fixedCase.id}`} fullWidth disabled helperText={caseHelperText ?? "Case is locked to the selected case."} sx={adminTextFieldSx} />
+            <TextField label="Case" value={caseOptions.find((o) => o.value === fixedCase.id)?.label ?? ""} fullWidth disabled helperText={caseHelperText ?? "Case is locked to the selected case."} sx={adminTextFieldSx} />
           ) : (
             <TextField select label="Case" value={caseId} onChange={(e) => setCaseId(e.target.value)} required fullWidth disabled={!patientId || caseOptionsLoading} helperText={caseHelperText} sx={adminTextFieldSx} SelectProps={adminSelectProps}>
               {caseOptions.map((option) => <MenuItem key={option.value} value={String(option.value)}>{option.label}</MenuItem>)}

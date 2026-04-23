@@ -58,11 +58,10 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void shouldLoginWhenClinicUserAndPasswordMatch() {
+    void shouldLoginWhenUserAndPasswordMatch() {
         Clinics clinic = clinic(5L, "demo");
         Users user = user(1L, "sam", clinic);
         LoginRequest request = new LoginRequest();
-        request.setSlug("demo");
         request.setUsername("sam");
         request.setPassword("secret1");
         Jwt accessJwt = mock(Jwt.class);
@@ -71,8 +70,7 @@ class AuthServiceTest {
         session.setId(UUID.randomUUID());
         session.setClinic(clinic);
 
-        when(clinicsRepository.findClinicsBySlug("demo")).thenReturn(Optional.of(clinic));
-        when(usersRepository.findByUsernameAndClinicId("sam", 5L)).thenReturn(Optional.of(user));
+        when(usersRepository.findByUsername("sam")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("secret1", "encoded")).thenReturn(true);
         when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
         when(authSessionService.createSession(any(), any())).thenReturn(session);
@@ -83,24 +81,21 @@ class AuthServiceTest {
 
         assertSame(result.accessToken(), accessJwt);
         assertSame(result.refreshToken(), refreshJwt);
-        verify(usersRepository).findByUsernameAndClinicId("sam", 5L);
+        verify(usersRepository).findByUsername("sam");
         verify(passwordEncoder).matches("secret1", "encoded");
     }
 
     @Test
-    void shouldThrowBadCredentialsWhenClinicUserDoesNotExist() {
-        Clinics clinic = clinic(5L, "demo");
+    void shouldThrowBadCredentialsWhenUserDoesNotExist() {
         LoginRequest request = new LoginRequest();
-        request.setSlug("demo");
         request.setUsername("sam");
         request.setPassword("secret1");
 
-        when(clinicsRepository.findClinicsBySlug("demo")).thenReturn(Optional.of(clinic));
-        when(usersRepository.findByUsernameAndClinicId("sam", 5L)).thenReturn(Optional.empty());
+        when(usersRepository.findByUsername("sam")).thenReturn(Optional.empty());
 
         assertThrows(BadCredentialsException.class, () -> authService.login(request));
 
-        verify(usersRepository).findByUsernameAndClinicId("sam", 5L);
+        verify(usersRepository).findByUsername("sam");
         verify(passwordEncoder, never()).matches(any(), any());
         verify(authSessionService, never()).createSession(any(), any());
     }
@@ -110,48 +105,17 @@ class AuthServiceTest {
         Clinics clinic = clinic(5L, "demo");
         Users user = user(1L, "sam", clinic);
         LoginRequest request = new LoginRequest();
-        request.setSlug("demo");
         request.setUsername("sam");
         request.setPassword("wrong");
 
-        when(clinicsRepository.findClinicsBySlug("demo")).thenReturn(Optional.of(clinic));
-        when(usersRepository.findByUsernameAndClinicId("sam", 5L)).thenReturn(Optional.of(user));
+        when(usersRepository.findByUsername("sam")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
         assertThrows(BadCredentialsException.class, () -> authService.login(request));
 
-        verify(usersRepository).findByUsernameAndClinicId("sam", 5L);
+        verify(usersRepository).findByUsername("sam");
         verify(passwordEncoder).matches("wrong", "encoded");
         verify(authSessionService, never()).createSession(any(), any());
-    }
-
-    @Test
-    void shouldAuthenticateSameUsernameAgainstRequestedClinicOnly() {
-        Clinics demoClinic = clinic(5L, "demo");
-        Users demoUser = user(1L, "sam", demoClinic);
-        LoginRequest request = new LoginRequest();
-        request.setSlug("demo");
-        request.setUsername("sam");
-        request.setPassword("secret1");
-        Jwt accessJwt = mock(Jwt.class);
-        Jwt refreshJwt = mock(Jwt.class);
-        AuthSessions session = new AuthSessions();
-        session.setId(UUID.randomUUID());
-        session.setClinic(demoClinic);
-
-        when(clinicsRepository.findClinicsBySlug("demo")).thenReturn(Optional.of(demoClinic));
-        when(usersRepository.findByUsernameAndClinicId("sam", 5L)).thenReturn(Optional.of(demoUser));
-        when(passwordEncoder.matches("secret1", "encoded")).thenReturn(true);
-        when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
-        when(authSessionService.createSession(any(), any())).thenReturn(session);
-        when(jwtService.generateAccessToken(demoUser, session.getId().toString(), 5L)).thenReturn(accessJwt);
-        when(jwtService.generateRefreshToken(demoUser, session.getId().toString(), 5L)).thenReturn(refreshJwt);
-
-        LoginResult result = authService.login(request);
-
-        assertSame(accessJwt, result.accessToken());
-        verify(usersRepository).findByUsernameAndClinicId("sam", 5L);
-        verify(usersRepository, never()).findByUsernameAndClinicId("sam", 6L);
     }
 
     @Test
