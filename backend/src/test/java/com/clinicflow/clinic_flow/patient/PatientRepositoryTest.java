@@ -93,7 +93,6 @@ class PatientRepositoryTest {
         Patient patient = new Patient();
         patient.setFirstName(firstName);
         patient.setLastName(lastName);
-        patient.setDisplayName(lastName + ", " + firstName.charAt(0));
         patient.setClinic(clinic);
         entityManager.persist(patient);
         return patient;

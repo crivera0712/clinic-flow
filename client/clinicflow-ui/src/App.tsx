@@ -1,94 +1,44 @@
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import type { ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
-import { AdminLayout } from "./components/admin/AdminLayout";
-import { AppointmentsPage } from "./features/appointments/AppointmentsPage";
-import { BodyRegionsPage } from "./features/body-regions/BodyRegionsPage";
-import { PatientsPage } from "./features/patients/PatientsPage";
-import { TherapistsPage } from "./features/therapists/TherapistsPage";
+import { ConsoleLayout } from "./features/console/ConsoleLayout";
+import { PatientsDirectory } from "./features/console/PatientsDirectory";
+import { SchedulePage } from "./features/console/SchedulePage";
+import { TherapistsManage } from "./features/console/TherapistsManage";
 import { useAuth } from "./auth/AuthContext";
 
-function ScheduleShell() {
-  const { currentUser } = useAuth();
-
+// ADMIN (front desk): console is home, gym board is a preview at /board.
+function AdminApp() {
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#020617" }}>
-      <Container maxWidth={false} disableGutters>
-        {currentUser?.roleName === "ADMIN" && (
-          <Box
-            sx={{
-              mx: 2,
-              mt: 2,
-              px: 2,
-              py: 1.5,
-              borderRadius: 3,
-              color: "#cbd5e1",
-              bgcolor: "rgba(30, 41, 59, 0.92)",
-              border: "1px solid rgba(148, 163, 184, 0.14)",
-            }}
-          >
-            <Typography sx={{ fontWeight: 600 }}>Admin access is active.</Typography>
-            <Typography sx={{ color: "#94a3b8" }}>
-              Use the admin panel to manage appointments, body regions, patients, and therapists.
-            </Typography>
-          </Box>
-        )}
-
-        {currentUser?.isDemo && (
-          <Box sx={{ mx: 2, mt: 2 }}>
-            <Alert severity="warning" variant="filled" sx={{ borderRadius: 3 }}>
-              Demo Mode: this clinic uses read-only sample data. Editing is disabled.
-            </Alert>
-          </Box>
-        )}
-
-        <ScheduleDisplayPage />
-      </Container>
-    </Box>
+    <Routes>
+      <Route path="/" element={<ConsoleLayout />}>
+        <Route index element={<SchedulePage />} />
+        <Route path="patients" element={<PatientsDirectory />} />
+        <Route path="therapists" element={<TherapistsManage />} />
+      </Route>
+      <Route path="/board" element={<ScheduleDisplayPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
-function RequireAdmin({ children }: { children: ReactNode }) {
-  const { currentUser } = useAuth();
-  if (currentUser?.roleName !== "ADMIN") {
-    return <Navigate to="/" replace />;
-  }
-  return <>{children}</>;
-}
-
-function AuthenticatedApp() {
+// DISPLAY (gym wall): the board is the only screen.
+function DisplayApp() {
   return (
     <Routes>
-      <Route path="/" element={<ScheduleShell />} />
-      <Route
-        path="/admin"
-        element={
-          <RequireAdmin>
-            <AdminLayout />
-          </RequireAdmin>
-        }
-      >
-        <Route index element={<Navigate to="/admin/appointments" replace />} />
-        <Route path="appointments" element={<AppointmentsPage />} />
-        <Route path="body-regions" element={<BodyRegionsPage />} />
-        <Route path="patients" element={<PatientsPage />} />
-        <Route path="therapists" element={<TherapistsPage />} />
-      </Route>
+      <Route path="/" element={<ScheduleDisplayPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
 function App() {
-  const { status } = useAuth();
+  const { status, currentUser } = useAuth();
   const { pathname } = useLocation();
 
   if (pathname.startsWith("/register")) {
@@ -101,15 +51,7 @@ function App() {
 
   if (status === "bootstrapping") {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          bgcolor: "#020617",
-          color: "#e2e8f0",
-        }}
-      >
+      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", bgcolor: "#020617", color: "#e2e8f0" }}>
         <Stack spacing={2} alignItems="center">
           <CircularProgress />
           <Typography>Restoring session...</Typography>
@@ -122,7 +64,7 @@ function App() {
     return <LoginPage />;
   }
 
-  return <AuthenticatedApp />;
+  return currentUser?.roleName === "ADMIN" ? <AdminApp /> : <DisplayApp />;
 }
 
 export default App;

@@ -1,7 +1,7 @@
 package com.clinicflow.clinic_flow.appointment;
 
-import com.clinicflow.clinic_flow.cases.Case;
 import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.patient.Patient;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,10 +17,9 @@ import java.time.LocalDateTime;
 public class Appointment {
 
     public enum Status {
-        CHECKED_IN,
-        IN_SESSION,
-        FINISHED,
-        SCHEDULED
+        SCHEDULED,
+        WAITING,
+        DONE
     }
 
     public enum Type {
@@ -52,8 +51,8 @@ public class Appointment {
     private Type type;
 
     @ManyToOne
-    @JoinColumn(name = "c_id")
-    private Case ptCase;
+    @JoinColumn(name = "p_id")
+    private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "t_id")
