@@ -11,6 +11,13 @@ VITE_API_BASE_URL=/api
 VITE_CLINIC_SLUG=demo
 ```
 
+For a deployed frontend talking to a different API origin, set:
+
+```bash
+VITE_API_BASE_URL=https://clinic-flow-api.duckdns.org/api
+VITE_CLINIC_SLUG=demo
+```
+
 ## Commands
 
 ```bash

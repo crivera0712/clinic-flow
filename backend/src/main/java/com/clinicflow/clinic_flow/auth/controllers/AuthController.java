@@ -2,25 +2,29 @@ package com.clinicflow.clinic_flow.auth.controllers;
 
 import com.clinicflow.clinic_flow.auth.AuthService;
 import com.clinicflow.clinic_flow.auth.JwtService;
-import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.dtos.JwtResponse;
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
 import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.exception.InvalidSessionException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @Validated
 @RestController
 @RequestMapping("/api/auth")
@@ -69,19 +73,46 @@ public class AuthController {
             HttpServletResponse response
     ){
         if (refreshToken == null || refreshToken.isBlank()) {
+            log.info("Refresh denied reason=missing_cookie");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         var jwt = jwtService.parseToken(refreshToken);
-        if (jwt == null || jwt.isExpired() || !"refresh".equals(jwt.getTokenType())) {
+        if (jwt == null) {
+            log.info("Refresh denied reason=parse_failed");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        var result = authService.refreshToken(jwt);
+        if (jwt.isExpired()) {
+            log.info("Refresh denied reason=expired sid={} clinicId={}", jwt.getSid(), jwt.getClinicId());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-        writeRefreshCookie(response, result.refreshToken().toString());
+        if (!"refresh".equals(jwt.getTokenType())) {
+            log.info(
+                    "Refresh denied reason=wrong_token_type sid={} clinicId={} tokenType={}",
+                    jwt.getSid(),
+                    jwt.getClinicId(),
+                    jwt.getTokenType()
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-        return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
+        try {
+            var result = authService.refreshToken(jwt);
+
+            writeRefreshCookie(response, result.refreshToken().toString());
+
+            return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
+        } catch (InvalidSessionException | BadCredentialsException ex) {
+            log.info(
+                    "Refresh denied reason=session_invalid sid={} clinicId={} message={}",
+                    jwt.getSid(),
+                    jwt.getClinicId(),
+                    ex.getMessage()
+            );
+            throw ex;
+        }
 
     }
 
@@ -108,7 +139,7 @@ public class AuthController {
         var cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(jwtConfig.isCookieSecure())
-                .sameSite(jwtConfig.isCookieSecure() ? "None" : "Lax")
+                .sameSite(jwtConfig.getCookieSameSite())
                 .path("/api/auth/refresh")
                 .maxAge(jwtConfig.getRefreshTokenExpiration())
                 .build();
@@ -119,7 +150,7 @@ public class AuthController {
         var cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(jwtConfig.isCookieSecure())
-                .sameSite(jwtConfig.isCookieSecure() ? "None" : "Lax")
+                .sameSite(jwtConfig.getCookieSameSite())
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();

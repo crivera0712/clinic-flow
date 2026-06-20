@@ -120,7 +120,17 @@ export DB_URL=jdbc:postgresql://localhost:5432/clinicflow
 export DB_USER=postgres
 export DB_PASSWORD=postgres
 export JWT_SECRET=change-me-to-a-long-random-secret
+export SPRING_JWT_COOKIESECURE=false
+export SPRING_JWT_COOKIESAMESITE=Lax
+```
 
+Production cross-origin deployment should use:
+
+```bash
+export SPRING_JWT_COOKIESECURE=true
+export SPRING_JWT_COOKIESAMESITE=None
+export APP_CORS_ALLOWED_ORIGINS=https://clinic-flow-4hei.onrender.com
+export VITE_API_BASE_URL=https://clinic-flow-api.duckdns.org/api
 ```
 
 ## API Overview
