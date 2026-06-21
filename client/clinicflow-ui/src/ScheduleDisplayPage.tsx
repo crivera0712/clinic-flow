@@ -14,15 +14,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { useAuth } from "./auth/AuthContext";
+import { buildTherapistAccentMap } from "./features/display/therapistAccents";
 import { listAppointmentsByDate } from "./services/appointmentService";
 import { colors } from "./theme";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
-
-const THERAPIST_ACCENT_PALETTE = [
-  "#38bdf8", "#2dd4bf", "#fbbf24", "#fb923c", "#a78bfa", "#fb7185", "#34d399", "#facc15",
-];
 
 function getTodayISODate(): string {
   const d = new Date();
@@ -39,12 +36,7 @@ function typeLabel(type: BoardRow["type"]): string {
   return appointmentTypeOptions.find((option) => option.value === type)?.label ?? "";
 }
 
-function accentFor(therapistId: number): string {
-  return THERAPIST_ACCENT_PALETTE[Math.abs(therapistId) % THERAPIST_ACCENT_PALETTE.length];
-}
-
-function ScheduleCard({ row, prominence }: { row: BoardRow; prominence: "primary" | "secondary" }) {
-  const accent = accentFor(row.therapistId);
+function ScheduleCard({ row, prominence, accent }: { row: BoardRow; prominence: "primary" | "secondary"; accent: string }) {
   const large = prominence === "primary";
 
   return (
@@ -124,6 +116,7 @@ export default function ScheduleDisplayPage() {
   const currentDate = useMemo(() => new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(now), [now]);
   const waiting = useMemo(() => appointments.filter((appointment) => appointment.status === "WAITING").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)), [appointments]);
   const upNext = useMemo(() => appointments.filter((appointment) => appointment.status === "SCHEDULED").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)).slice(0, 6), [appointments]);
+  const therapistAccents = useMemo(() => buildTherapistAccentMap(appointments), [appointments]);
 
   return (
     <Box sx={{ minHeight: "100vh", p: { xs: 2, sm: 3, lg: 4 }, background: "radial-gradient(circle at 0% 0%, rgba(56,189,248,.08), transparent 28%), #050b18" }}>
@@ -152,7 +145,7 @@ export default function ScheduleDisplayPage() {
           <Paper sx={{ p: { xs: 1.5, sm: 2, lg: 2.5 }, bgcolor: alpha(colors.surface, 0.82) }}>
             {waiting.length === 0 ? <EmptyPanel title="No one is waiting" description="Checked-in patients will appear here." /> : (
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(3, minmax(0, 1fr))" }, gap: { xs: 1.5, lg: 2 } }}>
-                {waiting.map((row) => <ScheduleCard key={row.id} row={row} prominence="primary" />)}
+                {waiting.map((row) => <ScheduleCard key={row.id} row={row} prominence="primary" accent={therapistAccents.get(row.therapistId)!} />)}
               </Box>
             )}
           </Paper>
@@ -167,7 +160,7 @@ export default function ScheduleDisplayPage() {
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: alpha(colors.surface, 0.5) }}>
             {upNext.length === 0 ? <EmptyPanel title="Nothing upcoming" description="Scheduled patients will appear here." /> : (
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", xl: "repeat(3, minmax(0, 1fr))" }, gap: 1.5 }}>
-                {upNext.map((row) => <ScheduleCard key={row.id} row={row} prominence="secondary" />)}
+                {upNext.map((row) => <ScheduleCard key={row.id} row={row} prominence="secondary" accent={therapistAccents.get(row.therapistId)!} />)}
               </Box>
             )}
           </Paper>
