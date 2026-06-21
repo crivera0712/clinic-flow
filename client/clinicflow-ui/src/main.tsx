@@ -12,23 +12,15 @@ import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { clinicTheme } from './theme.ts'
 
-async function enableMocking() {
-  if (import.meta.env.VITE_USE_MOCKS !== 'true') return
-  const { worker } = await import('./mocks/browser')
-  await worker.start({ onUnhandledRequest: 'bypass' })
-}
-
-enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <ThemeProvider theme={clinicTheme}>
-        <CssBaseline />
-        <BrowserRouter>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </StrictMode>,
-  )
-})
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ThemeProvider theme={clinicTheme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
+  </StrictMode>,
+)

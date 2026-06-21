@@ -10,7 +10,6 @@ In local dev the app calls `/api`, which Vite proxies to the backend at
 
 ```bash
 VITE_API_PROXY_TARGET=http://localhost:8080   # backend the dev proxy points at
-VITE_USE_MOCKS=true                           # run against the in-memory MSW mock backend
 VITE_CLINIC_NAME=Mill Valley Physical Therapy # clinic name shown on the display board
 ```
 
@@ -29,7 +28,4 @@ npm run build      # type-check + production build
 npm run lint       # ESLint
 npm run test:run   # Vitest (headless)
 npm run preview    # preview the production build
-
-# Run against the in-memory MSW mock backend (no real backend needed):
-VITE_USE_MOCKS=true npm run dev
 ```

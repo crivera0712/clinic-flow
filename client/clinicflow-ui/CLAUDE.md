@@ -10,10 +10,9 @@ npm run build    # Type-check + production build
 npm run lint     # ESLint
 npm run preview  # Preview production build locally
 npm run test:run # Vitest (headless)
-
-# Run the UI against the in-memory MSW mock backend (no real backend needed):
-VITE_USE_MOCKS=true npm run dev   # boots authenticated as ADMIN; .env.local sets this for dev
 ```
+
+The app always talks to the real backend (via the Vite `/api` proxy in dev). There is no in-browser mock backend.
 
 ## Local API Proxy
 
@@ -34,7 +33,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 - **ADMIN (front desk):** `ConsoleLayout` (`src/features/console/`) — `/` = `SchedulePage` (today's schedule + fast-add row with patient typeahead + Arrived/Start check-in), `/patients`, `/therapists`; `/board` opens the clinic display.
 - **DISPLAY:** `/` = `ScheduleDisplayPage` only — read-only, auto-refreshing, **Currently Waiting** large + **Up Next** smaller.
 
-**Mock backend:** `src/mocks/` holds an in-memory MSW browser worker (`db.ts`, `handlers.ts`, `browser.ts`) started from `main.tsx` when `VITE_USE_MOCKS=true`. It implements the same API contract the real backend will (auth boots as ADMIN). Test-side MSW lives separately in `src/test/msw/`.
+**Testing:** the Vitest suite mocks the API with MSW in `src/test/msw/` (node server, wired up in `src/test/setup.ts`). This is test-only — the running app has no mock backend and always hits the real API.
 
 ## UI Stack
 
