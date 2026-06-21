@@ -11,8 +11,9 @@ import { PatientsDirectory } from "./features/console/PatientsDirectory";
 import { SchedulePage } from "./features/console/SchedulePage";
 import { TherapistsManage } from "./features/console/TherapistsManage";
 import { useAuth } from "./auth/AuthContext";
+import { BrandMark } from "./components/ui/BrandMark";
 
-// ADMIN (front desk): console is home, gym board is a preview at /board.
+// ADMIN (front desk): console is home, clinic display is available at /board.
 function AdminApp() {
   return (
     <Routes>
@@ -27,7 +28,7 @@ function AdminApp() {
   );
 }
 
-// DISPLAY (gym wall): the board is the only screen.
+// DISPLAY: the clinic display is the only screen.
 function DisplayApp() {
   return (
     <Routes>
@@ -51,10 +52,11 @@ function App() {
 
   if (status === "bootstrapping") {
     return (
-      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", bgcolor: "#020617", color: "#e2e8f0" }}>
+      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
         <Stack spacing={2} alignItems="center">
+          <BrandMark size={48} />
           <CircularProgress />
-          <Typography>Restoring session...</Typography>
+          <Typography color="text.secondary">Restoring your clinic workspace…</Typography>
         </Stack>
       </Box>
     );

@@ -2,31 +2,26 @@ html, body, #root {
     height: 100%;
     margin: 0;
     padding: 0;
-    background: #020617;
-    font-family: "Segoe UI", sans-serif;
+    min-width: 320px;
 }
 
 * {
     box-sizing: border-box;
 }
 
-@layer components {
-    .card {
-        background: var(--panel-alt);
-        border-radius: 18px;
-        padding: clamp(22px, 2.8vw, 34px);
-        min-height: clamp(140px, 20vh, 210px);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        position: relative;
-        overflow: hidden;
-        animation: rise 560ms ease-out both;
-        animation-delay: var(--delay, 0ms);
-    }
+body {
+    overflow-x: hidden;
+}
 
-    .queue-card {
-        border-left: 10px solid var(--accent, var(--accent-slate));
-        gap: 6px;
+button, input, textarea, select {
+    font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

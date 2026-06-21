@@ -31,8 +31,8 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 **Data model (flat):** `Patient {firstName,lastName}`, `Therapist {name}`, `Appointment {patient, therapist, scheduledAt, type, status}`. `type` = Evaluation/Reassessment/Follow-up. `status` is a minimal 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`. There is no Case or Body Region. Types live one-per-entity in `src/types/` (`patient.ts`, `therapist.ts`, `appointment.ts`, `common.ts`). The API returns denormalized `BoardRow`s (patient/therapist names inline) for both surfaces.
 
 **Two surfaces / role-based routing** (`src/App.tsx` renders by `currentUser.roleName`):
-- **ADMIN (front desk):** `ConsoleLayout` (`src/features/console/`) — `/` = `SchedulePage` (today's schedule + fast-add row with patient typeahead + Arrived/Start check-in), `/patients`, `/therapists`; `/board` previews the gym display.
-- **DISPLAY (gym wall):** `/` = `ScheduleDisplayPage` only — read-only, auto-refreshing, **Currently Waiting** large + **Up Next** smaller.
+- **ADMIN (front desk):** `ConsoleLayout` (`src/features/console/`) — `/` = `SchedulePage` (today's schedule + fast-add row with patient typeahead + Arrived/Start check-in), `/patients`, `/therapists`; `/board` opens the clinic display.
+- **DISPLAY:** `/` = `ScheduleDisplayPage` only — read-only, auto-refreshing, **Currently Waiting** large + **Up Next** smaller.
 
 **Mock backend:** `src/mocks/` holds an in-memory MSW browser worker (`db.ts`, `handlers.ts`, `browser.ts`) started from `main.tsx` when `VITE_USE_MOCKS=true`. It implements the same API contract the real backend will (auth boots as ADMIN). Test-side MSW lives separately in `src/test/msw/`.
 
@@ -40,7 +40,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 
 - **MUI v7** — use for all UI components (layout, data grids, dialogs, chips, etc.)
 - **Tailwind v3** — available for utility classes where MUI's `sx` prop would be verbose
-- **MUI X DataGrid** — used in all admin list pages; pagination is server-side
+- **MUI X DataGrid** — used in `PatientsDirectory` only. `SchedulePage` renders today's appointments as an MUI `Table`, and `TherapistsManage` uses a plain MUI list.
 
 ## Key Conventions
 

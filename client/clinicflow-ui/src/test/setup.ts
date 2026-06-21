@@ -3,6 +3,20 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "./msw/server";
 
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    dispatchEvent: () => false,
+  }),
+});
+
 // Start the MSW server once for the whole suite. `onUnhandledRequest: "error"`
 // turns any request without a matching handler (e.g. a typo'd URL) into a
 // failing test.

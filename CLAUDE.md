@@ -15,10 +15,12 @@ Each subdirectory has its own CLAUDE.md with stack-specific detail.
 
 ## What ClinicFlow Does
 
-Multi-tenant scheduling backend for physical therapy clinics. Manages appointments, therapists, patients, and cases. Two user roles:
+Multi-tenant scheduling backend for physical therapy clinics. Manages appointments, therapists, and patients. Two user roles:
 
 - `ADMIN` — full access to admin panel (CRUD on all entities) + schedule board
 - `DISPLAY` — schedule board view only
+
+Scheduling uses a **flat appointment model**: an appointment holds its patient, therapist, `scheduledAt`, `type` (`EVALUATION` / `REASSESSMENT` / `FOLLOW_UP`), and `status` directly — there is no Case or Body Region. `status` is a 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`.
 
 A demo clinic (`demo_admin` / `demo_display`) is seeded and kept read-only; `DemoScheduler` reseeds it periodically.
 

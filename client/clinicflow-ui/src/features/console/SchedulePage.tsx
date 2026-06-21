@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -8,6 +13,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Snackbar from "@mui/material/Snackbar";
@@ -17,10 +23,16 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 import { adminColors, adminSelectProps, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { colors } from "../../theme";
 import {
   createAppointment,
   listAppointmentsByDate,
@@ -46,6 +58,39 @@ type PatientOption =
 function optionLabel(option: PatientOption): string {
   const name = `${option.firstName} ${option.lastName}`.trim();
   return option.kind === "existing" ? name : `Add new patient: "${name}"`;
+}
+
+function AppointmentActions({
+  row,
+  onStatus,
+  onEdit,
+  onDelete,
+}: {
+  row: BoardRow;
+  onStatus: (status: BoardRow["status"]) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+      {row.status === "SCHEDULED" && (
+        <Button size="small" variant="outlined" color="primary" onClick={() => onStatus("WAITING")}>Arrived</Button>
+      )}
+      {row.status === "WAITING" && (
+        <Button size="small" variant="outlined" color="success" onClick={() => onStatus("DONE")}>Start visit</Button>
+      )}
+      <Tooltip title="Edit appointment">
+        <IconButton aria-label={`Edit ${row.patientName}'s appointment`} size="small" onClick={onEdit}>
+          <EditRoundedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Cancel appointment">
+        <IconButton aria-label={`Cancel ${row.patientName}'s appointment`} size="small" color="error" onClick={onDelete}>
+          <DeleteOutlineRoundedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Stack>
+  );
 }
 
 export function SchedulePage() {
@@ -179,18 +224,24 @@ export function SchedulePage() {
   }
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>
-          Schedule
-        </Typography>
-        <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>
-          Add patients to the day and check them in as they arrive.
-        </Typography>
-      </Box>
+    <Stack spacing={3.5}>
+      <PageHeader
+        eyebrow="Daily operations"
+        title="Schedule"
+        description="Add patients to the day and move each visit from scheduled to waiting to complete."
+      />
 
       {/* Fast-add row */}
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, bgcolor: colors.surface, boxShadow: "0 18px 50px rgba(0,0,0,.18)" }}>
+        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: 2, display: "grid", placeItems: "center", color: "primary.main", bgcolor: alpha(colors.primary, 0.11) }}>
+            <AddRoundedIcon />
+          </Box>
+          <Box>
+            <Typography variant="h6">Quick add</Typography>
+            <Typography variant="body2" color="text.secondary">Create an appointment without leaving the schedule.</Typography>
+          </Box>
+        </Stack>
         <Stack
           direction={{ xs: "column", lg: "row" }}
           spacing={2}
@@ -250,65 +301,75 @@ export function SchedulePage() {
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
           </TextField>
-          <Button type="submit" variant="contained" disabled={adding} sx={{ height: 40 }}>
-            Add
+          <Button type="submit" variant="contained" disabled={adding} startIcon={<AddRoundedIcon />} sx={{ minWidth: 118 }}>
+            Add visit
           </Button>
         </Stack>
       </Paper>
 
       {/* Schedule table */}
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
-        <Stack spacing={2}>
-          <TextField
-            label="Date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            sx={{ maxWidth: 220, ...adminTextFieldSx }}
-            InputLabelProps={{ shrink: true }}
-          />
+      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }} justifyContent="space-between" sx={{ p: { xs: 2, md: 2.5 }, borderBottom: `1px solid ${colors.borderSoft}` }}>
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CalendarTodayRoundedIcon color="primary" fontSize="small" />
+              <Typography variant="h6">Day schedule</Typography>
+            </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {loading ? "Loading appointments…" : `${rows.length} appointment${rows.length === 1 ? "" : "s"}`}
+            </Typography>
+          </Box>
+          <TextField label="Date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} sx={{ width: { xs: "100%", sm: 210 }, ...adminTextFieldSx }} InputLabelProps={{ shrink: true }} />
+        </Stack>
+        <Stack>
           {error && <Alert severity="error">{error}</Alert>}
-          <Table size="small" sx={{ "& td, & th": { borderColor: adminColors.borderMuted, color: adminColors.textStrong } }}>
-            <TableHead>
-              <TableRow>
-                {["Time", "Patient", "Therapist", "Type", "Status", "Actions"].map((h) => (
-                  <TableCell key={h} sx={{ color: "#f8fafc", fontWeight: 700 }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.length === 0 && !loading && (
-                <TableRow>
-                  <TableCell colSpan={6} sx={{ color: adminColors.textSecondary, textAlign: "center", py: 4 }}>
-                    No appointments for this day.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{formatTime(row.scheduledAt)}</TableCell>
-                  <TableCell>{row.patientName}</TableCell>
-                  <TableCell>{row.therapistName}</TableCell>
-                  <TableCell>{appointmentTypeOptions.find((o) => o.value === row.type)?.label ?? row.type}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={appointmentStatusLabels[row.status]} color={statusChipColor[row.status]} variant={row.status === "SCHEDULED" ? "outlined" : "filled"} />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      {row.status === "SCHEDULED" && (
-                        <Button size="small" variant="outlined" onClick={() => void setStatus(row, "WAITING")}>Arrived</Button>
-                      )}
-                      {row.status === "WAITING" && (
-                        <Button size="small" variant="outlined" color="success" onClick={() => void setStatus(row, "DONE")}>Start</Button>
-                      )}
-                      <Button size="small" onClick={() => setEditTarget(row)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => setDeleteTarget(row)}>Cancel</Button>
+          {rows.length === 0 && !loading ? (
+            <EmptyState icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />} title="The day is clear" description="Use Quick add to schedule the first appointment." />
+          ) : (
+            <>
+              <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+                <Table sx={{ minWidth: 900, "& td, & th": { borderColor: adminColors.borderMuted } }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: alpha(colors.surfaceRaised, 0.55) }}>
+                      {["Time", "Patient", "Therapist", "Type", "Status", "Actions"].map((h) => (
+                        <TableCell key={h} sx={{ color: "text.secondary", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 750 }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow key={row.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
+                        <TableCell sx={{ fontWeight: 750, color: "primary.light" }}>{formatTime(row.scheduledAt)}</TableCell>
+                        <TableCell><Typography fontWeight={700}>{row.patientName}</Typography></TableCell>
+                        <TableCell color="text.secondary">{row.therapistName}</TableCell>
+                        <TableCell>{appointmentTypeOptions.find((o) => o.value === row.type)?.label ?? row.type}</TableCell>
+                        <TableCell><Chip size="small" label={appointmentStatusLabels[row.status]} color={statusChipColor[row.status]} variant={row.status === "SCHEDULED" ? "outlined" : "filled"} /></TableCell>
+                        <TableCell><AppointmentActions row={row} onStatus={(status) => void setStatus(row, status)} onEdit={() => setEditTarget(row)} onDelete={() => setDeleteTarget(row)} /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" }, p: 2 }}>
+                {rows.map((row) => (
+                  <Paper key={row.id} sx={{ p: 2, bgcolor: alpha(colors.surfaceRaised, 0.52), borderColor: colors.borderSoft }}>
+                    <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="flex-start">
+                      <Box>
+                        <Typography color="primary.light" fontWeight={750}>{formatTime(row.scheduledAt)}</Typography>
+                        <Typography variant="h6" sx={{ mt: 0.25 }}>{row.patientName}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{row.therapistName} · {appointmentTypeOptions.find((o) => o.value === row.type)?.label ?? row.type}</Typography>
+                      </Box>
+                      <Chip size="small" label={appointmentStatusLabels[row.status]} color={statusChipColor[row.status]} variant={row.status === "SCHEDULED" ? "outlined" : "filled"} />
                     </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <Box sx={{ mt: 2, pt: 1.5, borderTop: `1px solid ${colors.borderSoft}` }}>
+                      <AppointmentActions row={row} onStatus={(status) => void setStatus(row, status)} onEdit={() => setEditTarget(row)} onDelete={() => setDeleteTarget(row)} />
+                    </Box>
+                  </Paper>
+                ))}
+              </Stack>
+            </>
+          )}
         </Stack>
       </Paper>
 
@@ -328,6 +389,8 @@ export function SchedulePage() {
 
       <ConfirmDeleteDialog
         open={deleteTarget !== null}
+        title="Cancel appointment"
+        confirmLabel="Cancel appointment"
         description={deleteTarget ? `Cancel ${deleteTarget.patientName}'s ${formatTime(deleteTarget.scheduledAt)} appointment?` : ""}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}

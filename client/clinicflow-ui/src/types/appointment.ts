@@ -2,7 +2,7 @@ export type AppointmentType = "EVALUATION" | "REASSESSMENT" | "FOLLOW_UP";
 
 export type AppointmentStatus = "SCHEDULED" | "WAITING" | "DONE";
 
-// Denormalized row used by both the gym board and the front-desk console.
+// Denormalized row used by both the clinic display and the front-desk console.
 export interface BoardRow {
   id: number;
   scheduledAt: string;

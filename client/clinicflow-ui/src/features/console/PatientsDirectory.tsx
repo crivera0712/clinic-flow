@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import PersonAddAltRoundedIcon from "@mui/icons-material/PersonAddAltRounded";
+import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,7 +14,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { adminColors, adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { colors } from "../../theme";
 import { createPatient, listPatients } from "../../services/patientService";
 import type { Patient } from "../../types/patient";
 
@@ -65,30 +69,47 @@ export function PatientsDirectory() {
   ];
 
   return (
-    <Stack spacing={3}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ md: "center" }}>
-        <Box>
-          <Typography variant="h4" sx={{ color: "#f8fafc", fontWeight: 700 }}>Patients</Typography>
-          <Typography sx={{ color: adminColors.textSecondary, mt: 1 }}>The clinic's patient directory.</Typography>
-        </Box>
-        <Button variant="contained" onClick={() => setOpen(true)}>Add Patient</Button>
-      </Stack>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 4, bgcolor: adminColors.panelBg, border: `1px solid ${adminColors.border}` }}>
+    <Stack spacing={3.5}>
+      <PageHeader
+        eyebrow="Clinic directory"
+        title="Patients"
+        description="A focused directory for everyone currently receiving care at the clinic."
+        action={<Button variant="contained" startIcon={<PersonAddAltRoundedIcon />} onClick={() => setOpen(true)}>Add patient</Button>}
+      />
+      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}>
+          <PeopleAltRoundedIcon color="primary" />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6">Patient directory</Typography>
+            <Typography variant="body2" color="text.secondary">{loading ? "Loading patients…" : `${rows.length} patient${rows.length === 1 ? "" : "s"}`}</Typography>
+          </Box>
+        </Stack>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Box sx={{ height: 560 }}>
-          <DataGrid rows={rows} columns={columns} loading={loading} disableRowSelectionOnClick sx={adminDataGridSx} />
+        <Box sx={{ height: { xs: 460, md: 580 } }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            disableRowSelectionOnClick
+            rowHeight={58}
+            columnHeaderHeight={50}
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
+            sx={adminDataGridSx}
+          />
         </Box>
       </Paper>
 
-      <Dialog open={open} onClose={saving ? undefined : () => setOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { bgcolor: adminColors.panelElevated, color: adminColors.textStrong, border: `1px solid ${adminColors.border}`, backgroundImage: "none" } }}>
-        <DialogTitle sx={{ color: adminColors.textStrong }}>Add Patient</DialogTitle>
+      <Dialog open={open} onClose={saving ? undefined : () => setOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Add patient</DialogTitle>
         <DialogContent>
+          <Typography color="text.secondary" sx={{ mb: 2.5 }}>Add a patient to the clinic directory.</Typography>
           <Stack component="form" spacing={2.5} sx={{ pt: 1 }} onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}>
             <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoFocus fullWidth sx={adminTextFieldSx} />
             <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required fullWidth sx={adminTextFieldSx} />
             <DialogActions sx={{ px: 0, pb: 0 }}>
               <Button onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
-              <Button type="submit" variant="contained" disabled={saving}>Create</Button>
+              <Button type="submit" variant="contained" disabled={saving}>Add patient</Button>
             </DialogActions>
           </Stack>
         </DialogContent>

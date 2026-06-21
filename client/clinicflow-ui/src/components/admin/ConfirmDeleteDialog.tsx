@@ -5,10 +5,11 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { adminColors } from "./adminStyles";
 
 type ConfirmDeleteDialogProps = {
   open: boolean;
+  title?: string;
+  confirmLabel?: string;
   description: string;
   error?: string | null;
   loading?: boolean;
@@ -18,6 +19,8 @@ type ConfirmDeleteDialogProps = {
 
 export function ConfirmDeleteDialog({
   open,
+  title = "Confirm removal",
+  confirmLabel = "Remove",
   description,
   error,
   loading = false,
@@ -30,26 +33,18 @@ export function ConfirmDeleteDialog({
       onClose={loading ? undefined : onClose}
       fullWidth
       maxWidth="xs"
-      PaperProps={{
-        sx: {
-          backgroundColor: adminColors.panelElevated,
-          color: adminColors.textStrong,
-          border: `1px solid ${adminColors.border}`,
-          backgroundImage: "none",
-        },
-      }}
     >
-      <DialogTitle sx={{ color: adminColors.textStrong }}>Confirm Delete</DialogTitle>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Typography sx={{ color: adminColors.textSecondary }}>{description}</Typography>
+        <Typography color="text.secondary">{description}</Typography>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onClose} disabled={loading}>
           Cancel
         </Button>
         <Button color="error" variant="contained" onClick={onConfirm} disabled={loading}>
-          Delete
+          {confirmLabel}
         </Button>
       </DialogActions>
     </Dialog>
