@@ -1,22 +1,17 @@
 package com.clinicflow.clinic_flow.appointment;
 
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentResponseDto;
-import com.clinicflow.clinic_flow.appointment.dtos.AppointmentUiDto;
+import com.clinicflow.clinic_flow.appointment.dtos.BoardRowDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
 
-    Appointment requestToAppointmentEntityDto(AppointmentRequestDto request);
-
-    @Mapping(target = "caseId", source = "ptCase.id")
+    @Mapping(target = "patientId", source = "patient.id")
+    @Mapping(target = "patientName", expression = "java(appointment.getPatient().getFirstName() + \" \" + appointment.getPatient().getLastName())")
     @Mapping(target = "therapistId", source = "therapist.id")
-    AppointmentResponseDto entityToAppointmentResponseDto(Appointment appointment);
+    @Mapping(target = "therapistName", source = "therapist.therapistName")
+    BoardRowDto entityToBoardRow(Appointment appointment);
 
-
-    AppointmentUiDto toAppointmentUiDto(AppointmentScheduleProjection projection);
-
-
+    BoardRowDto projectionToBoardRow(AppointmentBoardProjection projection);
 }

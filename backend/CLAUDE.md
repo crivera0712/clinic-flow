@@ -39,12 +39,18 @@ Tests run against H2 in-memory — no database setup needed for `./mvnw test`.
 Each domain is a self-contained package under `com.clinicflow.clinic_flow`:
 
 ```
-appointment/     cases/       patient/      therapist/
-body_region/     clinics/     auth/         auth_sessions/
-users/           demo/        config/       exception/
+appointment/     patient/     therapist/    clinics/
+auth/            auth_sessions/  users/      user_clinic_memberships/
+demo/            common/      config/       exception/
 ```
 
 Each domain package follows: `Entity`, `Repository`, `Service`, `Controller`, `Mapper`, and a `dtos/` sub-package with `*RequestDto`, `*ResponseDto`, `*PatchDto`.
+
+## Flat Appointment Model
+
+Scheduling is built on a flat appointment model — there is no `Case` or `BodyRegion` entity. An `Appointment` references its `Patient` and `Therapist` directly and carries `scheduledAt`, `type` (`EVALUATION` / `REASSESSMENT` / `FOLLOW_UP`), and `status` (`SCHEDULED → WAITING → DONE`, a 3-state check-in lifecycle).
+
+Board reads return a denormalized `BoardRowDto` (patient/therapist names inline) sourced from `AppointmentBoardProjection`, a native-query interface projection. Writes use `AppointmentRequestDto` (which can create a new patient inline via a nested `patient` object, or reference an existing `patientId`) and `AppointmentPatchDto`. The service rejects therapist and patient double-booking at the same `scheduledAt`. Endpoints: `GET /api/appointments/date` (defaults to today), `POST /api/appointments`, `PATCH /api/appointments/{id}`, `DELETE /api/appointments/{id}`.
 
 ## Key Architectural Patterns
 
@@ -60,7 +66,7 @@ Each domain package follows: `Entity`, `Repository`, `Service`, `Controller`, `M
 
 ## Database Migrations
 
-Flyway migrations live in `src/main/resources/db/migration/` following `V{n}__{description}.sql`. New migrations must increment the version number. The demo clinic is seeded in `V23__seed_demo_clinic.sql` and expanded in `V24__expand_demo_clinic_seed.sql`.
+Flyway migrations live in `src/main/resources/db/migration/` following `V{n}__{description}.sql`. New migrations must increment the version number. The demo clinic is seeded in `V23__seed_demo_clinic.sql` and expanded in `V24__expand_demo_clinic_seed.sql`. `V26__flat_model_rebuild.sql` (the latest) collapsed scheduling to the flat model: it backfills the appointment→patient link, drops the `cases` and `body_regions` tables, collapses the appointment status enum, and removes `therapist_type` / `display_name`.
 
 ## Testing Patterns
 

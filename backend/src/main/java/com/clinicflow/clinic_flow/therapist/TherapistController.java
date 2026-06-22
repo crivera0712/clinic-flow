@@ -1,39 +1,28 @@
 package com.clinicflow.clinic_flow.therapist;
 
-import com.clinicflow.clinic_flow.common.PageResponse;
-import com.clinicflow.clinic_flow.therapist.dtos.TherapistPatchDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @Validated
 @AllArgsConstructor
 @RequestMapping("/api/therapists")
-@RestController()
+@RestController
 public class TherapistController {
     private final TherapistService therapistService;
 
     @GetMapping()
-    public ResponseEntity<PageResponse<TherapistsResponseDto>> getTherapists(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<TherapistsResponseDto> result = therapistService.getTherapists(search, pageable);
-        return ResponseEntity.ok(PageResponse.from(result));
+    public ResponseEntity<List<TherapistsResponseDto>> getTherapists() {
+        return ResponseEntity.ok(therapistService.getTherapists());
     }
 
     @GetMapping("/{id}")
@@ -49,19 +38,10 @@ public class TherapistController {
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(response.getTherapistId())
+                .buildAndExpand(response.getId())
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<TherapistsResponseDto> updateTherapist(
-            @PathVariable @Positive Long id, @RequestBody TherapistPatchDto patch) {
-
-        var patchedTherapist = therapistService.updateTherapist(id, patch);
-
-        return ResponseEntity.ok(patchedTherapist);
     }
 
     @DeleteMapping("/{id}")
@@ -69,6 +49,4 @@ public class TherapistController {
         therapistService.deleteTherapist(id);
         return ResponseEntity.noContent().build();
     }
-
-
 }

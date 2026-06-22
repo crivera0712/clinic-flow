@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class AppointmentPatchDto {
     private LocalDateTime scheduledAt;
-    private Long caseId;
     private Long therapistId;
     private Appointment.Status status;
     private Appointment.Type type;

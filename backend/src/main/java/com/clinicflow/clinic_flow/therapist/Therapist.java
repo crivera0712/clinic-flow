@@ -17,19 +17,6 @@ import java.util.Set;
 @Table(name = "therapists")
 public class Therapist {
 
-    @Getter
-    public enum TherapistType{
-        PHYSICAL_THERAPY_ASSISTANT("Physcial Therapy Assistant"),
-        PHYSICAL_THERAPIST("Physical Therapist"),
-        OCCUPATIONAL_THERAPIST("Occupational Therapist");
-
-        private final String displayName;
-
-        TherapistType(String displayName) {
-            this.displayName = displayName;
-        }
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "t_id")
@@ -37,10 +24,6 @@ public class Therapist {
 
     @Column(name = "therapist_name")
     private String therapistName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "therapist_type", nullable = false)
-    private TherapistType type;
 
     @OneToMany(mappedBy = "therapist", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

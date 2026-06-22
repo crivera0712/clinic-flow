@@ -58,8 +58,8 @@ class PatientControllerTest {
     void shouldReturnPatients_whenGetPatientsIsCalled() throws Exception {
         // Arrange
         var page = new PageImpl<>(List.of(
-                new PatientResponseDto(1L, "Sam", "Lee", "Lee, S"),
-                new PatientResponseDto(2L, "Alex", "Kim", "Kim, A")
+                new PatientResponseDto(1L, "Sam", "Lee"),
+                new PatientResponseDto(2L, "Alex", "Kim")
         ));
         when(patientService.getPatients(any(Pageable.class))).thenReturn(page);
 
@@ -73,7 +73,7 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(1L))
                 .andExpect(jsonPath("$.content[0].firstName").value("Sam"))
                 .andExpect(jsonPath("$.content[0].lastName").value("Lee"))
-                .andExpect(jsonPath("$.content[0].displayName").value("Lee, S"))
+                .andExpect(jsonPath("$.content[0].displayName").doesNotExist())
                 .andExpect(jsonPath("$.content[1].id").value(2L));
         verify(patientService).getPatients(any(Pageable.class));
     }
@@ -81,7 +81,7 @@ class PatientControllerTest {
     @Test
     void shouldReturnPatient_whenGetPatientByIdFindsPatient() throws Exception {
         // Arrange
-        when(patientService.getPatient(5L)).thenReturn(new PatientResponseDto(5L, "Sam", "Lee", "Lee, S"));
+        when(patientService.getPatient(5L)).thenReturn(new PatientResponseDto(5L, "Sam", "Lee"));
 
         // Act
         var response = mockMvc.perform(get("/api/patients/5"));
@@ -91,7 +91,7 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.id").value(5L))
                 .andExpect(jsonPath("$.firstName").value("Sam"))
                 .andExpect(jsonPath("$.lastName").value("Lee"))
-                .andExpect(jsonPath("$.displayName").value("Lee, S"));
+                .andExpect(jsonPath("$.displayName").doesNotExist());
         verify(patientService).getPatient(5L);
     }
 
@@ -111,7 +111,7 @@ class PatientControllerTest {
     @Test
     void shouldReturnPatients_whenSearchPatientReceivesOneTokenQuery() throws Exception {
         // Arrange
-        when(patientService.searchPatient("sam")).thenReturn(List.of(new PatientResponseDto(1L, "Sam", "Lee", "Lee, S")));
+        when(patientService.searchPatient("sam")).thenReturn(List.of(new PatientResponseDto(1L, "Sam", "Lee")));
 
         // Act
         var response = mockMvc.perform(get("/api/patients/search").param("q", "sam"));
@@ -121,14 +121,14 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].firstName").value("Sam"))
                 .andExpect(jsonPath("$[0].lastName").value("Lee"))
-                .andExpect(jsonPath("$[0].displayName").value("Lee, S"));
+                .andExpect(jsonPath("$[0].displayName").doesNotExist());
         verify(patientService).searchPatient("sam");
     }
 
     @Test
     void shouldReturnPatients_whenSearchPatientReceivesTwoTokenQuery() throws Exception {
         // Arrange
-        when(patientService.searchPatient("sam lee")).thenReturn(List.of(new PatientResponseDto(1L, "Sam", "Lee", "Lee, S")));
+        when(patientService.searchPatient("sam lee")).thenReturn(List.of(new PatientResponseDto(1L, "Sam", "Lee")));
 
         // Act
         var response = mockMvc.perform(get("/api/patients/search").param("q", "sam lee"));
@@ -138,7 +138,7 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].firstName").value("Sam"))
                 .andExpect(jsonPath("$[0].lastName").value("Lee"))
-                .andExpect(jsonPath("$[0].displayName").value("Lee, S"));
+                .andExpect(jsonPath("$[0].displayName").doesNotExist());
         verify(patientService).searchPatient("sam lee");
     }
 
@@ -175,7 +175,7 @@ class PatientControllerTest {
                   "lastName": "Lee"
                 }
                 """;
-        when(patientService.createPatient(any())).thenReturn(new PatientResponseDto(12L, "Sam", "Lee", "Lee, S"));
+        when(patientService.createPatient(any())).thenReturn(new PatientResponseDto(12L, "Sam", "Lee"));
 
         // Act
         var response = mockMvc.perform(post("/api/patients")
@@ -188,7 +188,7 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.id").value(12L))
                 .andExpect(jsonPath("$.firstName").value("Sam"))
                 .andExpect(jsonPath("$.lastName").value("Lee"))
-                .andExpect(jsonPath("$.displayName").value("Lee, S"));
+                .andExpect(jsonPath("$.displayName").doesNotExist());
         verify(patientService).createPatient(any());
     }
 
@@ -331,7 +331,7 @@ class PatientControllerTest {
     void shouldReturnUpdatedPatient_whenPatchPatientReceivesValidRequest() throws Exception {
         // Arrange
         String json = objectMapper.writeValueAsString(new PatchRequest("Samuel", "Leeds"));
-        when(patientService.updatePatient(eq(9L), any())).thenReturn(new PatientResponseDto(9L, "Samuel", "Leeds", "Leeds, S"));
+        when(patientService.updatePatient(eq(9L), any())).thenReturn(new PatientResponseDto(9L, "Samuel", "Leeds"));
 
         // Act
         var response = mockMvc.perform(patch("/api/patients/9")
@@ -343,7 +343,7 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.id").value(9L))
                 .andExpect(jsonPath("$.firstName").value("Samuel"))
                 .andExpect(jsonPath("$.lastName").value("Leeds"))
-                .andExpect(jsonPath("$.displayName").value("Leeds, S"));
+                .andExpect(jsonPath("$.displayName").doesNotExist());
         verify(patientService).updatePatient(eq(9L), any());
     }
 

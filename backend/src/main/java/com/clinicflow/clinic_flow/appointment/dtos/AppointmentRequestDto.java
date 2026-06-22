@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -18,16 +17,22 @@ public class AppointmentRequestDto {
     @NotNull(message = "scheduled time cannot be missing")
     private LocalDateTime scheduledAt;
 
-    private Instant modifiedAt;
-
-    @NotNull(message = "caseId cannot be missing")
-    private Long caseId;
-
     @NotNull(message = "therapistId cannot be missing")
     private Long therapistId;
 
-    private Appointment.Status status;
-
     @NotNull(message = "appointment type cannot be null")
     private Appointment.Type type;
+
+    // Provide exactly one of: an existing patient id, or new patient fields (created inline).
+    private Long patientId;
+    private NewPatient patient;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NewPatient {
+        private String firstName;
+        private String lastName;
+    }
 }

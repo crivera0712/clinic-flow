@@ -68,16 +68,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
     }
 
-    @ExceptionHandler(CaseNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleCaseNotFound(CaseNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
-    }
-
-    @ExceptionHandler(BodyRegionNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleBodyRegionNotFound(BodyRegionNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
-    }
-
     @ExceptionHandler(TherapistNotFoundException.class)
     public ResponseEntity<ErrorDto> handleTherapistNotFound(TherapistNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));

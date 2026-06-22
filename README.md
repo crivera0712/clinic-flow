@@ -4,7 +4,7 @@
 
 ClinicFlow started as a scheduling tool for a physical therapy clinic where I worked. The goal was to replace manual scheduling boards with a simple API-driven system that could power both administrative tools and display boards for therapists.
 
-ClinicFlow is a multi-tenant scheduling backend for physical therapy clinics. It manages appointments, therapists, patients, and cases, with clinic-scoped data access and JWT authentication backed by server-side session validation.
+ClinicFlow is a multi-tenant scheduling backend for physical therapy clinics. It manages appointments, therapists, and patients, with clinic-scoped data access and JWT authentication backed by server-side session validation. Scheduling uses a flat appointment model: each appointment links a patient and therapist directly and carries a type and a simple check-in status.
 
 This repo includes:
 
@@ -36,8 +36,9 @@ Current demo deployment:
 ## Features
 
 - Multi-clinic tenancy
-- Appointment scheduling and conflict checks
-- Therapist, patient, and case management
+- Appointment scheduling and conflict checks (therapist and patient double-booking)
+- 3-state check-in lifecycle (`SCHEDULED → WAITING → DONE`)
+- Therapist and patient management
 - JWT access tokens with refresh cookies
 - Server-side session tracking and revocation
 - Role-based access control (`ADMIN`, `DISPLAY`)
@@ -72,7 +73,7 @@ API ->> AuthService: validate credentials
 AuthService ->> Database: create auth_session
 AuthService ->> Client: JWT + refresh cookie
 
-Client ->> API: GET /api/appointments
+Client ->> API: GET /api/appointments/date
 API ->> JwtAuthenticationFilter: validate token
 JwtAuthenticationFilter ->> Database: verify session
 API ->> AppointmentService: fetch clinic appointments
@@ -89,9 +90,7 @@ Core tables:
 - `users`
 - `patients`
 - `therapists`
-- `cases`
 - `appointments`
-- `body_regions`
 - `auth_sessions`
 
 Flyway migrations live in `backend/src/main/resources/db/migration`.
@@ -140,26 +139,29 @@ Example endpoints:
 - `POST /api/auth/{clinicSlug}/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
-- `GET /api/appointments`
-- `GET /api/appointments/date`
-- `POST /api/patients`
+- `GET /api/appointments/date` — daily board (defaults to today)
+- `POST /api/appointments`
+- `PATCH /api/appointments/{id}`
+- `DELETE /api/appointments/{id}`
+- `GET /api/patients`
+- `GET /api/patients/search?q=`
 - `GET /api/therapists`
+
+The daily board returns denormalized rows with patient and therapist names inline.
 
 Example response:
 
 ```json
 [
   {
-    "aptId": 5,
-    "scheduledAt": "2026-02-23 10:00",
-    "caseId": 5,
-    "firstName": "Leon",
-    "lastName": "Kennedy",
+    "id": 5,
+    "scheduledAt": "2026-02-23T10:00",
+    "type": "EVALUATION",
+    "status": "SCHEDULED",
+    "patientId": 8,
+    "patientName": "Leon Kennedy",
     "therapistId": 2,
-    "therapistName": "Ada Wong",
-    "therapistType": "OCCUPATIONAL_THERAPIST",
-    "bodyRegionDisplayName": "hip",
-    "status": "SCHEDULED"
+    "therapistName": "Ada Wong"
   }
 ]
 ```

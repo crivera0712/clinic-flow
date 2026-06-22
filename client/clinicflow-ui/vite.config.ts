@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       css: true,
+      // Absolute base so Node fetch + MSW can intercept (relative URLs are
+      // rejected by Node fetch). Keep in sync with API_BASE_URL in src/test/constants.ts.
+      env: { VITE_API_BASE_URL: 'http://localhost/api' },
     },
   }
 })

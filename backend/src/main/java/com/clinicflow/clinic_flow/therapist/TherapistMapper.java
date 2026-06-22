@@ -7,11 +7,10 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface TherapistMapper {
-    @Mapping(target = "therapistId", source = "id")
-    TherapistsResponseDto toTherapistResponseDto(Therapist therapist);
-    Therapist toTherapist(TherapistRequestDto therapistRequestDto);
 
-    default String map(Therapist.TherapistType type) {
-        return type == null ? null : type.getDisplayName();
-    }
+    @Mapping(target = "name", source = "therapistName")
+    TherapistsResponseDto toTherapistResponseDto(Therapist therapist);
+
+    @Mapping(target = "therapistName", source = "name")
+    Therapist toTherapist(TherapistRequestDto therapistRequestDto);
 }

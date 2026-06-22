@@ -35,9 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/appointments/date").hasAnyRole(
                                 Users.RoleName.ADMIN.name(), Users.RoleName.DISPLAY.name())
                         .requestMatchers("/api/appointments/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers("/api/bodyregion/**").hasRole(Users.RoleName.ADMIN.name())
                         .requestMatchers("/api/patients/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers("/api/cases/**").hasRole(Users.RoleName.ADMIN.name())
                         .requestMatchers("/api/therapists/**").hasRole(Users.RoleName.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/users").hasRole(Users.RoleName.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/api/users/**").hasRole(Users.RoleName.ADMIN.name())

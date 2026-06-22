@@ -5,10 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
@@ -21,31 +23,31 @@ class TherapistRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnTherapistsMatchingNameWithinClinic() {
+    void findAllByClinicId_returnsOnlyThatClinicsTherapists() {
         Clinics clinicOne = persistClinic("clinic-one");
         Clinics clinicTwo = persistClinic("clinic-two");
-        Therapist exact = persistTherapist(clinicOne, "Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        persistTherapist(clinicTwo, "Sam Other", Therapist.TherapistType.PHYSICAL_THERAPIST);
-        persistTherapist(clinicOne, "Jordan Lee", Therapist.TherapistType.OCCUPATIONAL_THERAPIST);
+        persistTherapist(clinicOne, "Sam Taylor");
+        persistTherapist(clinicOne, "Jordan Lee");
+        persistTherapist(clinicTwo, "Sam Other");
         entityManager.flush();
         entityManager.clear();
 
-        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 10), clinicOne.getId());
+        List<Therapist> result = therapistRepository.findAllByClinicId(clinicOne.getId());
 
-        assertEquals(1, result.getTotalElements());
-        assertEquals(exact.getId(), result.getContent().get(0).getId());
+        assertEquals(2, result.size());
+        assertTrue(result.stream().allMatch(t -> t.getClinic().getId().equals(clinicOne.getId())));
     }
 
     @Test
-    void shouldReturnEmptyPageWhenClinicDoesNotMatch() {
+    void findByIdAndClinicId_isClinicScoped() {
         Clinics clinic = persistClinic("clinic-one");
-        persistTherapist(clinic, "Sam Taylor", Therapist.TherapistType.PHYSICAL_THERAPIST);
+        Therapist therapist = persistTherapist(clinic, "Sam Taylor");
         entityManager.flush();
         entityManager.clear();
 
-        Page<Therapist> result = therapistRepository.search("sam", PageRequest.of(0, 10), 999L);
-
-        assertTrue(result.isEmpty());
+        assertTrue(therapistRepository.findByIdAndClinicId(therapist.getId(), clinic.getId()).isPresent());
+        Optional<Therapist> wrongClinic = therapistRepository.findByIdAndClinicId(therapist.getId(), 999L);
+        assertFalse(wrongClinic.isPresent());
     }
 
     private Clinics persistClinic(String slug) {
@@ -58,10 +60,9 @@ class TherapistRepositoryTest {
         return clinic;
     }
 
-    private Therapist persistTherapist(Clinics clinic, String name, Therapist.TherapistType type) {
+    private Therapist persistTherapist(Clinics clinic, String name) {
         Therapist therapist = new Therapist();
         therapist.setTherapistName(name);
-        therapist.setType(type);
         therapist.setClinic(clinic);
         entityManager.persist(therapist);
         return therapist;

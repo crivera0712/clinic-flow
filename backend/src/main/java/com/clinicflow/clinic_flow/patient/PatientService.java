@@ -1,7 +1,5 @@
 package com.clinicflow.clinic_flow.patient;
 
-// **TODO implement entity graphs?
-
 import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
@@ -26,20 +24,13 @@ public class PatientService {
 
     public Page<PatientResponseDto> getPatients(Pageable pageable) {
         var clinicId = currentUserService.getCurrentClinicId();
-
-        Page<Patient> result;
-
-        result = patientRepository.findAllByClinicId(clinicId, pageable);
-
-        return result.map(patientMapper::toPatientResponseDto);
+        return patientRepository.findAllByClinicId(clinicId, pageable)
+                .map(patientMapper::toPatientResponseDto);
     }
 
     public PatientResponseDto getPatient(Long id) {
         var clinicId = currentUserService.getCurrentClinicId();
-
-        var patient = findByIdAndClinicIdOrElse(id, clinicId);
-
-        return patientMapper.toPatientResponseDto(patient);
+        return patientMapper.toPatientResponseDto(findByIdAndClinicIdOrElse(id, clinicId));
     }
 
     public List<PatientResponseDto> searchPatient(String tokens) {
@@ -50,75 +41,43 @@ public class PatientService {
         }
 
         String[] tokenArray = tokens.trim().split("\\s+");
-        if (tokenArray.length == 1){
-            return patientRepository.searchPatientByOneToken(tokenArray[0], clinicId)
-                    .stream()
-                    .map(patientMapper::toPatientResponseDto)
-                    .toList();
-        } else if (tokenArray.length == 2) {
+        if (tokenArray.length >= 2) {
             return patientRepository.searchPatientByTwoTokens(tokenArray[0], tokenArray[1], clinicId)
-                    .stream()
-                    .map(patientMapper::toPatientResponseDto)
-                    .toList();
+                    .stream().map(patientMapper::toPatientResponseDto).toList();
         }
         return patientRepository.searchPatientByOneToken(tokenArray[0], clinicId)
-                .stream()
-                .map(patientMapper::toPatientResponseDto)
-                .toList();
+                .stream().map(patientMapper::toPatientResponseDto).toList();
     }
 
     @Transactional
-    public PatientResponseDto createPatient (PatientRequestDto request) {
+    public PatientResponseDto createPatient(PatientRequestDto request) {
         var clinic = clinicContextService.requireWritableClinic();
-
         Patient patient = patientMapper.toPatient(request);
-        String dpn = buildDisplayName(request.getFirstName(), request.getLastName());
-        patient.setDisplayName(dpn);
         patient.setClinic(clinic);
-
-        var newPatient = patientRepository.save(patient);
-        return patientMapper.toPatientResponseDto(newPatient);
+        return patientMapper.toPatientResponseDto(patientRepository.save(patient));
     }
 
     @Transactional
-    public PatientResponseDto updatePatient (Long id, PatientPatchDto request) {
+    public PatientResponseDto updatePatient(Long id, PatientPatchDto request) {
         clinicContextService.assertWritableClinic();
-        var  clinicId = currentUserService.getCurrentClinicId();
+        var clinicId = currentUserService.getCurrentClinicId();
         var patient = findByIdAndClinicIdOrElse(id, clinicId);
 
-        if (request.getFirstName() != null) {
-            patient.setFirstName(request.getFirstName());
-        }
-
-        if (request.getLastName() != null) {
-            patient.setLastName(request.getLastName());
-        }
-
-        if (request.getFirstName() != null || request.getLastName() != null) {
-            patient.setDisplayName(buildDisplayName(patient.getFirstName(), patient.getLastName()));
-        }
+        if (request.getFirstName() != null) patient.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) patient.setLastName(request.getLastName());
 
         return patientMapper.toPatientResponseDto(patientRepository.save(patient));
     }
 
     @Transactional
-    public void deletePatient (Long id) {
+    public void deletePatient(Long id) {
         clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
-        var patient = findByIdAndClinicIdOrElse(id, clinicId);
-
-        patientRepository.delete(patient);
-    }
-
-    // helper methods
-    private String buildDisplayName (String firstName, String lastName) {
-        return lastName + ", " + firstName.charAt(0);
+        patientRepository.delete(findByIdAndClinicIdOrElse(id, clinicId));
     }
 
     private Patient findByIdAndClinicIdOrElse(Long id, Long clinicId) {
         return patientRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() ->
-                new PatientNotFoundException(id)
-        );
+                new PatientNotFoundException(id));
     }
-
 }
