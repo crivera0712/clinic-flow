@@ -15,13 +15,12 @@ import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -36,8 +35,7 @@ public class AppointmentService {
 
     public List<BoardRowDto> getAppointmentsByDate(LocalDate date) {
         var clinicId = currentUserService.getCurrentClinicId();
-        return appointmentRepository.findDailyAppointments(date, clinicId)
-                .stream()
+        return appointmentRepository.findDailyAppointments(date, clinicId).stream()
                 .map(appointmentMapper::projectionToBoardRow)
                 .toList();
     }
@@ -95,7 +93,8 @@ public class AppointmentService {
 
     private Patient resolvePatient(AppointmentRequestDto request, Clinics clinic, Long clinicId) {
         if (request.getPatientId() != null) {
-            return patientRepository.findByIdAndClinicId(request.getPatientId(), clinicId)
+            return patientRepository
+                    .findByIdAndClinicId(request.getPatientId(), clinicId)
                     .orElseThrow(() -> new PatientNotFoundException(request.getPatientId()));
         }
         if (request.getPatient() != null) {
@@ -132,17 +131,21 @@ public class AppointmentService {
     }
 
     private Appointment findAppointmentOrThrow(Long id, Long clinicId) {
-        return appointmentRepository.findByIdAndClinicId(id, clinicId).orElseThrow(
-                () -> new AppointmentNotFoundException("Appointment not found for this clinic"));
+        return appointmentRepository
+                .findByIdAndClinicId(id, clinicId)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found for this clinic"));
     }
 
     private Therapist findTherapistOrThrow(Long therapistId, Long clinicId) {
-        return therapistRepository.findByIdAndClinicId(therapistId, clinicId).orElseThrow(
-                () -> new TherapistNotFoundException(therapistId));
+        return therapistRepository
+                .findByIdAndClinicId(therapistId, clinicId)
+                .orElseThrow(() -> new TherapistNotFoundException(therapistId));
     }
 
     private boolean hasAppointmentConflict(Long clinicId, Long patientId, LocalDateTime scheduledAt, Long therapistId) {
-        if (appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, clinicId, therapistId).isPresent()) {
+        if (appointmentRepository
+                .findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, clinicId, therapistId)
+                .isPresent()) {
             return true;
         }
         return appointmentRepository.existsPatientAppointmentConflict(clinicId, patientId, scheduledAt);
@@ -150,7 +153,8 @@ public class AppointmentService {
 
     private boolean hasAppointmentConflictExcludingCurrent(
             Long clinicId, Long patientId, LocalDateTime scheduledAt, Long therapistId, Long appointmentId) {
-        var apptCheck = appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, clinicId, therapistId);
+        var apptCheck =
+                appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(scheduledAt, clinicId, therapistId);
         if (apptCheck.isPresent() && !apptCheck.get().getId().equals(appointmentId)) {
             return true;
         }

@@ -1,14 +1,13 @@
 package com.clinicflow.clinic_flow.demo;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 class DemoSeedMigrationTest {
 
@@ -47,8 +46,7 @@ class DemoSeedMigrationTest {
                 () -> assertTrue(sql.contains("'REASSESSMENT'")),
                 () -> assertTrue(sql.contains("TIME '08:00'")),
                 () -> assertTrue(sql.contains("TIME '11:30'")),
-                () -> assertTrue(sql.contains("TIME '13:30'"))
-        );
+                () -> assertTrue(sql.contains("TIME '13:30'")));
     }
 
     private String readMigration(String path) throws IOException {

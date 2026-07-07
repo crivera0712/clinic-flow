@@ -15,15 +15,13 @@ import com.clinicflow.clinic_flow.users.UsersRepository;
 import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
 import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -42,7 +40,8 @@ public class AuthService {
     public LoginResult login(LoginRequest request) {
         log.info("Login attempt for username={}", request.getUsername());
 
-        var user = usersRepository.findByUsername(request.getUsername())
+        var user = usersRepository
+                .findByUsername(request.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Bad credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -50,7 +49,10 @@ public class AuthService {
             throw new BadCredentialsException("Bad credentials");
         }
 
-        log.info("Login success for user={} clinicId={}", user.getUsername(), user.getClinic().getId());
+        log.info(
+                "Login success for user={} clinicId={}",
+                user.getUsername(),
+                user.getClinic().getId());
         return issueTokenPair(user);
     }
 
@@ -58,7 +60,8 @@ public class AuthService {
     public UsersResponseDto register(String clinicSlug, CreateUserRequest request) {
         log.info("Register attempt for username={} clinicSlug={}", request.getUsername(), clinicSlug);
 
-        var clinic = clinicsRepository.findClinicsBySlug(clinicSlug)
+        var clinic = clinicsRepository
+                .findClinicsBySlug(clinicSlug)
                 .orElseThrow(() -> new ClinicNotFoundException("Clinic not found"));
 
         if (usersRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -89,7 +92,8 @@ public class AuthService {
         var clinicId = refreshToken.getClinicId();
 
         var session = authSessionService.requireRefreshableSession(refreshToken.getSid(), clinicId);
-        var user = usersRepository.findByUsernameAndClinicId(refreshToken.getUsername(), clinicId)
+        var user = usersRepository
+                .findByUsernameAndClinicId(refreshToken.getUsername(), clinicId)
                 .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
         authSessionService.revokeSession(session.getId(), clinicId);
@@ -127,10 +131,8 @@ public class AuthService {
     @Transactional
     protected LoginResult issueTokenPair(Users user) {
         AuthSessions session = authSessionService.createSession(
-                user,
-                LocalDateTime.now().plusSeconds(jwtConfig.getRefreshTokenExpiration())
-        );
-        if (user.getClinic() == null){
+                user, LocalDateTime.now().plusSeconds(jwtConfig.getRefreshTokenExpiration()));
+        if (user.getClinic() == null) {
             throw new ClinicNotFoundException("Not able to associate user with clinic");
         }
         var sessionId = session.getId().toString();
@@ -139,6 +141,4 @@ public class AuthService {
         var refreshToken = jwtService.generateRefreshToken(user, sessionId, clinicId);
         return new LoginResult(accessToken, refreshToken);
     }
-
-
 }

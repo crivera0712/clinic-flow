@@ -1,5 +1,13 @@
 package com.clinicflow.clinic_flow.appointment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentPatchDto;
 import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.appointment.dtos.BoardRowDto;
@@ -15,6 +23,10 @@ import com.clinicflow.clinic_flow.patient.PatientRepository;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,36 +34,35 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
 
-    @Mock private AppointmentRepository appointmentRepository;
-    @Mock private AppointmentMapper appointmentMapper;
-    @Mock private TherapistRepository therapistRepository;
-    @Mock private PatientRepository patientRepository;
-    @Mock private CurrentUserService currentUserService;
-    @Mock private ClinicContextService clinicContextService;
+    @Mock
+    private AppointmentRepository appointmentRepository;
 
-    @InjectMocks private AppointmentService appointmentService;
+    @Mock
+    private AppointmentMapper appointmentMapper;
+
+    @Mock
+    private TherapistRepository therapistRepository;
+
+    @Mock
+    private PatientRepository patientRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private ClinicContextService clinicContextService;
+
+    @InjectMocks
+    private AppointmentService appointmentService;
 
     private static final LocalDateTime AT = LocalDateTime.of(2026, 2, 13, 9, 0);
 
     private BoardRowDto boardRow() {
-        return new BoardRowDto(1L, AT, Appointment.Type.EVALUATION, Appointment.Status.SCHEDULED,
-                5L, "Jane Doe", 3L, "Dr. Smith");
+        return new BoardRowDto(
+                1L, AT, Appointment.Type.EVALUATION, Appointment.Status.SCHEDULED, 5L, "Jane Doe", 3L, "Dr. Smith");
     }
 
     private Clinics clinic(long id) {
@@ -65,7 +76,8 @@ class AppointmentServiceTest {
         var projection = mock(AppointmentBoardProjection.class);
         var row = boardRow();
         when(currentUserService.getCurrentClinicId()).thenReturn(7L);
-        when(appointmentRepository.findDailyAppointments(LocalDate.of(2026, 2, 13), 7L)).thenReturn(List.of(projection));
+        when(appointmentRepository.findDailyAppointments(LocalDate.of(2026, 2, 13), 7L))
+                .thenReturn(List.of(projection));
         when(appointmentMapper.projectionToBoardRow(projection)).thenReturn(row);
 
         var result = appointmentService.getAppointmentsByDate(LocalDate.of(2026, 2, 13));
@@ -83,7 +95,8 @@ class AppointmentServiceTest {
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic(7L));
         when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.of(therapist));
         when(patientRepository.findByIdAndClinicId(5L, 7L)).thenReturn(Optional.of(patient));
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(AT, 7L, 3L)).thenReturn(Optional.empty());
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(AT, 7L, 3L))
+                .thenReturn(Optional.empty());
         when(appointmentRepository.existsPatientAppointmentConflict(7L, 5L, AT)).thenReturn(false);
 
         Appointment saved = new Appointment();
@@ -112,13 +125,14 @@ class AppointmentServiceTest {
         when(clinicContextService.requireWritableClinic()).thenReturn(clinic(7L));
         when(therapistRepository.findByIdAndClinicId(3L, 7L)).thenReturn(Optional.of(therapist));
         when(patientRepository.save(any(Patient.class))).thenReturn(created);
-        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(AT, 7L, 3L)).thenReturn(Optional.empty());
+        when(appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(AT, 7L, 3L))
+                .thenReturn(Optional.empty());
         when(appointmentRepository.existsPatientAppointmentConflict(7L, 9L, AT)).thenReturn(false);
         when(appointmentRepository.save(any(Appointment.class))).thenReturn(new Appointment());
         when(appointmentMapper.entityToBoardRow(any(Appointment.class))).thenReturn(boardRow());
 
-        var request = new AppointmentRequestDto(AT, 3L, Appointment.Type.EVALUATION, null,
-                new AppointmentRequestDto.NewPatient("New", "Patient"));
+        var request = new AppointmentRequestDto(
+                AT, 3L, Appointment.Type.EVALUATION, null, new AppointmentRequestDto.NewPatient("New", "Patient"));
         appointmentService.createAppointment(request);
 
         verify(patientRepository).save(any(Patient.class));

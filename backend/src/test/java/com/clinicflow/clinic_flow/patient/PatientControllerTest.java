@@ -1,26 +1,5 @@
 package com.clinicflow.clinic_flow.patient;
 
-import com.clinicflow.clinic_flow.auth.JwtService;
-import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
-import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
-import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
-import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
-import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.util.List;
-
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,6 +12,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
+import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
+import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
+import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PatientController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -57,16 +55,12 @@ class PatientControllerTest {
     @Test
     void shouldReturnPatients_whenGetPatientsIsCalled() throws Exception {
         // Arrange
-        var page = new PageImpl<>(List.of(
-                new PatientResponseDto(1L, "Sam", "Lee"),
-                new PatientResponseDto(2L, "Alex", "Kim")
-        ));
+        var page = new PageImpl<>(
+                List.of(new PatientResponseDto(1L, "Sam", "Lee"), new PatientResponseDto(2L, "Alex", "Kim")));
         when(patientService.getPatients(any(Pageable.class))).thenReturn(page);
 
         // Act
-        var response = mockMvc.perform(get("/api/patients")
-                .param("page", "0")
-                .param("size", "10"));
+        var response = mockMvc.perform(get("/api/patients").param("page", "0").param("size", "10"));
 
         // Assert
         response.andExpect(status().isOk())
@@ -156,7 +150,8 @@ class PatientControllerTest {
     @Test
     void shouldReturnBadRequest_whenSearchPatientReceivesBlankQuery() throws Exception {
         // Arrange
-        when(patientService.searchPatient("   ")).thenThrow(new IllegalArgumentException("search query must not be blank"));
+        when(patientService.searchPatient("   "))
+                .thenThrow(new IllegalArgumentException("search query must not be blank"));
 
         // Act
         var response = mockMvc.perform(get("/api/patients/search").param("q", "   "));
@@ -169,7 +164,8 @@ class PatientControllerTest {
     @Test
     void shouldCreatePatient_whenPostPatientReceivesValidRequest() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "firstName": "Sam",
                   "lastName": "Lee"
@@ -178,9 +174,8 @@ class PatientControllerTest {
         when(patientService.createPatient(any())).thenReturn(new PatientResponseDto(12L, "Sam", "Lee"));
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isCreated())
@@ -194,7 +189,8 @@ class PatientControllerTest {
 
     @Test
     void shouldReturnForbidden_whenPostPatientRunsInDemoClinic() throws Exception {
-        String json = """
+        String json =
+                """
                 {
                   "firstName": "Sam",
                   "lastName": "Lee"
@@ -227,9 +223,8 @@ class PatientControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -246,9 +241,8 @@ class PatientControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -258,7 +252,8 @@ class PatientControllerTest {
     @Test
     void shouldReturnBadRequest_whenPostPatientReceivesBlankNames() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "firstName": " ",
                   "lastName": ""
@@ -266,9 +261,8 @@ class PatientControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -282,9 +276,8 @@ class PatientControllerTest {
         String json = objectMapper.writeValueAsString(new CreateRequest(longName, "Lee"));
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -298,9 +291,8 @@ class PatientControllerTest {
         String json = objectMapper.writeValueAsString(new CreateRequest("Sam", longName));
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -310,7 +302,8 @@ class PatientControllerTest {
     @Test
     void shouldReturnBadRequest_whenPostPatientReceivesMalformedJson() throws Exception {
         // Arrange
-        String malformedJson = """
+        String malformedJson =
+                """
                 {
                   "firstName": "Sam",
                   "lastName":
@@ -318,9 +311,8 @@ class PatientControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/patients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(malformedJson));
+        var response = mockMvc.perform(
+                post("/api/patients").contentType(MediaType.APPLICATION_JSON).content(malformedJson));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -334,9 +326,8 @@ class PatientControllerTest {
         when(patientService.updatePatient(eq(9L), any())).thenReturn(new PatientResponseDto(9L, "Samuel", "Leeds"));
 
         // Act
-        var response = mockMvc.perform(patch("/api/patients/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                patch("/api/patients/9").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isOk())
@@ -354,9 +345,8 @@ class PatientControllerTest {
         when(patientService.updatePatient(eq(9L), any())).thenThrow(new PatientNotFoundException(9L));
 
         // Act
-        var response = mockMvc.perform(patch("/api/patients/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                patch("/api/patients/9").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isNotFound())
@@ -366,7 +356,8 @@ class PatientControllerTest {
     @Test
     void shouldReturnBadRequest_whenPatchPatientReceivesMalformedJson() throws Exception {
         // Arrange
-        String malformedJson = """
+        String malformedJson =
+                """
                 {
                   "firstName": "Samuel",
                   "lastName":
@@ -374,18 +365,15 @@ class PatientControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(patch("/api/patients/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(malformedJson));
+        var response = mockMvc.perform(
+                patch("/api/patients/9").contentType(MediaType.APPLICATION_JSON).content(malformedJson));
 
         // Assert
         response.andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    private record CreateRequest(String firstName, String lastName) {
-    }
+    private record CreateRequest(String firstName, String lastName) {}
 
-    private record PatchRequest(String firstName, String lastName) {
-    }
+    private record PatchRequest(String firstName, String lastName) {}
 }

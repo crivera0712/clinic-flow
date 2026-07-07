@@ -1,17 +1,16 @@
 package com.clinicflow.clinic_flow.therapist;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.clinicflow.clinic_flow.clinics.Clinics;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 class TherapistRepositoryTest {
@@ -45,7 +44,9 @@ class TherapistRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertTrue(therapistRepository.findByIdAndClinicId(therapist.getId(), clinic.getId()).isPresent());
+        assertTrue(therapistRepository
+                .findByIdAndClinicId(therapist.getId(), clinic.getId())
+                .isPresent());
         Optional<Therapist> wrongClinic = therapistRepository.findByIdAndClinicId(therapist.getId(), 999L);
         assertFalse(wrongClinic.isPresent());
     }

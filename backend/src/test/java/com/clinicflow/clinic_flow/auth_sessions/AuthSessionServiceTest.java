@@ -1,25 +1,24 @@
 package com.clinicflow.clinic_flow.auth_sessions;
 
-import com.clinicflow.clinic_flow.clinics.Clinics;
-import com.clinicflow.clinic_flow.exception.InvalidSessionException;
-import com.clinicflow.clinic_flow.users.CurrentUserService;
-import com.clinicflow.clinic_flow.users.Users;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.exception.InvalidSessionException;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
+import com.clinicflow.clinic_flow.users.Users;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AuthSessionServiceTest {
@@ -50,7 +49,8 @@ class AuthSessionServiceTest {
 
         when(authSessionRepository.findByIdAndClinicId(sessionId, 7L)).thenReturn(Optional.empty());
 
-        assertThrows(InvalidSessionException.class,
+        assertThrows(
+                InvalidSessionException.class,
                 () -> authSessionService.requireRefreshableSession(sessionId.toString(), 7L));
     }
 
@@ -73,8 +73,7 @@ class AuthSessionServiceTest {
 
         when(authSessionRepository.findByIdAndClinicId(sessionId, 7L)).thenReturn(Optional.empty());
 
-        assertThrows(InvalidSessionException.class,
-                () -> authSessionService.revokeSession(sessionId.toString(), 7L));
+        assertThrows(InvalidSessionException.class, () -> authSessionService.revokeSession(sessionId.toString(), 7L));
 
         verify(authSessionRepository, never()).save(org.mockito.ArgumentMatchers.any(AuthSessions.class));
     }

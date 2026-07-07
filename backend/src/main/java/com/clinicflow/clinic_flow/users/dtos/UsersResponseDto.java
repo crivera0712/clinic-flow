@@ -1,10 +1,9 @@
 package com.clinicflow.clinic_flow.users.dtos;
 
 import com.clinicflow.clinic_flow.users.Users;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

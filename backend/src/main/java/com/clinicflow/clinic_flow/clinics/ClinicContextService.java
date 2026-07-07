@@ -15,7 +15,8 @@ public class ClinicContextService {
 
     public Clinics getCurrentClinic() {
         Long clinicId = currentUserService.getCurrentClinicId();
-        return clinicsRepository.findById(clinicId)
+        return clinicsRepository
+                .findById(clinicId)
                 .orElseThrow(() -> new ClinicNotFoundException("Could not find current clinic"));
     }
 

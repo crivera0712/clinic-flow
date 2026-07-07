@@ -1,4 +1,3 @@
-
 package com.clinicflow.clinic_flow.config;
 
 import com.clinicflow.clinic_flow.auth.filters.JwtAuthenticationFilter;
@@ -26,24 +25,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        http
-                .cors(Customizer.withDefaults())
-                .sessionManagement(c ->
-                        c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        http.cors(Customizer.withDefaults())
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(c -> c
-                        .requestMatchers(HttpMethod.GET, "/api/appointments/date").hasAnyRole(
-                                Users.RoleName.ADMIN.name(), Users.RoleName.DISPLAY.name())
-                        .requestMatchers("/api/appointments/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers("/api/patients/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers("/api/therapists/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers(HttpMethod.POST, "/api/users").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers(HttpMethod.PATCH, "/api/users/**").hasRole(Users.RoleName.ADMIN.name())
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/*/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/api/appointments/date")
+                        .hasAnyRole(Users.RoleName.ADMIN.name(), Users.RoleName.DISPLAY.name())
+                        .requestMatchers("/api/appointments/**")
+                        .hasRole(Users.RoleName.ADMIN.name())
+                        .requestMatchers("/api/patients/**")
+                        .hasRole(Users.RoleName.ADMIN.name())
+                        .requestMatchers("/api/therapists/**")
+                        .hasRole(Users.RoleName.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/api/users")
+                        .hasRole(Users.RoleName.ADMIN.name())
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/**")
+                        .hasRole(Users.RoleName.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/*/register")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> {
                     c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
@@ -53,5 +57,4 @@ public class SecurityConfig {
                 });
         return http.build();
     }
-
 }

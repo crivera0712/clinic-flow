@@ -1,10 +1,10 @@
 package com.clinicflow.clinic_flow.common;
+
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
-
-import java.util.List;
 
 @NoArgsConstructor
 @Getter
@@ -17,7 +17,7 @@ public class PageResponse<T> {
     private int totalPages;
     private boolean last;
 
-    public static <T> PageResponse<T>from (Page<T> page){
+    public static <T> PageResponse<T> from(Page<T> page) {
         PageResponse<T> response = new PageResponse<>();
         response.content = page.getContent();
         response.page = page.getNumber();
@@ -27,5 +27,4 @@ public class PageResponse<T> {
         response.last = page.isLast();
         return response;
     }
-
 }

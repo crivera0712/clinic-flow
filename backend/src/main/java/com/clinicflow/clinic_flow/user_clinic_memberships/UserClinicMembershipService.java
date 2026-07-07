@@ -4,11 +4,10 @@ import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
 import com.clinicflow.clinic_flow.users.Users;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -23,7 +22,8 @@ public class UserClinicMembershipService {
     }
 
     public Clinics requireClinicMembership(Long userId, String clinicSlug) {
-        return membershipRepository.findByUser_IdAndClinic_Slug(userId, clinicSlug)
+        return membershipRepository
+                .findByUser_IdAndClinic_Slug(userId, clinicSlug)
                 .map(UserClinicMembership::getClinic)
                 .orElseThrow(() -> new ClinicNotFoundException("Clinic not available for user"));
     }

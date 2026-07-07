@@ -1,25 +1,5 @@
 package com.clinicflow.clinic_flow.users;
 
-import com.clinicflow.clinic_flow.auth.JwtService;
-import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
-import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
-import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
-import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
-import com.clinicflow.clinic_flow.exception.UserNotFoundException;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,6 +11,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
+import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
+import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
+import com.clinicflow.clinic_flow.exception.UserNotFoundException;
+import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -55,10 +54,9 @@ class UserControllerTest {
     @Test
     void shouldReturnUsers_whenGetUsersIsCalled() throws Exception {
         // Arrange
-        when(usersService.getUsers()).thenReturn(List.of(
-                response(1L, "sam", Users.RoleName.DISPLAY),
-                response(2L, "alex", Users.RoleName.ADMIN)
-        ));
+        when(usersService.getUsers())
+                .thenReturn(List.of(
+                        response(1L, "sam", Users.RoleName.DISPLAY), response(2L, "alex", Users.RoleName.ADMIN)));
 
         // Act
         var response = mockMvc.perform(get("/api/users"));
@@ -105,7 +103,8 @@ class UserControllerTest {
     @Test
     void shouldCreateUser_whenPostUserReceivesValidRequest() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "username": "sam",
                   "passwordHash": "secret1",
@@ -116,9 +115,8 @@ class UserControllerTest {
         when(usersService.createUser(any())).thenReturn(response(12L, "sam", Users.RoleName.DISPLAY));
 
         // Act
-        var response = mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isCreated())
@@ -131,7 +129,8 @@ class UserControllerTest {
 
     @Test
     void shouldReturnForbidden_whenPostUserRunsInDemoClinic() throws Exception {
-        String json = """
+        String json =
+                """
                 {
                   "username": "sam",
                   "passwordHash": "secret1",
@@ -151,7 +150,8 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequest_whenPostUserMissingUsername() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "passwordHash": "secret1",
                   "enabled": true
@@ -159,9 +159,8 @@ class UserControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -171,7 +170,8 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequest_whenPostUserReceivesShortPassword() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "username": "sam",
                   "passwordHash": "123",
@@ -180,9 +180,8 @@ class UserControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -192,7 +191,8 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequest_whenPostUserReceivesMalformedJson() throws Exception {
         // Arrange
-        String malformedJson = """
+        String malformedJson =
+                """
                 {
                   "username": "sam",
                   "passwordHash":
@@ -200,9 +200,8 @@ class UserControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(malformedJson));
+        var response = mockMvc.perform(
+                post("/api/users").contentType(MediaType.APPLICATION_JSON).content(malformedJson));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -212,7 +211,8 @@ class UserControllerTest {
     @Test
     void shouldReturnConflict_whenPostUserReceivesDuplicateUsername() throws Exception {
         // Arrange
-        String json = """
+        String json =
+                """
                 {
                   "username": "sam",
                   "passwordHash": "secret1",
@@ -222,9 +222,8 @@ class UserControllerTest {
         when(usersService.createUser(any())).thenThrow(new UserAlreadyExistsException("sam"));
 
         // Act
-        var response = mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isConflict())
@@ -238,9 +237,8 @@ class UserControllerTest {
         when(usersService.updateUser(eq(9L), any())).thenReturn(response(9L, "sam", Users.RoleName.ADMIN));
 
         // Act
-        var response = mockMvc.perform(patch("/api/users/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                patch("/api/users/9").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isOk())
@@ -260,9 +258,8 @@ class UserControllerTest {
                 """;
 
         // Act
-        var response = mockMvc.perform(patch("/api/users/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                patch("/api/users/9").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -272,16 +269,16 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequest_whenPatchUserReceivesMalformedJson() throws Exception {
         // Arrange
-        String malformedJson = """
+        String malformedJson =
+                """
                 {
                   "roleName":
                 }
                 """;
 
         // Act
-        var response = mockMvc.perform(patch("/api/users/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(malformedJson));
+        var response = mockMvc.perform(
+                patch("/api/users/9").contentType(MediaType.APPLICATION_JSON).content(malformedJson));
 
         // Assert
         response.andExpect(status().isBadRequest())
@@ -295,9 +292,8 @@ class UserControllerTest {
         when(usersService.updateUser(eq(9L), any())).thenThrow(new UserNotFoundException(9L));
 
         // Act
-        var response = mockMvc.perform(patch("/api/users/9")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json));
+        var response = mockMvc.perform(
+                patch("/api/users/9").contentType(MediaType.APPLICATION_JSON).content(json));
 
         // Assert
         response.andExpect(status().isNotFound())
@@ -313,6 +309,5 @@ class UserControllerTest {
         return response;
     }
 
-    private record PatchRequest(String roleName) {
-    }
+    private record PatchRequest(String roleName) {}
 }

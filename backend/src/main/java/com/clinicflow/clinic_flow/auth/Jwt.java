@@ -3,10 +3,9 @@ package com.clinicflow.clinic_flow.auth;
 import com.clinicflow.clinic_flow.users.Users;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import lombok.*;
-
-import javax.crypto.SecretKey;
 import java.util.Date;
+import javax.crypto.SecretKey;
+import lombok.*;
 
 @Getter
 @AllArgsConstructor
@@ -18,19 +17,19 @@ public class Jwt {
     private final SecretKey key;
     private final Long clinicId;
 
-    public boolean isExpired(){
+    public boolean isExpired() {
         return claims.getExpiration().before(new Date());
     }
 
-    public Long getUserId(){
+    public Long getUserId() {
         return Long.valueOf(claims.getSubject());
     }
 
-    public Users.RoleName getRole(){
+    public Users.RoleName getRole() {
         return Users.RoleName.valueOf(claims.get("role", String.class));
     }
 
-    public String getSid(){
+    public String getSid() {
         return claims.get("sid", String.class);
     }
 

@@ -1,5 +1,12 @@
 package com.clinicflow.clinic_flow.appointment;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.clinicflow.clinic_flow.appointment.dtos.BoardRowDto;
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
@@ -8,6 +15,9 @@ import com.clinicflow.clinic_flow.exception.AppointmentNotFoundException;
 import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.patient.PatientService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,17 +26,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AppointmentController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -57,8 +56,7 @@ class AppointmentControllerTest {
                 7L,
                 "Jane Doe",
                 3L,
-                "Dr. Smith"
-        );
+                "Dr. Smith");
     }
 
     @Test
@@ -93,12 +91,15 @@ class AppointmentControllerTest {
 
     @Test
     void createAppointment_withExistingPatient_returnsCreated() throws Exception {
-        String json = """
+        String json =
+                """
                 { "scheduledAt": "2026-02-13T09:00:00", "type": "EVALUATION", "therapistId": 3, "patientId": 7 }
                 """;
         when(appointmentService.createAppointment(any())).thenReturn(boardRow(12L));
 
-        mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/appointments/12")))
                 .andExpect(jsonPath("$.id").value(12L))
@@ -109,48 +110,60 @@ class AppointmentControllerTest {
 
     @Test
     void createAppointment_withInlineNewPatient_returnsCreated() throws Exception {
-        String json = """
+        String json =
+                """
                 { "scheduledAt": "2026-02-13T09:00:00", "type": "EVALUATION", "therapistId": 3,
                   "patient": { "firstName": "New", "lastName": "Patient" } }
                 """;
         when(appointmentService.createAppointment(any())).thenReturn(boardRow(13L));
 
-        mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(13L));
     }
 
     @Test
     void createAppointment_inDemoClinic_returnsForbidden() throws Exception {
-        String json = """
+        String json =
+                """
                 { "scheduledAt": "2026-02-13T09:00:00", "type": "EVALUATION", "therapistId": 3, "patientId": 7 }
                 """;
         when(appointmentService.createAppointment(any())).thenThrow(new DemoClinicReadOnlyException());
 
-        mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void createAppointment_withInvalidInput_returnsBadRequest() throws Exception {
-        String invalidJson = """
+        String invalidJson =
+                """
                 { "scheduledAt": null, "type": null, "therapistId": null }
                 """;
 
-        mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON).content(invalidJson))
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
     void createAppointment_onConflict_returnsConflict() throws Exception {
-        String json = """
+        String json =
+                """
                 { "scheduledAt": "2026-02-13T09:00:00", "type": "EVALUATION", "therapistId": 3, "patientId": 7 }
                 """;
         when(appointmentService.createAppointment(any()))
                 .thenThrow(new AppointmentAtTimeExistsException(LocalDateTime.of(2026, 2, 13, 9, 0)));
 
-        mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
     }
@@ -161,11 +174,19 @@ class AppointmentControllerTest {
                 { "status": "WAITING" }
                 """;
         BoardRowDto updated = new BoardRowDto(
-                9L, LocalDateTime.of(2026, 2, 13, 9, 0), Appointment.Type.EVALUATION,
-                Appointment.Status.WAITING, 7L, "Jane Doe", 3L, "Dr. Smith");
+                9L,
+                LocalDateTime.of(2026, 2, 13, 9, 0),
+                Appointment.Type.EVALUATION,
+                Appointment.Status.WAITING,
+                7L,
+                "Jane Doe",
+                3L,
+                "Dr. Smith");
         when(appointmentService.updateAppointmentById(any(Long.class), any())).thenReturn(updated);
 
-        mockMvc.perform(patch("/api/appointments/9").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(patch("/api/appointments/9")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(9L))
                 .andExpect(jsonPath("$.status").value("WAITING"));
@@ -178,14 +199,15 @@ class AppointmentControllerTest {
         when(appointmentService.updateAppointmentById(any(Long.class), any()))
                 .thenThrow(new AppointmentNotFoundException("Appointment not found for this clinic"));
 
-        mockMvc.perform(patch("/api/appointments/9").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mockMvc.perform(patch("/api/appointments/9")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deleteAppointment_returnsNoContent() throws Exception {
-        mockMvc.perform(delete("/api/appointments/9"))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/appointments/9")).andExpect(status().isNoContent());
         verify(appointmentService).deleteAppointmentById(9L);
     }
 }

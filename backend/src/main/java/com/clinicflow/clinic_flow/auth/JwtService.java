@@ -5,11 +5,10 @@ import com.clinicflow.clinic_flow.users.Users;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 
 @Slf4j
 @AllArgsConstructor
@@ -27,19 +26,21 @@ public class JwtService {
     }
 
     public Jwt generateAccessToken(Users user, String sessionId, Long clinicId) {
-        log.info("Generating access token for user={} sessionId={} clinicId={}",
+        log.info(
+                "Generating access token for user={} sessionId={} clinicId={}",
                 user.getUsername(),
                 sessionId,
                 clinicId);
         return generateToken(user, jwtConfig.getAccessTokenExpiration(), sessionId, "access", clinicId);
     }
 
-    public Jwt generateRefreshToken(Users user, String sessionId,  Long clinicId) {
-        log.info("Generating refresh token for usern={} sessionId={} clinicId={}",
+    public Jwt generateRefreshToken(Users user, String sessionId, Long clinicId) {
+        log.info(
+                "Generating refresh token for usern={} sessionId={} clinicId={}",
                 user.getUsername(),
                 sessionId,
                 clinicId);
-        return generateToken(user, jwtConfig.getRefreshTokenExpiration(), sessionId, "refresh",  clinicId);
+        return generateToken(user, jwtConfig.getRefreshTokenExpiration(), sessionId, "refresh", clinicId);
     }
 
     private Jwt generateToken(Users user, long tokenExpiration, String sessionId, String tokenType, Long clinicId) {
@@ -60,12 +61,12 @@ public class JwtService {
     public Jwt parseToken(String token) {
         try {
             var claims = getClaims(token);
-            return new Jwt(claims.get
-                    ("sid", String.class),
-                    claims.get("token_type", String.class) ,
-                    claims, jwtConfig.getSecretKey(),
-                    claims.get("clinic_id", Long.class)
-            );
+            return new Jwt(
+                    claims.get("sid", String.class),
+                    claims.get("token_type", String.class),
+                    claims,
+                    jwtConfig.getSecretKey(),
+                    claims.get("clinic_id", Long.class));
         } catch (JwtException e) {
             return null;
         }
@@ -74,6 +75,4 @@ public class JwtService {
     public String getUsernameFromToken(String token) {
         return getClaims(token).get("username", String.class);
     }
-
-
 }

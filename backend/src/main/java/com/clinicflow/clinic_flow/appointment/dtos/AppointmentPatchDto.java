@@ -1,11 +1,10 @@
 package com.clinicflow.clinic_flow.appointment.dtos;
 
 import com.clinicflow.clinic_flow.appointment.Appointment;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor

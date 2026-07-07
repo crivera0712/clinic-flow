@@ -3,13 +3,12 @@ package com.clinicflow.clinic_flow.auth_sessions;
 import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.users.Users;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @AllArgsConstructor

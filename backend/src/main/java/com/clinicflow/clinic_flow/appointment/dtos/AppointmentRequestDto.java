@@ -2,12 +2,11 @@ package com.clinicflow.clinic_flow.appointment.dtos;
 
 import com.clinicflow.clinic_flow.appointment.Appointment;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor

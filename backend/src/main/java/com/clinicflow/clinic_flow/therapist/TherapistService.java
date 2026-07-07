@@ -6,10 +6,9 @@ import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -21,8 +20,7 @@ public class TherapistService {
 
     public List<TherapistsResponseDto> getTherapists() {
         var clinicId = currentUserService.getCurrentClinicId();
-        return therapistRepository.findAllByClinicId(clinicId)
-                .stream()
+        return therapistRepository.findAllByClinicId(clinicId).stream()
                 .map(therapistMapper::toTherapistResponseDto)
                 .toList();
     }
@@ -48,7 +46,8 @@ public class TherapistService {
     }
 
     private Therapist findTherapistOrThrow(Long id, Long clinicId) {
-        return therapistRepository.findByIdAndClinicId(id, clinicId).orElseThrow(
-                () -> new TherapistNotFoundException(id));
+        return therapistRepository
+                .findByIdAndClinicId(id, clinicId)
+                .orElseThrow(() -> new TherapistNotFoundException(id));
     }
 }

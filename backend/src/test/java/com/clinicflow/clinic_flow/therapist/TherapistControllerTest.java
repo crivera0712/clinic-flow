@@ -1,22 +1,5 @@
 package com.clinicflow.clinic_flow.therapist;
 
-import com.clinicflow.clinic_flow.auth.JwtService;
-import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
-import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
-import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
-import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
-import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -26,6 +9,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.clinicflow.clinic_flow.auth.JwtService;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
+import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
+import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
+import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(TherapistController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -82,7 +81,9 @@ class TherapistControllerTest {
                 """;
         when(therapistService.createTherapist(any())).thenReturn(new TherapistsResponseDto(12L, "Taylor"));
 
-        mockMvc.perform(post("/api/therapists").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/therapists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/therapists/12")))
                 .andExpect(jsonPath("$.id").value(12L))
@@ -93,13 +94,17 @@ class TherapistControllerTest {
     void createTherapist_inDemoClinic_returnsForbidden() throws Exception {
         when(therapistService.createTherapist(any())).thenThrow(new DemoClinicReadOnlyException());
 
-        mockMvc.perform(post("/api/therapists").contentType(MediaType.APPLICATION_JSON).content("{ \"name\": \"Taylor\" }"))
+        mockMvc.perform(post("/api/therapists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"name\": \"Taylor\" }"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void createTherapist_missingName_returnsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/therapists").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mockMvc.perform(post("/api/therapists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray());
     }

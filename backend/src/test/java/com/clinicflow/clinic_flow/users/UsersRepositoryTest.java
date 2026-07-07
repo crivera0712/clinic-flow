@@ -1,17 +1,16 @@
 package com.clinicflow.clinic_flow.users;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.clinicflow.clinic_flow.clinics.Clinics;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 class UsersRepositoryTest {
@@ -61,9 +60,7 @@ class UsersRepositoryTest {
         entityManager.clear();
 
         Optional<Users> result = usersRepository.findByUsernameAndClinicId(
-                "sam",
-                clinicOneUser.getClinic().getId()
-        );
+                "sam", clinicOneUser.getClinic().getId());
 
         assertTrue(result.isPresent());
         assertEquals(clinicOneUser.getUsername(), result.get().getUsername());

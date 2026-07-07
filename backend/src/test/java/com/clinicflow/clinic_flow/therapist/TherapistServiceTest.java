@@ -1,21 +1,5 @@
 package com.clinicflow.clinic_flow.therapist;
 
-import com.clinicflow.clinic_flow.clinics.Clinics;
-import com.clinicflow.clinic_flow.clinics.ClinicContextService;
-import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
-import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
-import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
-import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
-import com.clinicflow.clinic_flow.users.CurrentUserService;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,15 +8,38 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
+import com.clinicflow.clinic_flow.exception.TherapistNotFoundException;
+import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
+import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
+import com.clinicflow.clinic_flow.users.CurrentUserService;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 @ExtendWith(MockitoExtension.class)
 class TherapistServiceTest {
 
-    @Mock private TherapistRepository therapistRepository;
-    @Mock private TherapistMapper therapistMapper;
-    @Mock private CurrentUserService currentUserService;
-    @Mock private ClinicContextService clinicContextService;
+    @Mock
+    private TherapistRepository therapistRepository;
 
-    @InjectMocks private TherapistService therapistService;
+    @Mock
+    private TherapistMapper therapistMapper;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private ClinicContextService clinicContextService;
+
+    @InjectMocks
+    private TherapistService therapistService;
 
     @Test
     void getTherapists_returnsClinicTherapists() {
@@ -99,14 +106,17 @@ class TherapistServiceTest {
     void createTherapist_inDemoClinic_throws() {
         when(clinicContextService.requireWritableClinic()).thenThrow(new DemoClinicReadOnlyException());
 
-        assertThrows(DemoClinicReadOnlyException.class,
+        assertThrows(
+                DemoClinicReadOnlyException.class,
                 () -> therapistService.createTherapist(new TherapistRequestDto("Jordan")));
         verify(therapistRepository, never()).save(any(Therapist.class));
     }
 
     @Test
     void deleteTherapist_inDemoClinic_throws() {
-        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException())
+                .when(clinicContextService)
+                .assertWritableClinic();
 
         assertThrows(DemoClinicReadOnlyException.class, () -> therapistService.deleteTherapist(5L));
         verify(therapistRepository, never()).delete(any(Therapist.class));

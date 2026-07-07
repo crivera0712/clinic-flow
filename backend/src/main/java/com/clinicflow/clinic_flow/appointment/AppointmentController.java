@@ -5,15 +5,14 @@ import com.clinicflow.clinic_flow.appointment.dtos.AppointmentRequestDto;
 import com.clinicflow.clinic_flow.appointment.dtos.BoardRowDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.time.LocalDate;
-import java.util.List;
 
 @Validated
 @AllArgsConstructor
@@ -24,8 +23,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @GetMapping("/date")
-    public ResponseEntity<List<BoardRowDto>> getAppointmentsByDate(
-            @RequestParam(required = false) LocalDate date) {
+    public ResponseEntity<List<BoardRowDto>> getAppointmentsByDate(@RequestParam(required = false) LocalDate date) {
         if (date == null) date = LocalDate.now();
         return ResponseEntity.ok(appointmentService.getAppointmentsByDate(date));
     }
@@ -34,8 +32,7 @@ public class AppointmentController {
     public ResponseEntity<BoardRowDto> createAppointment(@RequestBody @Valid AppointmentRequestDto request) {
         var created = appointmentService.createAppointment(request);
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(created.getId())
                 .toUri();
