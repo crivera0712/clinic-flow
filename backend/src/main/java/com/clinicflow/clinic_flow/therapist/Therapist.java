@@ -3,10 +3,9 @@ package com.clinicflow.clinic_flow.therapist;
 import com.clinicflow.clinic_flow.appointment.Appointment;
 import com.clinicflow.clinic_flow.clinics.Clinics;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.HashSet;
 import java.util.Set;
+import lombok.*;
 
 @Builder
 @AllArgsConstructor
@@ -32,6 +31,4 @@ public class Therapist {
     @ManyToOne
     @JoinColumn(name = "clinic_id")
     private Clinics clinic;
-
-
 }

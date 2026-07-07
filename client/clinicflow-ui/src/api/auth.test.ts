@@ -35,6 +35,14 @@ describe("auth api", () => {
     expect(res).toEqual(jwtFixture);
   });
 
+  it("uses a friendly message when login returns an empty unauthorized response", async () => {
+    server.use(http.post(apiUrl("/auth/login"), () => new HttpResponse(null, { status: 401 })));
+
+    await expect(login({ username: "demo_admin", password: "wrong" })).rejects.toThrow(
+      "Username or password is incorrect.",
+    );
+  });
+
   it("register POSTs to the clinic-scoped path without an auth header", async () => {
     let captured: Request | undefined;
     let body: unknown;

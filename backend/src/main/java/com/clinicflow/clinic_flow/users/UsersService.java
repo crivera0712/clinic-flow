@@ -1,10 +1,14 @@
 package com.clinicflow.clinic_flow.users;
 
 import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
 import com.clinicflow.clinic_flow.users.dtos.*;
-import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.security.core.userdetails.User;
@@ -13,11 +17,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @Service
@@ -28,24 +27,21 @@ public class UsersService implements UserDetailsService {
     private final CurrentUserService currentUserService;
     private final ClinicContextService clinicContextService;
 
-
-    public List<UsersResponseDto> getUsers(){
+    public List<UsersResponseDto> getUsers() {
         var clinicId = currentUserService.getCurrentClinicId();
-        return usersRepository.findAllByClinicId(clinicId)
-                .stream()
+        return usersRepository.findAllByClinicId(clinicId).stream()
                 .map(usersMapper::toUsersResponseDto)
                 .toList();
     }
 
-    public UsersResponseDto getUserById(Long id){
+    public UsersResponseDto getUserById(Long id) {
         var clinicId = currentUserService.getCurrentClinicId();
         return usersMapper.toUsersResponseDto(
-                usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new UserNotFoundException(id))
-        );
+                usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new UserNotFoundException(id)));
     }
 
     @Transactional
-    public UsersResponseDto createUser(@NonNull CreateUserRequest request){
+    public UsersResponseDto createUser(@NonNull CreateUserRequest request) {
         var clinic = clinicContextService.requireWritableClinic();
         var clinicId = clinic.getId();
         Optional<Users> userCheck = usersRepository.findByUsernameAndClinicId(request.getUsername(), clinicId);
@@ -69,24 +65,17 @@ public class UsersService implements UserDetailsService {
     @Transactional
     public UsersResponseDto updateUser(Long id, @NonNull UserPatchDto patch) {
         var clinicId = currentUserService.getCurrentClinicId();
-        var user = usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() ->
-                new UserNotFoundException(id));
+        var user = usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new UserNotFoundException(id));
 
         user.setRoleName(patch.getRoleName());
 
         return usersMapper.toUsersResponseDto(usersRepository.save(user));
-
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user = usersRepository.findByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException(username));
+        var user = usersRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
 
-        return new User(
-                user.getUsername(),
-                user.getPasswordHash(),
-                Collections.emptyList()
-        );
+        return new User(user.getUsername(), user.getPasswordHash(), Collections.emptyList());
     }
 }

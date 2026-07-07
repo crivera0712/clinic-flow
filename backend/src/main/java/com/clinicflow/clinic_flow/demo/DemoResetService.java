@@ -9,10 +9,6 @@ import com.clinicflow.clinic_flow.patient.PatientRepository;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import com.clinicflow.clinic_flow.therapist.TherapistRepository;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +17,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -63,8 +62,8 @@ public class DemoResetService {
 
     private List<Patient> buildPatients(Clinics clinic) {
         String[][] data = {
-                {"Marcus", "Webb"}, {"Priya", "Nair"}, {"Daniel", "Cho"}, {"Sofia", "Reyes"}, {"Jordan", "Flores"},
-                {"Aaliyah", "Brooks"}, {"Ethan", "Park"}, {"Camila", "Torres"}, {"Noah", "Schmidt"}, {"Leila", "Hassan"},
+            {"Marcus", "Webb"}, {"Priya", "Nair"}, {"Daniel", "Cho"}, {"Sofia", "Reyes"}, {"Jordan", "Flores"},
+            {"Aaliyah", "Brooks"}, {"Ethan", "Park"}, {"Camila", "Torres"}, {"Noah", "Schmidt"}, {"Leila", "Hassan"},
         };
         List<Patient> patients = new ArrayList<>();
         for (String[] row : data) {
@@ -82,14 +81,14 @@ public class DemoResetService {
         LocalTime nowLA = LocalTime.now(LA);
 
         int[][] slots = {
-                {9, 0}, {9, 30}, {10, 0}, {10, 30}, {11, 0},
-                {11, 30}, {13, 0}, {13, 30}, {14, 0}, {16, 30}
+            {9, 0}, {9, 30}, {10, 0}, {10, 30}, {11, 0},
+            {11, 30}, {13, 0}, {13, 30}, {14, 0}, {16, 30}
         };
         Appointment.Type[] types = {
-                Appointment.Type.EVALUATION, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
-                Appointment.Type.REASSESSMENT, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
-                Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
-                Appointment.Type.EVALUATION,
+            Appointment.Type.EVALUATION, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
+            Appointment.Type.REASSESSMENT, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
+            Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP, Appointment.Type.FOLLOW_UP,
+            Appointment.Type.EVALUATION,
         };
 
         List<Appointment> appointments = new ArrayList<>();

@@ -23,6 +23,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 **Auth state** lives in `src/auth/AuthContext.tsx`. Access tokens are stored in `sessionStorage`; the refresh token is an HTTP-only cookie. On bootstrap, `AuthContext` checks for a stored token or calls `/api/auth/refresh`. Auth status is one of `"bootstrapping" | "authenticated" | "anonymous"` — `App.tsx` gates rendering on this.
 
 **API layer:**
+
 - `src/api/client.ts` — central `apiRequest<T>()` function. Automatically attaches `Authorization: Bearer` header and retries once on 401 using the refresh token before calling `onAuthFailure`.
 - `src/api/auth.ts` — login, logout, refresh, getCurrentUser
 - `src/services/` — per-entity modules (`appointmentService`, `patientService`, etc.) that call `apiRequest`
@@ -30,6 +31,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 **Data model (flat):** `Patient {firstName,lastName}`, `Therapist {name}`, `Appointment {patient, therapist, scheduledAt, type, status}`. `type` = Evaluation/Reassessment/Follow-up. `status` is a minimal 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`. There is no Case or Body Region. Types live one-per-entity in `src/types/` (`patient.ts`, `therapist.ts`, `appointment.ts`, `common.ts`). The API returns denormalized `BoardRow`s (patient/therapist names inline) for both surfaces.
 
 **Two surfaces / role-based routing** (`src/App.tsx` renders by `currentUser.roleName`):
+
 - **ADMIN (front desk):** `ConsoleLayout` (`src/features/console/`) — `/` = `SchedulePage` (today's schedule + fast-add row with patient typeahead + Arrived/Start check-in), `/patients`, `/therapists`; `/board` opens the clinic display.
 - **DISPLAY:** `/` = `ScheduleDisplayPage` only — read-only, auto-refreshing, **Currently Waiting** large + **Up Next** smaller.
 

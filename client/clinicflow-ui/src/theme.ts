@@ -51,7 +51,10 @@ export const clinicTheme = createTheme({
             "radial-gradient(circle at 15% -10%, rgba(56, 189, 248, 0.08), transparent 32%), linear-gradient(180deg, #050b18 0%, #07101e 100%)",
         },
         "::selection": { backgroundColor: alpha(colors.primary, 0.3) },
-        "*:focus-visible": { outline: `3px solid ${alpha(colors.primary, 0.55)}`, outlineOffset: 2 },
+        "*:focus-visible": {
+          outline: `3px solid ${alpha(colors.primary, 0.55)}`,
+          outlineOffset: 2,
+        },
       },
     },
     MuiButton: {
@@ -72,7 +75,11 @@ export const clinicTheme = createTheme({
         root: { backgroundImage: "none", border: `1px solid ${colors.borderSoft}` },
       },
     },
-    MuiCard: { styleOverrides: { root: { backgroundImage: "none", border: `1px solid ${colors.borderSoft}` } } },
+    MuiCard: {
+      styleOverrides: {
+        root: { backgroundImage: "none", border: `1px solid ${colors.borderSoft}` },
+      },
+    },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
@@ -88,7 +95,11 @@ export const clinicTheme = createTheme({
     MuiInputLabel: { styleOverrides: { root: { color: colors.textSecondary } } },
     MuiDialog: {
       styleOverrides: {
-        paper: { backgroundColor: colors.surfaceRaised, border: `1px solid ${colors.border}`, boxShadow: "0 30px 90px rgba(0,0,0,.55)" },
+        paper: {
+          backgroundColor: colors.surfaceRaised,
+          border: `1px solid ${colors.border}`,
+          boxShadow: "0 30px 90px rgba(0,0,0,.55)",
+        },
       },
     },
     MuiDialogTitle: { styleOverrides: { root: { padding: "24px 24px 8px", fontWeight: 720 } } },

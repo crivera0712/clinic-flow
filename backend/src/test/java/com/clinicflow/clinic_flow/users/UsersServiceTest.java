@@ -1,24 +1,5 @@
 package com.clinicflow.clinic_flow.users;
 
-import com.clinicflow.clinic_flow.clinics.Clinics;
-import com.clinicflow.clinic_flow.clinics.ClinicContextService;
-import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
-import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
-import com.clinicflow.clinic_flow.exception.UserNotFoundException;
-import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
-import com.clinicflow.clinic_flow.users.dtos.UserPatchDto;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -28,6 +9,24 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.clinics.Clinics;
+import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
+import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
+import com.clinicflow.clinic_flow.exception.UserNotFoundException;
+import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
+import com.clinicflow.clinic_flow.users.dtos.UserPatchDto;
+import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 class UsersServiceTest {
@@ -114,8 +113,7 @@ class UsersServiceTest {
         when(usersRepository.findByIdAndClinicId(5L, 4L)).thenReturn(Optional.empty());
 
         // Act
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
-                () -> usersService.getUserById(5L));
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> usersService.getUserById(5L));
 
         // Assert
         assertEquals("User with id 5 not found", exception.getMessage());
@@ -168,8 +166,8 @@ class UsersServiceTest {
         when(usersRepository.findByUsernameAndClinicId("sam", 4L)).thenReturn(Optional.of(existingUser));
 
         // Act
-        UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class,
-                () -> usersService.createUser(request));
+        UserAlreadyExistsException exception =
+                assertThrows(UserAlreadyExistsException.class, () -> usersService.createUser(request));
 
         // Assert
         assertEquals("Username sam already exists", exception.getMessage());
@@ -243,8 +241,8 @@ class UsersServiceTest {
         when(usersRepository.findByIdAndClinicId(4L, 4L)).thenReturn(Optional.empty());
 
         // Act
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
-                () -> usersService.updateUser(4L, patch));
+        UserNotFoundException exception =
+                assertThrows(UserNotFoundException.class, () -> usersService.updateUser(4L, patch));
 
         // Assert
         assertEquals("User with id 4 not found", exception.getMessage());
@@ -252,7 +250,8 @@ class UsersServiceTest {
         verify(usersRepository, never()).save(any(Users.class));
     }
 
-    private CreateUserRequest createRequest(String username, String passwordHash, boolean enabled, Users.RoleName role) {
+    private CreateUserRequest createRequest(
+            String username, String passwordHash, boolean enabled, Users.RoleName role) {
         CreateUserRequest request = new CreateUserRequest();
         request.setUsername(username);
         request.setPasswordHash(passwordHash);

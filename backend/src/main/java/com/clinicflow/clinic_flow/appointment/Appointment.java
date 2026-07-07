@@ -4,11 +4,10 @@ import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.patient.Patient;
 import com.clinicflow.clinic_flow.therapist.Therapist;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -61,5 +60,4 @@ public class Appointment {
     @ManyToOne
     @JoinColumn(name = "clinic_id")
     private Clinics clinic;
-
 }

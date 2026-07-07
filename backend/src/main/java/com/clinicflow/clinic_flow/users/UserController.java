@@ -3,14 +3,13 @@ package com.clinicflow.clinic_flow.users;
 import com.clinicflow.clinic_flow.users.dtos.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import java.net.URI;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @Validated
 @RestController
@@ -35,22 +34,18 @@ public class UserController {
 
         var createdUser = usersService.createUser(createUserRequest);
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(createdUser.getId())
                 .toUri();
 
-        return ResponseEntity
-                .created(location)
-                .body(createdUser);
+        return ResponseEntity.created(location).body(createdUser);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<UsersResponseDto>  updateUser(@PathVariable @Positive Long id,
-            @Valid @RequestBody UserPatchDto userPatchDto) {
-        var  updatedUser = usersService.updateUser(id, userPatchDto);
+    public ResponseEntity<UsersResponseDto> updateUser(
+            @PathVariable @Positive Long id, @Valid @RequestBody UserPatchDto userPatchDto) {
+        var updatedUser = usersService.updateUser(id, userPatchDto);
         return ResponseEntity.ok(updatedUser);
     }
-
 }

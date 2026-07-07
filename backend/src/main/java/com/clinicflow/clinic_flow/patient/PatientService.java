@@ -1,18 +1,17 @@
 package com.clinicflow.clinic_flow.patient;
 
 import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
-import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -24,8 +23,7 @@ public class PatientService {
 
     public Page<PatientResponseDto> getPatients(Pageable pageable) {
         var clinicId = currentUserService.getCurrentClinicId();
-        return patientRepository.findAllByClinicId(clinicId, pageable)
-                .map(patientMapper::toPatientResponseDto);
+        return patientRepository.findAllByClinicId(clinicId, pageable).map(patientMapper::toPatientResponseDto);
     }
 
     public PatientResponseDto getPatient(Long id) {
@@ -42,11 +40,13 @@ public class PatientService {
 
         String[] tokenArray = tokens.trim().split("\\s+");
         if (tokenArray.length >= 2) {
-            return patientRepository.searchPatientByTwoTokens(tokenArray[0], tokenArray[1], clinicId)
-                    .stream().map(patientMapper::toPatientResponseDto).toList();
+            return patientRepository.searchPatientByTwoTokens(tokenArray[0], tokenArray[1], clinicId).stream()
+                    .map(patientMapper::toPatientResponseDto)
+                    .toList();
         }
-        return patientRepository.searchPatientByOneToken(tokenArray[0], clinicId)
-                .stream().map(patientMapper::toPatientResponseDto).toList();
+        return patientRepository.searchPatientByOneToken(tokenArray[0], clinicId).stream()
+                .map(patientMapper::toPatientResponseDto)
+                .toList();
     }
 
     @Transactional
@@ -77,7 +77,6 @@ public class PatientService {
     }
 
     private Patient findByIdAndClinicIdOrElse(Long id, Long clinicId) {
-        return patientRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() ->
-                new PatientNotFoundException(id));
+        return patientRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new PatientNotFoundException(id));
     }
 }

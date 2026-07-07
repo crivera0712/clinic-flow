@@ -38,50 +38,58 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <Stack spacing={3.5} component="form" onSubmit={handleSubmit}>
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
-            <BrandMark size={38} />
-            <Typography variant="h6">ClinicFlow</Typography>
-          </Stack>
-          <div>
-            <Typography variant="overline" color="primary.main">Welcome back</Typography>
-            <Typography variant="h4" sx={{ mt: 0.5 }}>
-              Sign in
-            </Typography>
-            <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>
-              Sign in to access your clinic schedule.
-            </Typography>
-          </div>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
+          <BrandMark size={38} />
+          <Typography variant="h6">ClinicFlow</Typography>
+        </Stack>
+        <div>
+          <Typography variant="overline" color="primary.main">
+            Welcome back
+          </Typography>
+          <Typography variant="h4" sx={{ mt: 0.5 }}>
+            Sign in
+          </Typography>
+          <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>
+            Sign in to access your clinic schedule.
+          </Typography>
+        </div>
 
-          {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
-            id="login-username"
-            label="Username"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            autoComplete="username"
-            variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Username" } }}
-            fullWidth
-            required
-          />
+        <TextField
+          id="login-username"
+          label="Username"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          autoComplete="username"
+          variant="outlined"
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Username" } }}
+          fullWidth
+          required
+        />
 
-          <TextField
-            id="login-password"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Password" } }}
-            fullWidth
-            required
-          />
+        <TextField
+          id="login-password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          variant="outlined"
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Password" } }}
+          fullWidth
+          required
+        />
 
-          <Button type="submit" variant="contained" size="large" disabled={submitting} sx={{ mt: 0.5 }}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : "Login"}
-          </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={submitting}
+          sx={{ mt: 0.5 }}
+        >
+          {submitting ? <CircularProgress size={24} color="inherit" /> : "Login"}
+        </Button>
       </Stack>
     </AuthShell>
   );

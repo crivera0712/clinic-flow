@@ -1,13 +1,23 @@
 package com.clinicflow.clinic_flow.patient;
 
-import com.clinicflow.clinic_flow.clinics.Clinics;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.clinicflow.clinic_flow.clinics.ClinicContextService;
+import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.exception.DemoClinicReadOnlyException;
 import com.clinicflow.clinic_flow.exception.PatientNotFoundException;
 import com.clinicflow.clinic_flow.patient.dtos.PatientPatchDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
 import com.clinicflow.clinic_flow.users.CurrentUserService;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,17 +27,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
@@ -56,7 +55,8 @@ class PatientServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         when(currentUserService.getCurrentClinicId()).thenReturn(8L);
-        when(patientRepository.findAllByClinicId(8L, pageable)).thenReturn(new PageImpl<>(List.of(firstPatient, secondPatient)));
+        when(patientRepository.findAllByClinicId(8L, pageable))
+                .thenReturn(new PageImpl<>(List.of(firstPatient, secondPatient)));
         when(patientMapper.toPatientResponseDto(firstPatient)).thenReturn(firstResponse);
         when(patientMapper.toPatientResponseDto(secondPatient)).thenReturn(secondResponse);
 
@@ -122,10 +122,8 @@ class PatientServiceTest {
         when(currentUserService.getCurrentClinicId()).thenReturn(8L);
         when(patientRepository.findByIdAndClinicId(5L, 8L)).thenReturn(Optional.empty());
 
-        PatientNotFoundException exception = assertThrows(
-                PatientNotFoundException.class,
-                () -> patientService.getPatient(5L)
-        );
+        PatientNotFoundException exception =
+                assertThrows(PatientNotFoundException.class, () -> patientService.getPatient(5L));
 
         assertEquals("Patient with id 5 does not exist", exception.getMessage());
     }
@@ -145,7 +143,9 @@ class PatientServiceTest {
 
     @Test
     void shouldThrowWhenDemoClinicUpdatesPatient() {
-        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException())
+                .when(clinicContextService)
+                .assertWritableClinic();
 
         assertThrows(DemoClinicReadOnlyException.class, () -> patientService.updatePatient(5L, new PatientPatchDto()));
 
@@ -154,7 +154,9 @@ class PatientServiceTest {
 
     @Test
     void shouldThrowWhenDemoClinicDeletesPatient() {
-        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+        org.mockito.Mockito.doThrow(new DemoClinicReadOnlyException())
+                .when(clinicContextService)
+                .assertWritableClinic();
 
         assertThrows(DemoClinicReadOnlyException.class, () -> patientService.deletePatient(5L));
 

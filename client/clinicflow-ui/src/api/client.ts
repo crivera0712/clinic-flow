@@ -8,6 +8,7 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: BodyInit | object | null;
   skipAuth?: boolean;
   retryOn401?: boolean;
+  statusMessages?: Partial<Record<number, string>>;
 };
 
 export class ApiError extends Error {
@@ -57,7 +58,12 @@ async function parseResponseBody(response: Response) {
   return text || null;
 }
 
-function getErrorMessage(status: number, fallback: string, data: unknown) {
+function getErrorMessage(
+  status: number,
+  fallback: string,
+  data: unknown,
+  statusMessages?: Partial<Record<number, string>>,
+) {
   if (typeof data === "string" && data.trim()) {
     return data;
   }
@@ -68,6 +74,10 @@ function getErrorMessage(status: number, fallback: string, data: unknown) {
 
   if (isPlainObject(data) && Array.isArray(data.errors) && data.errors.length > 0) {
     return String(data.errors[0]);
+  }
+
+  if (statusMessages?.[status]) {
+    return statusMessages[status];
   }
 
   return fallback || `Request failed with status ${status}`;
@@ -81,7 +91,12 @@ function buildHeaders(
 ) {
   const nextHeaders = new Headers(headers);
 
-  if (body !== null && body !== undefined && !(body instanceof FormData) && !nextHeaders.has("Content-Type")) {
+  if (
+    body !== null &&
+    body !== undefined &&
+    !(body instanceof FormData) &&
+    !nextHeaders.has("Content-Type")
+  ) {
     nextHeaders.set("Content-Type", "application/json");
   }
 
@@ -106,11 +121,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers,
     skipAuth = false,
     retryOn401 = !skipAuth,
+    statusMessages,
     credentials = "include",
     ...init
   } = options;
 
-  const accessToken = skipAuth ? null : authHandlers?.getAccessToken() ?? null;
+  const accessToken = skipAuth ? null : (authHandlers?.getAccessToken() ?? null);
   const response = await fetch(buildUrl(path), {
     ...init,
     body: normalizeBody(body),
@@ -139,7 +155,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       }
 
       throw new ApiError(
-        getErrorMessage(retryResponse.status, retryResponse.statusText, retryData),
+        getErrorMessage(retryResponse.status, retryResponse.statusText, retryData, statusMessages),
         retryResponse.status,
         retryData,
       );
@@ -150,7 +166,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     const data = await parseResponseBody(response);
-    throw new ApiError(getErrorMessage(response.status, response.statusText, data), response.status, data);
+    throw new ApiError(
+      getErrorMessage(response.status, response.statusText, data, statusMessages),
+      response.status,
+      data,
+    );
   }
 
   return (await parseResponseBody(response)) as T;

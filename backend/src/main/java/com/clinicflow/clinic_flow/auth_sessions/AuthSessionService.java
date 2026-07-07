@@ -1,16 +1,13 @@
 package com.clinicflow.clinic_flow.auth_sessions;
 
 import com.clinicflow.clinic_flow.exception.InvalidSessionException;
-import com.clinicflow.clinic_flow.users.CurrentUserService;
 import com.clinicflow.clinic_flow.users.Users;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 
 @Slf4j
 @Service
@@ -20,7 +17,9 @@ public class AuthSessionService {
     private final AuthSessionRepository authSessionRepository;
 
     public boolean isAccessSessionActive(String sid, Long clinicId) {
-        var session = authSessionRepository.findByIdAndClinicId(parseSessionId(sid), clinicId).orElse(null);
+        var session = authSessionRepository
+                .findByIdAndClinicId(parseSessionId(sid), clinicId)
+                .orElse(null);
         return session != null && session.getRevokedAt() == null;
     }
 
@@ -97,9 +96,8 @@ public class AuthSessionService {
     }
 
     private AuthSessions findAuthSessionOrThrow(UUID sid, Long clinicId) {
-        return authSessionRepository.findByIdAndClinicId(sid, clinicId).orElseThrow( () ->
-                new InvalidSessionException("Could not find session")
-        );
+        return authSessionRepository
+                .findByIdAndClinicId(sid, clinicId)
+                .orElseThrow(() -> new InvalidSessionException("Could not find session"));
     }
-
 }

@@ -1,5 +1,11 @@
 package com.clinicflow.clinic_flow.auth.filters;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.clinicflow.clinic_flow.auth.Jwt;
 import com.clinicflow.clinic_flow.auth.JwtService;
 import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
@@ -11,12 +17,6 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class JwtAuthenticationFilterTest {
 
@@ -47,7 +47,8 @@ class JwtAuthenticationFilterTest {
 
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
-        AuthPrincipal principal = (AuthPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthPrincipal principal = (AuthPrincipal)
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         assertEquals(12L, principal.userId());
         assertEquals("sam", principal.username());
         assertEquals(7L, principal.clinicId());

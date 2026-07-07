@@ -2,4 +2,4 @@ package com.clinicflow.clinic_flow.auth.dtos;
 
 import com.clinicflow.clinic_flow.auth.Jwt;
 
-public record RefreshResult(Jwt accessToken){}
+public record RefreshResult(Jwt accessToken) {}

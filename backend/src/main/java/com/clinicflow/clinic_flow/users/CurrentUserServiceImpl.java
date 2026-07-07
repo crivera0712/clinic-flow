@@ -6,12 +6,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CurrentUserServiceImpl implements  CurrentUserService {
+public class CurrentUserServiceImpl implements CurrentUserService {
     @Override
     public Long getCurrentClinicId() {
-        Authentication authentication = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
         return principal.clinicId();

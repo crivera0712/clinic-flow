@@ -4,14 +4,13 @@ import com.clinicflow.clinic_flow.therapist.dtos.TherapistRequestDto;
 import com.clinicflow.clinic_flow.therapist.dtos.TherapistsResponseDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import java.net.URI;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @Validated
 @AllArgsConstructor
@@ -35,8 +34,7 @@ public class TherapistController {
             @RequestBody @Valid TherapistRequestDto therapistRequestDto) {
         TherapistsResponseDto response = therapistService.createTherapist(therapistRequestDto);
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(response.getId())
                 .toUri();

@@ -1,5 +1,13 @@
 package com.clinicflow.clinic_flow.auth;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.records.LoginResult;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
@@ -10,6 +18,8 @@ import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,18 +27,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -74,8 +72,10 @@ class AuthServiceTest {
         when(passwordEncoder.matches("secret1", "encoded")).thenReturn(true);
         when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
         when(authSessionService.createSession(any(), any())).thenReturn(session);
-        when(jwtService.generateAccessToken(user, session.getId().toString(), 5L)).thenReturn(accessJwt);
-        when(jwtService.generateRefreshToken(user, session.getId().toString(), 5L)).thenReturn(refreshJwt);
+        when(jwtService.generateAccessToken(user, session.getId().toString(), 5L))
+                .thenReturn(accessJwt);
+        when(jwtService.generateRefreshToken(user, session.getId().toString(), 5L))
+                .thenReturn(refreshJwt);
 
         LoginResult result = authService.login(request);
 
@@ -129,7 +129,8 @@ class AuthServiceTest {
         when(refreshJwt.getClinicId()).thenReturn(7L);
         when(refreshJwt.getSid()).thenReturn(session.getId().toString());
         when(refreshJwt.getUsername()).thenReturn("sam");
-        when(authSessionService.requireRefreshableSession(session.getId().toString(), 7L)).thenReturn(session);
+        when(authSessionService.requireRefreshableSession(session.getId().toString(), 7L))
+                .thenReturn(session);
         when(usersRepository.findByUsernameAndClinicId("sam", 7L)).thenReturn(Optional.empty());
 
         assertThrows(BadCredentialsException.class, () -> authService.refreshToken(refreshJwt));
@@ -154,12 +155,15 @@ class AuthServiceTest {
         when(refreshJwt.getClinicId()).thenReturn(7L);
         when(refreshJwt.getSid()).thenReturn(session.getId().toString());
         when(refreshJwt.getUsername()).thenReturn("sam");
-        when(authSessionService.requireRefreshableSession(session.getId().toString(), 7L)).thenReturn(session);
+        when(authSessionService.requireRefreshableSession(session.getId().toString(), 7L))
+                .thenReturn(session);
         when(usersRepository.findByUsernameAndClinicId("sam", 7L)).thenReturn(Optional.of(user));
         when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
         when(authSessionService.createSession(any(), any())).thenReturn(session);
-        when(jwtService.generateAccessToken(user, session.getId().toString(), 7L)).thenReturn(accessJwt);
-        when(jwtService.generateRefreshToken(user, session.getId().toString(), 7L)).thenReturn(newRefreshJwt);
+        when(jwtService.generateAccessToken(user, session.getId().toString(), 7L))
+                .thenReturn(accessJwt);
+        when(jwtService.generateRefreshToken(user, session.getId().toString(), 7L))
+                .thenReturn(newRefreshJwt);
 
         LoginResult result = authService.refreshToken(refreshJwt);
 

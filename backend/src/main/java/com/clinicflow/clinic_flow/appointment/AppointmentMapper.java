@@ -8,7 +8,10 @@ import org.mapstruct.Mapping;
 public interface AppointmentMapper {
 
     @Mapping(target = "patientId", source = "patient.id")
-    @Mapping(target = "patientName", expression = "java(appointment.getPatient().getFirstName() + \" \" + appointment.getPatient().getLastName())")
+    @Mapping(
+            target = "patientName",
+            expression =
+                    "java(appointment.getPatient().getFirstName() + \" \" + appointment.getPatient().getLastName())")
     @Mapping(target = "therapistId", source = "therapist.id")
     @Mapping(target = "therapistName", source = "therapist.therapistName")
     BoardRowDto entityToBoardRow(Appointment appointment);

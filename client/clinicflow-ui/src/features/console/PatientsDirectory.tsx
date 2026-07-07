@@ -28,7 +28,10 @@ export function PatientsDirectory() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: "",
+  });
 
   async function refresh() {
     try {
@@ -57,7 +60,10 @@ export function PatientsDirectory() {
       await refresh();
       setSnackbar({ open: true, message: "Patient added." });
     } catch (createError) {
-      setSnackbar({ open: true, message: createError instanceof Error ? createError.message : "Unable to add patient." });
+      setSnackbar({
+        open: true,
+        message: createError instanceof Error ? createError.message : "Unable to add patient.",
+      });
     } finally {
       setSaving(false);
     }
@@ -74,17 +80,38 @@ export function PatientsDirectory() {
         eyebrow="Clinic directory"
         title="Patients"
         description="A focused directory for everyone currently receiving care at the clinic."
-        action={<Button variant="contained" startIcon={<PersonAddAltRoundedIcon />} onClick={() => setOpen(true)}>Add patient</Button>}
+        action={
+          <Button
+            variant="contained"
+            startIcon={<PersonAddAltRoundedIcon />}
+            onClick={() => setOpen(true)}
+          >
+            Add patient
+          </Button>
+        }
       />
       <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}>
+        <Stack
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
+          sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}
+        >
           <PeopleAltRoundedIcon color="primary" />
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6">Patient directory</Typography>
-            <Typography variant="body2" color="text.secondary">{loading ? "Loading patients…" : `${rows.length} patient${rows.length === 1 ? "" : "s"}`}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {loading
+                ? "Loading patients…"
+                : `${rows.length} patient${rows.length === 1 ? "" : "s"}`}
+            </Typography>
           </Box>
         </Stack>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <Box sx={{ height: { xs: 460, md: 580 } }}>
           <DataGrid
             rows={rows}
@@ -100,23 +127,68 @@ export function PatientsDirectory() {
         </Box>
       </Paper>
 
-      <Dialog open={open} onClose={saving ? undefined : () => setOpen(false)} fullWidth maxWidth="xs">
+      <Dialog
+        open={open}
+        onClose={saving ? undefined : () => setOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Add patient</DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary" sx={{ mb: 2.5 }}>Add a patient to the clinic directory.</Typography>
-          <Stack component="form" spacing={2.5} sx={{ pt: 1 }} onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}>
-            <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoFocus fullWidth sx={adminTextFieldSx} />
-            <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required fullWidth sx={adminTextFieldSx} />
+          <Typography color="text.secondary" sx={{ mb: 2.5 }}>
+            Add a patient to the clinic directory.
+          </Typography>
+          <Stack
+            component="form"
+            spacing={2.5}
+            sx={{ pt: 1 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleCreate();
+            }}
+          >
+            <TextField
+              label="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              autoFocus
+              fullWidth
+              sx={adminTextFieldSx}
+            />
+            <TextField
+              label="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              fullWidth
+              sx={adminTextFieldSx}
+            />
             <DialogActions sx={{ px: 0, pb: 0 }}>
-              <Button onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
-              <Button type="submit" variant="contained" disabled={saving}>Add patient</Button>
+              <Button onClick={() => setOpen(false)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" disabled={saving}>
+                Add patient
+              </Button>
             </DialogActions>
           </Stack>
         </DialogContent>
       </Dialog>
 
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ open: false, message: "" })} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert onClose={() => setSnackbar({ open: false, message: "" })} severity="success" variant="filled">{snackbar.message}</Alert>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ open: false, message: "" })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: "" })}
+          severity="success"
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </Stack>
   );

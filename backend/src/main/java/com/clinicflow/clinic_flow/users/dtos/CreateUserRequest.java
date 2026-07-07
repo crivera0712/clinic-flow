@@ -15,5 +15,4 @@ public class CreateUserRequest {
     @NotBlank
     @Size(min = 6, message = "password is too short")
     private String passwordHash;
-
 }

@@ -1,18 +1,17 @@
 package com.clinicflow.clinic_flow.patient;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.clinicflow.clinic_flow.clinics.Clinics;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 class PatientRepositoryTest {
@@ -36,7 +35,8 @@ class PatientRepositoryTest {
         List<Patient> result = patientRepository.searchPatientByOneToken("Sam", clinicOne.getId());
 
         assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(patient -> patient.getClinic().getId().equals(clinicOne.getId())));
+        assertTrue(
+                result.stream().allMatch(patient -> patient.getClinic().getId().equals(clinicOne.getId())));
     }
 
     @Test

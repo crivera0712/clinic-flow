@@ -1,12 +1,11 @@
 package com.clinicflow.clinic_flow.config;
 
-import jakarta.annotation.PostConstruct;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import javax.crypto.SecretKey;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import javax.crypto.SecretKey;
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.jwt")

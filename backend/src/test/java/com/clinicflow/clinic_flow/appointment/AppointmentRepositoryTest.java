@@ -1,22 +1,21 @@
 package com.clinicflow.clinic_flow.appointment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.patient.Patient;
 import com.clinicflow.clinic_flow.therapist.Therapist;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 @DataJpaTest
 class AppointmentRepositoryTest {
@@ -30,8 +29,10 @@ class AppointmentRepositoryTest {
     @Test
     void findDailyAppointments_returnsClinicRowsOrderedByTime_withJoinedNames() {
         Fixture fixture = persistFixture("clinic-one");
-        Appointment early = persistAppointment(fixture, LocalDateTime.of(2026, 2, 13, 9, 0), Appointment.Status.SCHEDULED);
-        Appointment late = persistAppointment(fixture, LocalDateTime.of(2026, 2, 13, 11, 0), Appointment.Status.WAITING);
+        Appointment early =
+                persistAppointment(fixture, LocalDateTime.of(2026, 2, 13, 9, 0), Appointment.Status.SCHEDULED);
+        Appointment late =
+                persistAppointment(fixture, LocalDateTime.of(2026, 2, 13, 11, 0), Appointment.Status.WAITING);
 
         Fixture other = persistFixture("clinic-two");
         persistAppointment(other, LocalDateTime.of(2026, 2, 13, 10, 0), Appointment.Status.SCHEDULED);
@@ -64,8 +65,8 @@ class AppointmentRepositoryTest {
         assertTrue(found.isPresent());
         assertEquals(appointment.getId(), found.get().getId());
 
-        Optional<Appointment> wrongClinic = appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(
-                at, 999L, fixture.therapist.getId());
+        Optional<Appointment> wrongClinic =
+                appointmentRepository.findByScheduledAtAndClinicIdAndTherapistId(at, 999L, fixture.therapist.getId());
         assertFalse(wrongClinic.isPresent());
     }
 
@@ -120,6 +121,5 @@ class AppointmentRepositoryTest {
         return appointment;
     }
 
-    private record Fixture(Clinics clinic, Patient patient, Therapist therapist) {
-    }
+    private record Fixture(Clinics clinic, Patient patient, Therapist therapist) {}
 }

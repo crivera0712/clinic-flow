@@ -6,6 +6,8 @@ import com.clinicflow.clinic_flow.patient.dtos.PatientRequestDto;
 import com.clinicflow.clinic_flow.patient.dtos.PatientResponseDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import java.net.URI;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,9 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import java.net.URI;
-import java.util.List;
-
 
 @Validated
 @AllArgsConstructor
@@ -27,9 +26,7 @@ public class PatientController {
 
     @GetMapping
     public ResponseEntity<PageResponse<PatientResponseDto>> getPatients(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PatientResponseDto> result = patientService.getPatients(pageable);
 
@@ -37,21 +34,18 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    public PatientResponseDto getPatientById(
-            @PathVariable @Positive Long id){
+    public PatientResponseDto getPatientById(@PathVariable @Positive Long id) {
         return patientService.getPatient(id);
     }
 
     @GetMapping("/search")
-    public List<PatientResponseDto> searchPatient(
-            @RequestParam String q){
+    public List<PatientResponseDto> searchPatient(@RequestParam String q) {
         return patientService.searchPatient(q);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<PatientResponseDto> updatePatient(
-            @PathVariable @Positive Long id,
-            @RequestBody @Valid PatientPatchDto patch){
+            @PathVariable @Positive Long id, @RequestBody @Valid PatientPatchDto patch) {
         return ResponseEntity.ok(patientService.updatePatient(id, patch));
     }
 
@@ -61,14 +55,12 @@ public class PatientController {
 
         URI location = URI.create("/api/patients/" + createdPatient.getId());
 
-
         return ResponseEntity.created(location).body(createdPatient);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePatient(@PathVariable @Positive Long id){
+    public ResponseEntity<Void> deletePatient(@PathVariable @Positive Long id) {
         patientService.deletePatient(id);
         return ResponseEntity.noContent().build();
     }
-
 }

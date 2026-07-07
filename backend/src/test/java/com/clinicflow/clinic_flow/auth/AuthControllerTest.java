@@ -1,30 +1,5 @@
 package com.clinicflow.clinic_flow.auth;
 
-import com.clinicflow.clinic_flow.auth.controllers.AuthController;
-import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
-import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
-import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
-import com.clinicflow.clinic_flow.auth.records.LoginResult;
-import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
-import com.clinicflow.clinic_flow.config.JwtConfig;
-import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
-import com.clinicflow.clinic_flow.users.Users;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +12,30 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.clinicflow.clinic_flow.auth.controllers.AuthController;
+import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
+import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
+import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
+import com.clinicflow.clinic_flow.auth.records.LoginResult;
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
+import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
+import com.clinicflow.clinic_flow.users.Users;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -92,17 +91,18 @@ class AuthControllerTest {
                 .andExpect(cookie().secure("refreshToken", false))
                 .andExpect(cookie().path("refreshToken", "/api/auth/refresh"))
                 .andExpect(cookie().maxAge("refreshToken", 3600))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("SameSite=Lax")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Set-Cookie", containsString("SameSite=Lax")));
 
-        verify(authService).login(argThat(loginRequest ->
-                "sam".equals(loginRequest.getUsername())
-                        && "secret1".equals(loginRequest.getPassword())
-        ));
+        verify(authService)
+                .login(argThat(loginRequest ->
+                        "sam".equals(loginRequest.getUsername()) && "secret1".equals(loginRequest.getPassword())));
     }
 
     @Test
     void shouldReturnBadRequest_whenLoginRequestIsInvalid() throws Exception {
-        String json = """
+        String json =
+                """
                 {
                   "username": "",
                   "password": ""
@@ -136,9 +136,9 @@ class AuthControllerTest {
     void shouldLogout_whenAuthenticatedUserExists() throws Exception {
         when(jwtConfig.isCookieSecure()).thenReturn(false);
         when(jwtConfig.getCookieSameSite()).thenReturn("Lax");
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(new AuthPrincipal(7L, "sam", "session-123", 2L), null, List.of())
-        );
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthPrincipal(7L, "sam", "session-123", 2L), null, List.of()));
 
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isNoContent())
@@ -167,12 +167,15 @@ class AuthControllerTest {
         when(accessJwt.toString()).thenReturn("new-access-token");
         when(newRefreshJwt.toString()).thenReturn("new-refresh-token");
 
-        mockMvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token")))
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("new-access-token"))
                 .andExpect(cookie().value("refreshToken", "new-refresh-token"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("SameSite=None")))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", containsString("Secure")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Set-Cookie", containsString("SameSite=None")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Set-Cookie", containsString("Secure")));
 
         verify(authService).refreshToken(refreshJwt);
     }
@@ -192,7 +195,8 @@ class AuthControllerTest {
         when(jwtService.parseToken("expired-token")).thenReturn(refreshJwt);
         when(refreshJwt.isExpired()).thenReturn(true);
 
-        mockMvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refreshToken", "expired-token")))
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "expired-token")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -204,7 +208,8 @@ class AuthControllerTest {
         when(refreshJwt.isExpired()).thenReturn(false);
         when(refreshJwt.getTokenType()).thenReturn("access");
 
-        mockMvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refreshToken", "access-token")))
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "access-token")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -241,7 +246,6 @@ class AuthControllerTest {
     void shouldReturnNotFound_whenMeDoesNotFindUser() throws Exception {
         when(authService.me()).thenReturn(null);
 
-        mockMvc.perform(get("/api/auth/me"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/auth/me")).andExpect(status().isNotFound());
     }
 }

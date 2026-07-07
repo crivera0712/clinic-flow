@@ -6,10 +6,10 @@ import com.clinicflow.clinic_flow.auth.dtos.JwtResponse;
 import com.clinicflow.clinic_flow.auth.dtos.LoginRequest;
 import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
 import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
-import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.exception.InvalidSessionException;
+import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
+import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -36,10 +36,7 @@ public class AuthController {
     private final JwtConfig jwtConfig;
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(
-            @Valid @RequestBody LoginRequest request,
-            HttpServletResponse response
-    ) {
+    public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         var result = authService.login(request);
         writeRefreshCookie(response, result.refreshToken().toString());
         return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
@@ -47,15 +44,13 @@ public class AuthController {
 
     @PostMapping("/{clinicSlug}/register")
     public ResponseEntity<UsersResponseDto> register(
-            @PathVariable @NotBlank String clinicSlug,
-            @Valid @RequestBody CreateUserRequest request
-    ) {
+            @PathVariable @NotBlank String clinicSlug, @Valid @RequestBody CreateUserRequest request) {
         var created = authService.register(clinicSlug, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void>logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         var principal = (AuthPrincipal) auth.getPrincipal();
         var sid = principal.sid();
@@ -69,9 +64,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<JwtResponse> refresh(
-            @CookieValue(value = "refreshToken", required = false) String refreshToken,
-            HttpServletResponse response
-    ){
+            @CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
         if (refreshToken == null || refreshToken.isBlank()) {
             log.info("Refresh denied reason=missing_cookie");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -93,8 +86,7 @@ public class AuthController {
                     "Refresh denied reason=wrong_token_type sid={} clinicId={} tokenType={}",
                     jwt.getSid(),
                     jwt.getClinicId(),
-                    jwt.getTokenType()
-            );
+                    jwt.getTokenType());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -109,15 +101,13 @@ public class AuthController {
                     "Refresh denied reason=session_invalid sid={} clinicId={} message={}",
                     jwt.getSid(),
                     jwt.getClinicId(),
-                    ex.getMessage()
-            );
+                    ex.getMessage());
             throw ex;
         }
-
     }
 
     @PostMapping("/validate")
-    public boolean validate(@RequestHeader("Authorization") String authHeader){
+    public boolean validate(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return false;
         }
@@ -156,5 +146,4 @@ public class AuthController {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
-
 }

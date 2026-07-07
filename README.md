@@ -15,14 +15,15 @@ This repo includes:
 
 Current demo deployment:
 
-- Live demo : [https://clinic-flow-4hei.onrender.com](https://clinic-flow-4hei.onrender.com)
+- Live demo: [https://clinicflowappdemo.com](https://clinicflowappdemo.com)
 - EC2 runs PostgreSQL and the backend Docker container
-- Caddy terminates TLS for `clinic-flow-api.duckdns.org`
+- Caddy terminates TLS for `api.clinicflowappdemo.com`
 - Render hosts the frontend static site
 
 ### Demo Sandbox
 
-- Seeded users: `demo_admin` and `demo_display`
+- Seeded admin user: `demo_admin` / `demoadmin`
+- Seeded display user: `demo_display` / `demodisplay`
 - The demo clinic is read-only after login, so seeded records can be explored safely without allowing writes
 
 
@@ -111,26 +112,6 @@ Tenant isolation is enforced in both the schema and application layer:
 
 - Java 17
 - PostgreSQL
-
-### Environment Variables
-
-```bash
-export DB_URL=jdbc:postgresql://localhost:5432/clinicflow
-export DB_USER=postgres
-export DB_PASSWORD=postgres
-export JWT_SECRET=change-me-to-a-long-random-secret
-export SPRING_JWT_COOKIESECURE=false
-export SPRING_JWT_COOKIESAMESITE=Lax
-```
-
-Production cross-origin deployment should use:
-
-```bash
-export SPRING_JWT_COOKIESECURE=true
-export SPRING_JWT_COOKIESAMESITE=None
-export APP_CORS_ALLOWED_ORIGINS=https://clinic-flow-4hei.onrender.com
-export VITE_API_BASE_URL=https://clinic-flow-api.duckdns.org/api
-```
 
 ## API Overview
 

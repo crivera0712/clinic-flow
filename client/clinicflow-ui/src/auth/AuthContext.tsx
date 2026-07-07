@@ -1,7 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { configureApiClient, resetApiClient } from "../api/client";
-import { getCurrentUser, login as loginRequest, logout as logoutRequest, refresh as refreshRequest } from "../api/auth";
+import {
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+  refresh as refreshRequest,
+} from "../api/auth";
 import type { CurrentUser, LoginRequest } from "../types/auth";
 
 type AuthStatus = "bootstrapping" | "authenticated" | "anonymous";
@@ -135,7 +140,9 @@ function useProvideAuth(): AuthContextValue {
     if (!payload?.exp) return;
     const msUntilRefresh = payload.exp * 1000 - Date.now() - 2 * 60 * 1000;
     if (msUntilRefresh <= 0) return;
-    const id = setTimeout(() => { refresh(); }, msUntilRefresh);
+    const id = setTimeout(() => {
+      refresh();
+    }, msUntilRefresh);
     return () => clearTimeout(id);
   }, [accessToken, status]);
 
