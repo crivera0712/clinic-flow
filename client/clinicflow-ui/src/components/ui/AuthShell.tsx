@@ -10,9 +10,9 @@ import { BrandMark } from "./BrandMark";
 import { colors } from "../../theme";
 
 const benefits = [
-  { icon: <CalendarMonthRoundedIcon />, label: "One clear schedule for the entire clinic" },
-  { icon: <GroupsRoundedIcon />, label: "Fast patient and therapist coordination" },
-  { icon: <MonitorHeartRoundedIcon />, label: "A calm, readable display for the gym floor" },
+  { icon: <CalendarMonthRoundedIcon />, label: "Daily appointment board" },
+  { icon: <GroupsRoundedIcon />, label: "Patient and therapist coordination" },
+  { icon: <MonitorHeartRoundedIcon />, label: "Treatment-floor display view" },
 ];
 
 export function AuthShell({ children }: { children: ReactNode }) {
@@ -53,9 +53,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <Typography variant="h6">ClinicFlow</Typography>
           </Stack>
           <Box>
-            <Typography variant="h3" sx={{ maxWidth: 500 }}>A calmer way to run the day.</Typography>
+            <Typography variant="h3" sx={{ maxWidth: 500 }}>A clearer view of today&apos;s clinic schedule.</Typography>
             <Typography color="text.secondary" sx={{ mt: 2, maxWidth: 480, fontSize: "1.05rem", lineHeight: 1.75 }}>
-              Keep the front desk, care team, and gym floor moving together without the visual noise.
+              Manage appointments, patient check-ins, and therapist schedules in one clinic-focused workspace.
             </Typography>
           </Box>
           <Stack spacing={2.25}>

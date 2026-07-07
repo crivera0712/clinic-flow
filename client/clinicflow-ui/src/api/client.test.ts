@@ -161,6 +161,28 @@ describe("apiRequest — error handling", () => {
     expect(err.message).toBe("first");
   });
 
+  it("uses a status-specific message when the response has no useful message", async () => {
+    server.use(http.get(apiUrl("/err"), () => new HttpResponse(null, { status: 401 })));
+
+    const err = await captureError(
+      apiRequest("/err", { skipAuth: true, statusMessages: { 401: "Username or password is incorrect." } }),
+    );
+
+    expect(err.status).toBe(401);
+    expect(err.message).toBe("Username or password is incorrect.");
+  });
+
+  it("prefers response error details over a status-specific message", async () => {
+    server.use(http.get(apiUrl("/err"), () => HttpResponse.json({ message: "Account disabled" }, { status: 401 })));
+
+    const err = await captureError(
+      apiRequest("/err", { skipAuth: true, statusMessages: { 401: "Username or password is incorrect." } }),
+    );
+
+    expect(err.status).toBe(401);
+    expect(err.message).toBe("Account disabled");
+  });
+
   it("falls back to a generic message when data has none", async () => {
     server.use(http.get(apiUrl("/err"), () => HttpResponse.json({}, { status: 500 })));
 

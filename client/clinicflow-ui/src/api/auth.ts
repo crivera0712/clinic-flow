@@ -7,6 +7,7 @@ export function login(request: LoginRequest) {
     body: request,
     skipAuth: true,
     retryOn401: false,
+    statusMessages: { 401: "Username or password is incorrect." },
   });
 }
 
