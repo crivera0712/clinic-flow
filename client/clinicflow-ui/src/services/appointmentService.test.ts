@@ -36,9 +36,19 @@ describe("appointmentService", () => {
       }),
     );
 
-    await createAppointment({ patientId: 1, therapistId: 7, scheduledAt: "2026-06-20T14:30", type: "EVALUATION" });
+    await createAppointment({
+      patientId: 1,
+      therapistId: 7,
+      scheduledAt: "2026-06-20T14:30",
+      type: "EVALUATION",
+    });
 
-    expect(body).toEqual({ patientId: 1, therapistId: 7, scheduledAt: "2026-06-20T14:30", type: "EVALUATION" });
+    expect(body).toEqual({
+      patientId: 1,
+      therapistId: 7,
+      scheduledAt: "2026-06-20T14:30",
+      type: "EVALUATION",
+    });
   });
 
   it("createAppointment POSTs an inline new patient", async () => {

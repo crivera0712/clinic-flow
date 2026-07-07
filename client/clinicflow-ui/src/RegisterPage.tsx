@@ -42,50 +42,59 @@ export default function RegisterPage() {
   return (
     <AuthShell>
       <Stack spacing={3.5} component="form" onSubmit={handleSubmit}>
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
-            <BrandMark size={38} />
-            <Typography variant="h6">ClinicFlow</Typography>
-          </Stack>
-          <div>
-            <Typography variant="overline" color="primary.main">Join your clinic</Typography>
-            <Typography variant="h4" sx={{ mt: 0.5 }}>
-              Create account
-            </Typography>
-            <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>
-              Register for <strong>{clinicSlug}</strong>. You'll be able to sign in after your account is created.
-            </Typography>
-          </div>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
+          <BrandMark size={38} />
+          <Typography variant="h6">ClinicFlow</Typography>
+        </Stack>
+        <div>
+          <Typography variant="overline" color="primary.main">
+            Join your clinic
+          </Typography>
+          <Typography variant="h4" sx={{ mt: 0.5 }}>
+            Create account
+          </Typography>
+          <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>
+            Register for <strong>{clinicSlug}</strong>. You'll be able to sign in after your account
+            is created.
+          </Typography>
+        </div>
 
-          {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
-            id="register-username"
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Username" } }}
-            fullWidth
-            required
-          />
+        <TextField
+          id="register-username"
+          label="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          variant="outlined"
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Username" } }}
+          fullWidth
+          required
+        />
 
-          <TextField
-            id="register-password"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Password" } }}
-            fullWidth
-            required
-          />
+        <TextField
+          id="register-password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          variant="outlined"
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: { "aria-label": "Password" } }}
+          fullWidth
+          required
+        />
 
-          <Button type="submit" variant="contained" size="large" disabled={submitting} sx={{ mt: 0.5 }}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : "Create account"}
-          </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={submitting}
+          sx={{ mt: 0.5 }}
+        >
+          {submitting ? <CircularProgress size={24} color="inherit" /> : "Create account"}
+        </Button>
       </Stack>
     </AuthShell>
   );

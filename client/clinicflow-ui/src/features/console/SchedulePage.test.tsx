@@ -15,7 +15,9 @@ vi.mock("../../services/appointmentService", () => ({
   removeAppointment: (...args: unknown[]) => removeAppointment(...args),
 }));
 vi.mock("../../services/patientService", () => ({ searchPatients: vi.fn().mockResolvedValue([]) }));
-vi.mock("../../services/therapistService", () => ({ listTherapists: vi.fn().mockResolvedValue([{ id: 1, name: "Dr. Smith" }]) }));
+vi.mock("../../services/therapistService", () => ({
+  listTherapists: vi.fn().mockResolvedValue([{ id: 1, name: "Dr. Smith" }]),
+}));
 
 const row = {
   id: 8,

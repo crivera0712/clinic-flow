@@ -110,15 +110,17 @@ describe("apiRequest — response parsing", () => {
 
   it("returns text for non-JSON responses, and null when empty", async () => {
     server.use(
-      http.get(apiUrl("/text"), () =>
-        new HttpResponse("hello", { headers: { "content-type": "text/plain" } }),
+      http.get(
+        apiUrl("/text"),
+        () => new HttpResponse("hello", { headers: { "content-type": "text/plain" } }),
       ),
     );
     expect(await apiRequest("/text")).toBe("hello");
 
     server.use(
-      http.get(apiUrl("/empty"), () =>
-        new HttpResponse("", { headers: { "content-type": "text/plain" } }),
+      http.get(
+        apiUrl("/empty"),
+        () => new HttpResponse("", { headers: { "content-type": "text/plain" } }),
       ),
     );
     expect(await apiRequest("/empty")).toBeNull();
@@ -128,8 +130,9 @@ describe("apiRequest — response parsing", () => {
 describe("apiRequest — error handling", () => {
   it("throws ApiError carrying status and data", async () => {
     server.use(
-      http.get(apiUrl("/err"), () =>
-        new HttpResponse("boom", { status: 400, headers: { "content-type": "text/plain" } }),
+      http.get(
+        apiUrl("/err"),
+        () => new HttpResponse("boom", { status: 400, headers: { "content-type": "text/plain" } }),
       ),
     );
 
@@ -142,7 +145,9 @@ describe("apiRequest — error handling", () => {
   });
 
   it("uses data.message as the error message", async () => {
-    server.use(http.get(apiUrl("/err"), () => HttpResponse.json({ message: "bad input" }, { status: 422 })));
+    server.use(
+      http.get(apiUrl("/err"), () => HttpResponse.json({ message: "bad input" }, { status: 422 })),
+    );
 
     const err = await captureError(apiRequest("/err"));
 
@@ -153,7 +158,9 @@ describe("apiRequest — error handling", () => {
 
   it("uses the first entry of data.errors as the error message", async () => {
     server.use(
-      http.get(apiUrl("/err"), () => HttpResponse.json({ errors: ["first", "second"] }, { status: 400 })),
+      http.get(apiUrl("/err"), () =>
+        HttpResponse.json({ errors: ["first", "second"] }, { status: 400 }),
+      ),
     );
 
     const err = await captureError(apiRequest("/err"));
@@ -165,7 +172,10 @@ describe("apiRequest — error handling", () => {
     server.use(http.get(apiUrl("/err"), () => new HttpResponse(null, { status: 401 })));
 
     const err = await captureError(
-      apiRequest("/err", { skipAuth: true, statusMessages: { 401: "Username or password is incorrect." } }),
+      apiRequest("/err", {
+        skipAuth: true,
+        statusMessages: { 401: "Username or password is incorrect." },
+      }),
     );
 
     expect(err.status).toBe(401);
@@ -173,10 +183,17 @@ describe("apiRequest — error handling", () => {
   });
 
   it("prefers response error details over a status-specific message", async () => {
-    server.use(http.get(apiUrl("/err"), () => HttpResponse.json({ message: "Account disabled" }, { status: 401 })));
+    server.use(
+      http.get(apiUrl("/err"), () =>
+        HttpResponse.json({ message: "Account disabled" }, { status: 401 }),
+      ),
+    );
 
     const err = await captureError(
-      apiRequest("/err", { skipAuth: true, statusMessages: { 401: "Username or password is incorrect." } }),
+      apiRequest("/err", {
+        skipAuth: true,
+        statusMessages: { 401: "Username or password is incorrect." },
+      }),
     );
 
     expect(err.status).toBe(401);
@@ -197,7 +214,9 @@ describe("apiRequest — 401 refresh/retry", () => {
   it("refreshes the token and retries once on 401, carrying the new token", async () => {
     const refreshAccessToken = vi.fn(async () => "newtok");
     const onAuthFailure = vi.fn();
-    configureApiClient(authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }));
+    configureApiClient(
+      authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }),
+    );
 
     const seenAuth: (string | null)[] = [];
     server.use(
@@ -226,8 +245,12 @@ describe("apiRequest — 401 refresh/retry", () => {
   it("calls onAuthFailure and throws when refresh yields no token", async () => {
     const refreshAccessToken = vi.fn(async () => null);
     const onAuthFailure = vi.fn();
-    configureApiClient(authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }));
-    server.use(http.get(apiUrl("/secure"), () => HttpResponse.json({ message: "expired" }, { status: 401 })));
+    configureApiClient(
+      authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }),
+    );
+    server.use(
+      http.get(apiUrl("/secure"), () => HttpResponse.json({ message: "expired" }, { status: 401 })),
+    );
 
     const err = await captureError(apiRequest("/secure"));
 
@@ -239,8 +262,12 @@ describe("apiRequest — 401 refresh/retry", () => {
   it("calls onAuthFailure and throws when the retry is also 401", async () => {
     const refreshAccessToken = vi.fn(async () => "newtok");
     const onAuthFailure = vi.fn();
-    configureApiClient(authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }));
-    server.use(http.get(apiUrl("/secure"), () => HttpResponse.json({ message: "nope" }, { status: 401 })));
+    configureApiClient(
+      authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }),
+    );
+    server.use(
+      http.get(apiUrl("/secure"), () => HttpResponse.json({ message: "nope" }, { status: 401 })),
+    );
 
     const err = await captureError(apiRequest("/secure"));
 
@@ -252,10 +279,14 @@ describe("apiRequest — 401 refresh/retry", () => {
   it("does not call onAuthFailure when the retry fails with a non-401", async () => {
     const refreshAccessToken = vi.fn(async () => "newtok");
     const onAuthFailure = vi.fn();
-    configureApiClient(authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }));
+    configureApiClient(
+      authHandlers({ getAccessToken: () => "oldtok", refreshAccessToken, onAuthFailure }),
+    );
     server.use(
       http.get(apiUrl("/secure"), () => new HttpResponse(null, { status: 401 }), { once: true }),
-      http.get(apiUrl("/secure"), () => HttpResponse.json({ message: "server boom" }, { status: 500 })),
+      http.get(apiUrl("/secure"), () =>
+        HttpResponse.json({ message: "server boom" }, { status: 500 }),
+      ),
     );
 
     const err = await captureError(apiRequest("/secure"));

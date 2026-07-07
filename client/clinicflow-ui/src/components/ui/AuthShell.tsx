@@ -53,14 +53,26 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <Typography variant="h6">ClinicFlow</Typography>
           </Stack>
           <Box>
-            <Typography variant="h3" sx={{ maxWidth: 500 }}>A clearer view of today&apos;s clinic schedule.</Typography>
-            <Typography color="text.secondary" sx={{ mt: 2, maxWidth: 480, fontSize: "1.05rem", lineHeight: 1.75 }}>
-              Manage appointments, patient check-ins, and therapist schedules in one clinic-focused workspace.
+            <Typography variant="h3" sx={{ maxWidth: 500 }}>
+              A clearer view of today&apos;s clinic schedule.
+            </Typography>
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 2, maxWidth: 480, fontSize: "1.05rem", lineHeight: 1.75 }}
+            >
+              Manage appointments, patient check-ins, and therapist schedules in one clinic-focused
+              workspace.
             </Typography>
           </Box>
           <Stack spacing={2.25}>
             {benefits.map((benefit) => (
-              <Stack key={benefit.label} direction="row" spacing={1.5} alignItems="center" color="text.secondary">
+              <Stack
+                key={benefit.label}
+                direction="row"
+                spacing={1.5}
+                alignItems="center"
+                color="text.secondary"
+              >
                 <Box sx={{ color: "primary.main", display: "flex" }}>{benefit.icon}</Box>
                 <Typography>{benefit.label}</Typography>
               </Stack>

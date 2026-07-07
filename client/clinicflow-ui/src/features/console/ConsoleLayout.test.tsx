@@ -14,7 +14,11 @@ describe("ConsoleLayout", () => {
     const user = userEvent.setup();
     renderWithTheme(
       <MemoryRouter initialEntries={["/"]}>
-        <Routes><Route path="/" element={<ConsoleLayout />}><Route index element={<div>Schedule content</div>} /></Route></Routes>
+        <Routes>
+          <Route path="/" element={<ConsoleLayout />}>
+            <Route index element={<div>Schedule content</div>} />
+          </Route>
+        </Routes>
       </MemoryRouter>,
     );
 

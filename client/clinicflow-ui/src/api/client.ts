@@ -91,7 +91,12 @@ function buildHeaders(
 ) {
   const nextHeaders = new Headers(headers);
 
-  if (body !== null && body !== undefined && !(body instanceof FormData) && !nextHeaders.has("Content-Type")) {
+  if (
+    body !== null &&
+    body !== undefined &&
+    !(body instanceof FormData) &&
+    !nextHeaders.has("Content-Type")
+  ) {
     nextHeaders.set("Content-Type", "application/json");
   }
 
@@ -121,7 +126,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     ...init
   } = options;
 
-  const accessToken = skipAuth ? null : authHandlers?.getAccessToken() ?? null;
+  const accessToken = skipAuth ? null : (authHandlers?.getAccessToken() ?? null);
   const response = await fetch(buildUrl(path), {
     ...init,
     body: normalizeBody(body),

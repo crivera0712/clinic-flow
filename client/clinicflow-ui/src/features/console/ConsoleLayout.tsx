@@ -55,13 +55,19 @@ export function ConsoleLayout() {
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ px: 3, py: 3.25 }}>
         <BrandMark size={40} />
         <Box>
-          <Typography variant="h6" lineHeight={1.1}>ClinicFlow</Typography>
-          <Typography variant="caption" color="text.secondary">Front desk workspace</Typography>
+          <Typography variant="h6" lineHeight={1.1}>
+            ClinicFlow
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Front desk workspace
+          </Typography>
         </Box>
       </Stack>
       <Divider />
       <Box sx={{ px: 2, pt: 2.5 }}>
-        <Typography variant="overline" color="text.disabled" sx={{ px: 1.5 }}>Workspace</Typography>
+        <Typography variant="overline" color="text.disabled" sx={{ px: 1.5 }}>
+          Workspace
+        </Typography>
       </Box>
       <List sx={{ px: 2, py: 1, flexGrow: 1 }}>
         {navItems.map((item) => {
@@ -86,24 +92,60 @@ export function ConsoleLayout() {
                 "&:hover": { bgcolor: alpha(colors.primary, 0.07), color: "text.primary" },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 40, color: selected ? "primary.main" : "text.disabled" }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} slotProps={{ primary: { fontWeight: selected ? 700 : 600 } }} />
-              {selected && <ChevronRightRoundedIcon fontSize="small" sx={{ color: "primary.main" }} />}
+              <ListItemIcon
+                sx={{ minWidth: 40, color: selected ? "primary.main" : "text.disabled" }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                slotProps={{ primary: { fontWeight: selected ? 700 : 600 } }}
+              />
+              {selected && (
+                <ChevronRightRoundedIcon fontSize="small" sx={{ color: "primary.main" }} />
+              )}
             </ListItemButton>
           );
         })}
       </List>
       <Box sx={{ p: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 1.5, borderRadius: 2.5, bgcolor: alpha(colors.surfaceRaised, 0.65), border: `1px solid ${colors.borderSoft}` }}>
-          <Avatar sx={{ width: 38, height: 38, bgcolor: alpha(colors.primary, 0.15), color: "primary.main", fontWeight: 750 }}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          sx={{
+            p: 1.5,
+            borderRadius: 2.5,
+            bgcolor: alpha(colors.surfaceRaised, 0.65),
+            border: `1px solid ${colors.borderSoft}`,
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 38,
+              height: 38,
+              bgcolor: alpha(colors.primary, 0.15),
+              color: "primary.main",
+              fontWeight: 750,
+            }}
+          >
             {currentUser?.username?.charAt(0).toUpperCase() ?? "U"}
           </Avatar>
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-            <Typography variant="body2" fontWeight={700} noWrap>{currentUser?.username}</Typography>
-            <Typography variant="caption" color="text.secondary">{currentUser?.roleName}</Typography>
+            <Typography variant="body2" fontWeight={700} noWrap>
+              {currentUser?.username}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {currentUser?.roleName}
+            </Typography>
           </Box>
           <Tooltip title="Log out">
-            <IconButton aria-label="Log out" size="small" onClick={() => void logout()} sx={{ color: "text.secondary" }}>
+            <IconButton
+              aria-label="Log out"
+              size="small"
+              onClick={() => void logout()}
+              sx={{ color: "text.secondary" }}
+            >
               <LogoutRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -130,27 +172,54 @@ export function ConsoleLayout() {
       >
         <Toolbar sx={{ minHeight: { xs: 64, sm: 72 }, px: { xs: 2, md: 4 } }}>
           {!isDesktop && (
-            <IconButton aria-label="Open navigation" color="inherit" edge="start" onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}>
+            <IconButton
+              aria-label="Open navigation"
+              color="inherit"
+              edge="start"
+              onClick={() => setMobileOpen(true)}
+              sx={{ mr: 1 }}
+            >
               <MenuRoundedIcon />
             </IconButton>
           )}
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" color="text.secondary">Today’s workspace</Typography>
-            <Typography variant="h6" lineHeight={1.2}>{pageNames[location.pathname] ?? "ClinicFlow"}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Today’s workspace
+            </Typography>
+            <Typography variant="h6" lineHeight={1.2}>
+              {pageNames[location.pathname] ?? "ClinicFlow"}
+            </Typography>
           </Box>
-          <Button component={RouterLink} to="/board" variant="outlined" startIcon={<MonitorRoundedIcon />} sx={{ display: { xs: "none", sm: "inline-flex" } }}>
+          <Button
+            component={RouterLink}
+            to="/board"
+            variant="outlined"
+            startIcon={<MonitorRoundedIcon />}
+            sx={{ display: { xs: "none", sm: "inline-flex" } }}
+          >
             Open display
           </Button>
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }} aria-label="Primary navigation">
+      <Box
+        component="nav"
+        sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}
+        aria-label="Primary navigation"
+      >
         <Drawer
           variant={isDesktop ? "permanent" : "temporary"}
           open={isDesktop || mobileOpen}
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{ "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box", border: 0, borderRight: `1px solid ${colors.borderSoft}` } }}
+          sx={{
+            "& .MuiDrawer-paper": {
+              width: drawerWidth,
+              boxSizing: "border-box",
+              border: 0,
+              borderRight: `1px solid ${colors.borderSoft}`,
+            },
+          }}
         >
           {drawer}
         </Drawer>
@@ -158,7 +227,9 @@ export function ConsoleLayout() {
 
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0, px: { xs: 2, sm: 3, md: 4.5 }, pb: 5 }}>
         <Toolbar sx={{ minHeight: { xs: 88, sm: 96 } }} />
-        <Box sx={{ width: "100%", maxWidth: 1440, mx: "auto" }}><Outlet /></Box>
+        <Box sx={{ width: "100%", maxWidth: 1440, mx: "auto" }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

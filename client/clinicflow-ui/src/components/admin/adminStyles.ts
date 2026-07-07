@@ -100,9 +100,10 @@ export const adminDataGridSx: SxProps<Theme> = {
     color: adminColors.textSecondary,
     borderTopColor: adminColors.border,
   },
-  "& .MuiTablePagination-root, & .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-    color: adminColors.textSecondary,
-  },
+  "& .MuiTablePagination-root, & .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+    {
+      color: adminColors.textSecondary,
+    },
   "& .MuiTablePagination-selectIcon, & .MuiTablePagination-actions button": {
     color: adminColors.textStrong,
   },
