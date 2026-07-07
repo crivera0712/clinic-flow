@@ -15,7 +15,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     renderWithTheme(<LoginPage />);
 
-    expect(screen.getByText("A calmer way to run the day.")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to access your clinic schedule.")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Username"), "demo_admin");
     await user.type(screen.getByLabelText("Password"), "secret");
     await user.click(screen.getByRole("button", { name: "Login" }));
