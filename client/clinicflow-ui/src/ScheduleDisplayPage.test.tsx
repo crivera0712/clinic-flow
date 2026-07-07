@@ -1,12 +1,18 @@
 import { MemoryRouter } from "react-router-dom";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { buildTherapistAccentMap } from "./features/display/therapistAccents";
 import { renderWithTheme } from "./test/render";
 
+const authMock = vi.hoisted(() => ({
+  currentUser: { username: "demo_admin", roleName: "ADMIN" },
+  logout: vi.fn(),
+}));
+
 vi.mock("./auth/AuthContext", () => ({
-  useAuth: () => ({ currentUser: { username: "demo_admin", roleName: "ADMIN" } }),
+  useAuth: () => authMock,
 }));
 
 vi.mock("./services/appointmentService", () => ({
@@ -35,6 +41,11 @@ vi.mock("./services/appointmentService", () => ({
 }));
 
 describe("ScheduleDisplayPage", () => {
+  beforeEach(() => {
+    authMock.currentUser = { username: "demo_admin", roleName: "ADMIN" };
+    authMock.logout.mockReset();
+  });
+
   it("assigns one unique accent to each therapist regardless of database id gaps", () => {
     const appointments = [
       {
@@ -93,5 +104,24 @@ describe("ScheduleDisplayPage", () => {
     expect(await screen.findByText("Mary Roe")).toBeInTheDocument();
     expect(await screen.findByText("Pat Sims")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Console/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Log out/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the logout button only for display users", async () => {
+    const user = userEvent.setup();
+    authMock.currentUser = { username: "demo_display", roleName: "DISPLAY" };
+
+    renderWithTheme(
+      <MemoryRouter>
+        <ScheduleDisplayPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: /Console/ })).not.toBeInTheDocument();
+    const logoutButton = screen.getByRole("button", { name: /Log out/ });
+
+    await user.click(logoutButton);
+
+    expect(authMock.logout).toHaveBeenCalledTimes(1);
   });
 });

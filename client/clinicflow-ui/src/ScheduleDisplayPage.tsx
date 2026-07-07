@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -146,7 +147,7 @@ function EmptyPanel({ title, description }: { title: string; description: string
 }
 
 export default function ScheduleDisplayPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<BoardRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -343,6 +344,18 @@ export default function ScheduleDisplayPage() {
             )}
           </Paper>
         </Stack>
+
+        {currentUser?.roleName === "DISPLAY" && (
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<LogoutRoundedIcon fontSize="small" />}
+            onClick={() => void logout()}
+            sx={{ alignSelf: "flex-end", color: "text.secondary" }}
+          >
+            Log out
+          </Button>
+        )}
       </Stack>
     </Box>
   );
