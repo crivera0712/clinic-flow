@@ -8,7 +8,6 @@ import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -16,7 +15,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -27,9 +25,15 @@ import TableContainer from "@mui/material/TableContainer";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { ListSkeleton, TableSkeletonRows } from "../../components/ui/Skeletons";
+import { StatusChip } from "../../components/ui/StatusChip";
+import { TherapistBadge } from "../../components/ui/TherapistBadge";
+import { useTherapistAccents } from "../../components/ui/therapistAccents";
+import { useToast } from "../../components/ui/useToast";
 import {
   createAppointment,
   listAppointmentsByDate,
@@ -39,15 +43,15 @@ import {
 import { searchPatients } from "../../services/patientService";
 import { listTherapists } from "../../services/therapistService";
 import {
-  appointmentStatusLabels,
   appointmentTypeOptions,
   type AppointmentType,
   type BoardRow,
 } from "../../types/appointment";
 import type { Therapist } from "../../types/therapist";
-import { formatTime, getTodayDateString, splitName, statusChipColor } from "./scheduleUtils";
+import { formatTime, getTodayDateString, splitName } from "./scheduleUtils";
 
-type SnackbarState = { open: boolean; severity: "success" | "error"; message: string };
+const columns = ["Time", "Patient", "Therapist", "Type", "Status", "Actions"];
+
 type PatientOption =
   | { kind: "existing"; id: number; firstName: string; lastName: string }
   | { kind: "create"; firstName: string; lastName: string };
@@ -55,6 +59,10 @@ type PatientOption =
 function optionLabel(option: PatientOption): string {
   const name = `${option.firstName} ${option.lastName}`.trim();
   return option.kind === "existing" ? name : `Add new patient: "${name}"`;
+}
+
+function typeLabel(type: AppointmentType): string {
+  return appointmentTypeOptions.find((o) => o.value === type)?.label ?? type;
 }
 
 function AppointmentActions({
@@ -109,11 +117,7 @@ export function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    severity: "success",
-    message: "",
-  });
+  const toast = useToast();
 
   // Fast-add form
   const [patientInput, setPatientInput] = useState("");
@@ -127,6 +131,12 @@ export function SchedulePage() {
 
   const [editTarget, setEditTarget] = useState<BoardRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BoardRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const accents = useTherapistAccents([
+    ...therapists.map((t) => t.id),
+    ...rows.map((row) => row.therapistId),
+  ]);
 
   async function refresh(date = selectedDate) {
     try {
@@ -198,11 +208,7 @@ export function SchedulePage() {
       selectedPatient ??
       (typed ? ({ kind: "create", ...splitName(typed) } as PatientOption) : null);
     if (!patientChoice || !therapistId || !time) {
-      setSnackbar({
-        open: true,
-        severity: "error",
-        message: "Patient, therapist and time are required.",
-      });
+      toast.error("Patient, therapist and time are required.");
       return;
     }
     setAdding(true);
@@ -217,10 +223,9 @@ export function SchedulePage() {
       });
       await refresh();
       resetAddForm();
-      setSnackbar({ open: true, severity: "success", message: "Appointment added." });
+      toast.success("Appointment added.");
     } catch (addError) {
-      const message = addError instanceof Error ? addError.message : "Unable to add appointment.";
-      setSnackbar({ open: true, severity: "error", message });
+      toast.error(addError instanceof Error ? addError.message : "Unable to add appointment.");
     } finally {
       setAdding(false);
     }
@@ -231,23 +236,24 @@ export function SchedulePage() {
       await updateAppointment(row.id, { status });
       await refresh();
     } catch (statusError) {
-      const message =
-        statusError instanceof Error ? statusError.message : "Unable to update status.";
-      setSnackbar({ open: true, severity: "error", message });
+      toast.error(statusError instanceof Error ? statusError.message : "Unable to update status.");
     }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return;
+    setDeleting(true);
     try {
       await removeAppointment(deleteTarget.id);
       await refresh();
       setDeleteTarget(null);
-      setSnackbar({ open: true, severity: "success", message: "Appointment cancelled." });
+      toast.success("Appointment cancelled.");
     } catch (deleteError) {
-      const message =
-        deleteError instanceof Error ? deleteError.message : "Unable to cancel appointment.";
-      setSnackbar({ open: true, severity: "error", message });
+      toast.error(
+        deleteError instanceof Error ? deleteError.message : "Unable to cancel appointment.",
+      );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -257,33 +263,15 @@ export function SchedulePage() {
         eyebrow="Daily operations"
         title="Schedule"
         description="Add patients to the day and move each visit from scheduled to waiting to complete."
+        onRefresh={() => void refresh()}
+        refreshing={loading}
       />
 
-      {/* Fast-add row */}
-      <Paper
-        sx={(theme) => ({ p: { xs: 2, md: 3 }, boxShadow: theme.vars.palette.elevation.card })}
+      <SectionCard
+        icon={<AddRoundedIcon />}
+        title="Quick add"
+        subtitle="Create an appointment without leaving the schedule."
       >
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
-          <Box
-            sx={(theme) => ({
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              display: "grid",
-              placeItems: "center",
-              color: "primary.main",
-              bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.11),
-            })}
-          >
-            <AddRoundedIcon />
-          </Box>
-          <Box>
-            <Typography variant="h6">Quick add</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create an appointment without leaving the schedule.
-            </Typography>
-          </Box>
-        </Stack>
         <Stack
           direction={{ xs: "column", lg: "row" }}
           spacing={2}
@@ -359,28 +347,17 @@ export function SchedulePage() {
             Add visit
           </Button>
         </Stack>
-      </Paper>
+      </SectionCard>
 
-      {/* Schedule table */}
-      <Paper sx={{ overflow: "hidden" }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          alignItems={{ sm: "center" }}
-          justifyContent="space-between"
-          sx={{ p: { xs: 2, md: 2.5 }, borderBottom: 1, borderColor: "divider" }}
-        >
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <CalendarTodayRoundedIcon color="primary" fontSize="small" />
-              <Typography variant="h6">Day schedule</Typography>
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {loading
-                ? "Loading appointments…"
-                : `${rows.length} appointment${rows.length === 1 ? "" : "s"}`}
-            </Typography>
-          </Box>
+      <SectionCard
+        icon={<CalendarTodayRoundedIcon />}
+        title="Day schedule"
+        subtitle={
+          loading
+            ? "Loading appointments…"
+            : `${rows.length} appointment${rows.length === 1 ? "" : "s"}`
+        }
+        action={
           <TextField
             label="Date"
             type="date"
@@ -389,28 +366,32 @@ export function SchedulePage() {
             sx={{ width: { xs: "100%", sm: 210 } }}
             InputLabelProps={{ shrink: true }}
           />
-        </Stack>
-        <Stack>
-          {error && <Alert severity="error">{error}</Alert>}
-          {rows.length === 0 && !loading ? (
-            <EmptyState
-              icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
-              title="The day is clear"
-              description="Use Quick add to schedule the first appointment."
-            />
-          ) : (
-            <>
-              <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-                <Table sx={{ minWidth: 900 }}>
-                  <TableHead>
-                    <TableRow>
-                      {["Time", "Patient", "Therapist", "Type", "Status", "Actions"].map((h) => (
-                        <TableCell key={h}>{h}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map((row) => (
+        }
+        disablePadding
+      >
+        {error && <Alert severity="error">{error}</Alert>}
+        {rows.length === 0 && !loading ? (
+          <EmptyState
+            icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
+            title="The day is clear"
+            description="Use Quick add to schedule the first appointment."
+          />
+        ) : (
+          <>
+            <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+              <Table sx={{ minWidth: 900 }}>
+                <TableHead>
+                  <TableRow>
+                    {columns.map((h) => (
+                      <TableCell key={h}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.length === 0 ? (
+                    <TableSkeletonRows columns={columns.length} />
+                  ) : (
+                    rows.map((row) => (
                       <TableRow key={row.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
                         <TableCell sx={{ fontWeight: 750, color: "primary.main" }}>
                           {formatTime(row.scheduledAt)}
@@ -418,18 +399,15 @@ export function SchedulePage() {
                         <TableCell>
                           <Typography fontWeight={700}>{row.patientName}</Typography>
                         </TableCell>
-                        <TableCell color="text.secondary">{row.therapistName}</TableCell>
                         <TableCell>
-                          {appointmentTypeOptions.find((o) => o.value === row.type)?.label ??
-                            row.type}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={appointmentStatusLabels[row.status]}
-                            color={statusChipColor[row.status]}
-                            variant={row.status === "SCHEDULED" ? "outlined" : "filled"}
+                          <TherapistBadge
+                            name={row.therapistName}
+                            accent={accents.get(row.therapistId)}
                           />
+                        </TableCell>
+                        <TableCell>{typeLabel(row.type)}</TableCell>
+                        <TableCell>
+                          <StatusChip status={row.status} />
                         </TableCell>
                         <TableCell>
                           <AppointmentActions
@@ -440,55 +418,61 @@ export function SchedulePage() {
                           />
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-              <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" }, p: 2 }}>
-                {rows.map((row) => (
-                  <Paper key={row.id} sx={{ p: 2, bgcolor: "background.subtle" }}>
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                    >
-                      <Box>
-                        <Typography color="primary.main" fontWeight={750}>
-                          {formatTime(row.scheduledAt)}
-                        </Typography>
-                        <Typography variant="h6" sx={{ mt: 0.25 }}>
-                          {row.patientName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          {row.therapistName} ·{" "}
-                          {appointmentTypeOptions.find((o) => o.value === row.type)?.label ??
-                            row.type}
-                        </Typography>
+            <Box sx={{ display: { xs: "block", md: "none" } }}>
+              {rows.length === 0 ? (
+                <ListSkeleton />
+              ) : (
+                <Stack spacing={1.5} sx={{ p: 2 }}>
+                  {rows.map((row) => (
+                    <Paper key={row.id} sx={{ p: 2, bgcolor: "background.subtle" }}>
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                      >
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography color="primary.main" fontWeight={750}>
+                            {formatTime(row.scheduledAt)}
+                          </Typography>
+                          <Typography variant="h6" sx={{ mt: 0.25 }}>
+                            {row.patientName}
+                          </Typography>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                            <TherapistBadge
+                              name={row.therapistName}
+                              accent={accents.get(row.therapistId)}
+                              color="text.secondary"
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              · {typeLabel(row.type)}
+                            </Typography>
+                          </Stack>
+                        </Box>
+                        <StatusChip status={row.status} />
+                      </Stack>
+                      <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
+                        <AppointmentActions
+                          row={row}
+                          onStatus={(status) => void setStatus(row, status)}
+                          onEdit={() => setEditTarget(row)}
+                          onDelete={() => setDeleteTarget(row)}
+                        />
                       </Box>
-                      <Chip
-                        size="small"
-                        label={appointmentStatusLabels[row.status]}
-                        color={statusChipColor[row.status]}
-                        variant={row.status === "SCHEDULED" ? "outlined" : "filled"}
-                      />
-                    </Stack>
-                    <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
-                      <AppointmentActions
-                        row={row}
-                        onStatus={(status) => void setStatus(row, status)}
-                        onEdit={() => setEditTarget(row)}
-                        onDelete={() => setDeleteTarget(row)}
-                      />
-                    </Box>
-                  </Paper>
-                ))}
-              </Stack>
-            </>
-          )}
-        </Stack>
-      </Paper>
+                    </Paper>
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          </>
+        )}
+      </SectionCard>
 
       {editTarget && (
         <EditAppointmentDialog
@@ -498,16 +482,19 @@ export function SchedulePage() {
           onSaved={async () => {
             setEditTarget(null);
             await refresh();
-            setSnackbar({ open: true, severity: "success", message: "Appointment updated." });
+            toast.success("Appointment updated.");
           }}
-          onError={(message) => setSnackbar({ open: true, severity: "error", message })}
+          onError={toast.error}
         />
       )}
 
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
         title="Cancel appointment"
         confirmLabel="Cancel appointment"
+        cancelLabel="Keep appointment"
+        tone="danger"
+        loading={deleting}
         description={
           deleteTarget
             ? `Cancel ${deleteTarget.patientName}'s ${formatTime(deleteTarget.scheduledAt)} appointment?`
@@ -516,21 +503,6 @@ export function SchedulePage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
       />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((c) => ({ ...c, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar((c) => ({ ...c, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Stack>
   );
 }

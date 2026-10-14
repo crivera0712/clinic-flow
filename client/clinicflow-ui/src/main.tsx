@@ -10,6 +10,7 @@ import "@fontsource/inter/latin-700.css";
 import "./globals.css";
 import App from "./App.tsx";
 import { AuthProvider } from "./auth/AuthContext.tsx";
+import { ToastProvider } from "./components/ui/ToastProvider.tsx";
 import { clinicTheme } from "./theme.ts";
 
 createRoot(document.getElementById("root")!).render(
@@ -18,7 +19,9 @@ createRoot(document.getElementById("root")!).render(
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

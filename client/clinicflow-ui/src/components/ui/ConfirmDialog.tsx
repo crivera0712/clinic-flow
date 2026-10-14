@@ -1,32 +1,39 @@
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 
-type ConfirmDeleteDialogProps = {
+type ConfirmDialogProps = {
   open: boolean;
-  title?: string;
-  confirmLabel?: string;
+  title: string;
   description: string;
-  error?: string | null;
+  confirmLabel: string;
+  cancelLabel?: string;
+  // "danger" for destructive actions (remove, cancel a visit).
+  tone?: "primary" | "danger";
+  // While true, both buttons are disabled and the dialog can't be dismissed.
   loading?: boolean;
+  error?: string | null;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export function ConfirmDeleteDialog({
+export function ConfirmDialog({
   open,
-  title = "Confirm removal",
-  confirmLabel = "Remove",
+  title,
   description,
-  error,
+  confirmLabel,
+  cancelLabel = "Cancel",
+  tone = "primary",
   loading = false,
+  error,
   onClose,
   onConfirm,
-}: ConfirmDeleteDialogProps) {
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="xs">
       <DialogTitle>{title}</DialogTitle>
@@ -38,11 +45,17 @@ export function ConfirmDeleteDialog({
         )}
         <Typography color="text.secondary">{description}</Typography>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+      <DialogActions>
         <Button onClick={onClose} disabled={loading}>
-          Cancel
+          {cancelLabel}
         </Button>
-        <Button color="error" variant="contained" onClick={onConfirm} disabled={loading}>
+        <Button
+          variant="contained"
+          color={tone === "danger" ? "error" : "primary"}
+          onClick={onConfirm}
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
           {confirmLabel}
         </Button>
       </DialogActions>

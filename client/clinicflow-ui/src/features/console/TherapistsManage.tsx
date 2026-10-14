@@ -6,16 +6,18 @@ import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { ListSkeleton } from "../../components/ui/Skeletons";
+import { useTherapistAccents } from "../../components/ui/therapistAccents";
+import { useToast } from "../../components/ui/useToast";
 import { createTherapist, listTherapists, removeTherapist } from "../../services/therapistService";
 import type { Therapist } from "../../types/therapist";
 
@@ -26,10 +28,9 @@ export function TherapistsManage() {
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Therapist | null>(null);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: "",
-  });
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
+  const accents = useTherapistAccents(therapists.map((t) => t.id));
 
   async function refresh() {
     try {
@@ -54,12 +55,9 @@ export function TherapistsManage() {
       await createTherapist({ name: name.trim() });
       setName("");
       await refresh();
-      setSnackbar({ open: true, message: "Therapist added." });
+      toast.success("Therapist added.");
     } catch (addError) {
-      setSnackbar({
-        open: true,
-        message: addError instanceof Error ? addError.message : "Unable to add therapist.",
-      });
+      toast.error(addError instanceof Error ? addError.message : "Unable to add therapist.");
     } finally {
       setAdding(false);
     }
@@ -67,16 +65,18 @@ export function TherapistsManage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
+    setDeleting(true);
     try {
       await removeTherapist(deleteTarget.id);
       setDeleteTarget(null);
       await refresh();
-      setSnackbar({ open: true, message: "Therapist removed." });
+      toast.success("Therapist removed.");
     } catch (deleteError) {
-      setSnackbar({
-        open: true,
-        message: deleteError instanceof Error ? deleteError.message : "Unable to remove therapist.",
-      });
+      toast.error(
+        deleteError instanceof Error ? deleteError.message : "Unable to remove therapist.",
+      );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -86,18 +86,15 @@ export function TherapistsManage() {
         eyebrow="Care team"
         title="Therapists"
         description="Manage the clinicians available for scheduling and daily patient care."
+        onRefresh={() => void refresh()}
+        refreshing={loading}
       />
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 } }}>
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2 }}>
-          <MedicalServicesRoundedIcon color="primary" />
-          <Box>
-            <Typography variant="h6">Add to the care team</Typography>
-            <Typography variant="body2" color="text.secondary">
-              New therapists are immediately available in scheduling.
-            </Typography>
-          </Box>
-        </Stack>
+      <SectionCard
+        icon={<MedicalServicesRoundedIcon />}
+        title="Add to the care team"
+        subtitle="New therapists are immediately available in scheduling."
+      >
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
@@ -123,23 +120,21 @@ export function TherapistsManage() {
             Add therapist
           </Button>
         </Stack>
-      </Paper>
+      </SectionCard>
 
-      <Paper sx={{ overflow: "hidden" }}>
-        <Box sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="h6">Active therapists</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {loading
-              ? "Loading care team…"
-              : `${therapists.length} therapist${therapists.length === 1 ? "" : "s"}`}
-          </Typography>
-        </Box>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {!loading && therapists.length === 0 ? (
+      <SectionCard
+        title="Active therapists"
+        subtitle={
+          loading
+            ? "Loading care team…"
+            : `${therapists.length} therapist${therapists.length === 1 ? "" : "s"}`
+        }
+        disablePadding
+      >
+        {error && <Alert severity="error">{error}</Alert>}
+        {loading && therapists.length === 0 ? (
+          <ListSkeleton avatar />
+        ) : therapists.length === 0 ? (
           <EmptyState
             icon={<MedicalServicesRoundedIcon sx={{ fontSize: 42 }} />}
             title="No therapists yet"
@@ -160,11 +155,10 @@ export function TherapistsManage() {
                 }}
               >
                 <Avatar
-                  sx={(theme) => ({
-                    bgcolor: theme.alpha(theme.vars.palette.success.main, 0.13),
-                    color: "success.main",
-                    fontWeight: 750,
-                  })}
+                  sx={(theme) => {
+                    const accent = accents.get(t.id) ?? theme.vars.palette.primary.main;
+                    return { bgcolor: theme.alpha(accent, 0.14), color: accent, fontWeight: 750 };
+                  }}
                 >
                   {t.name.charAt(0).toUpperCase()}
                 </Avatar>
@@ -187,29 +181,22 @@ export function TherapistsManage() {
             ))}
           </Stack>
         )}
-      </Paper>
+      </SectionCard>
 
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
-        description={deleteTarget ? `Remove ${deleteTarget.name}?` : ""}
+        title="Remove therapist"
+        confirmLabel="Remove"
+        tone="danger"
+        loading={deleting}
+        description={
+          deleteTarget
+            ? `Remove ${deleteTarget.name}? They will no longer be available for scheduling.`
+            : ""
+        }
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
       />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ open: false, message: "" })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ open: false, message: "" })}
-          severity="success"
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Stack>
   );
 }
