@@ -14,7 +14,7 @@ import { clinicTheme } from "./theme.ts";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider theme={clinicTheme}>
+    <ThemeProvider theme={clinicTheme} defaultMode="light">
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>

@@ -7,7 +7,6 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import MonitorHeartRoundedIcon from "@mui/icons-material/MonitorHeartRounded";
 import { BrandMark } from "./BrandMark";
-import { colors } from "../../theme";
 
 const benefits = [
   { icon: <CalendarMonthRoundedIcon />, label: "Daily appointment board" },
@@ -18,35 +17,33 @@ const benefits = [
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
         p: { xs: 2, sm: 4 },
-        background:
-          "radial-gradient(circle at 15% 10%, rgba(56,189,248,.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(45,212,191,.08), transparent 30%), #050b18",
-      }}
+        background: `radial-gradient(circle at 15% 10%, ${theme.alpha(theme.vars.palette.primary.main, 0.12)}, transparent 30%), radial-gradient(circle at 90% 90%, ${theme.alpha(theme.vars.palette.info.main, 0.08)}, transparent 30%), ${theme.vars.palette.background.default}`,
+      })}
     >
       <Paper
-        sx={{
+        sx={(theme) => ({
           width: "100%",
           maxWidth: 1040,
           overflow: "hidden",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.08fr .92fr" },
-          bgcolor: colors.surface,
-          boxShadow: "0 36px 100px rgba(0,0,0,.48)",
-        }}
+          boxShadow: theme.vars.palette.elevation.overlay,
+        })}
       >
         <Stack
           spacing={5}
-          sx={{
+          sx={(theme) => ({
             display: { xs: "none", md: "flex" },
             p: { md: 5, lg: 7 },
             justifyContent: "space-between",
-            background: "linear-gradient(145deg, rgba(19,34,56,.96), rgba(8,18,34,.98))",
-            borderRight: `1px solid ${colors.borderSoft}`,
-          }}
+            background: `linear-gradient(145deg, ${theme.vars.palette.background.subtle}, ${theme.vars.palette.background.default})`,
+            borderRight: `1px solid ${theme.vars.palette.divider}`,
+          })}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
             <BrandMark />

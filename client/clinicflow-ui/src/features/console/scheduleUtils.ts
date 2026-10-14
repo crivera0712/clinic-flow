@@ -22,8 +22,8 @@ export function splitName(input: string): { firstName: string; lastName: string 
   return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
 }
 
-export const statusChipColor: Record<AppointmentStatus, "default" | "info" | "success"> = {
+export const statusChipColor: Record<AppointmentStatus, "default" | "warning" | "success"> = {
   SCHEDULED: "default",
-  WAITING: "info",
+  WAITING: "warning",
   DONE: "success",
 };
