@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
-import { buildTherapistAccentMap } from "./features/display/therapistAccents";
+import { buildTherapistAccentMap } from "./components/ui/therapistAccents";
 import { renderWithTheme } from "./test/render";
 import { clinicTheme } from "./theme";
 
@@ -14,6 +14,13 @@ const authMock = vi.hoisted(() => ({
 
 vi.mock("./auth/AuthContext", () => ({
   useAuth: () => authMock,
+}));
+
+vi.mock("./services/therapistService", () => ({
+  listTherapists: vi.fn().mockResolvedValue([
+    { id: 1, name: "Dr. Smith" },
+    { id: 2, name: "Dr. Lee" },
+  ]),
 }));
 
 vi.mock("./services/appointmentService", () => ({
@@ -81,7 +88,10 @@ describe("ScheduleDisplayPage", () => {
       },
     ];
 
-    const accents = buildTherapistAccentMap(appointments, clinicTheme.vars.palette.therapist);
+    const accents = buildTherapistAccentMap(
+      appointments.map((appointment) => appointment.therapistId),
+      clinicTheme.vars.palette.therapist,
+    );
 
     expect(accents.get(1)).toBeDefined();
     expect(accents.get(9)).toBeDefined();

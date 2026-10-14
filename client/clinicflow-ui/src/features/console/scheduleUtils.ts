@@ -1,5 +1,3 @@
-import type { AppointmentStatus } from "../../types/appointment";
-
 export function getTodayDateString(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -21,9 +19,3 @@ export function splitName(input: string): { firstName: string; lastName: string 
   const parts = input.trim().split(/\s+/);
   return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
 }
-
-export const statusChipColor: Record<AppointmentStatus, "default" | "warning" | "success"> = {
-  SCHEDULED: "default",
-  WAITING: "warning",
-  DONE: "success",
-};

@@ -13,10 +13,10 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
 import { useAuth } from "./auth/AuthContext";
-import { buildTherapistAccentMap } from "./features/display/therapistAccents";
+import { useTherapistAccents } from "./components/ui/therapistAccents";
 import { listAppointmentsByDate } from "./services/appointmentService";
+import { listTherapists } from "./services/therapistService";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
@@ -154,8 +154,8 @@ function EmptyPanel({ title, description }: { title: string; description: string
 export default function ScheduleDisplayPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const theme = useTheme();
   const [appointments, setAppointments] = useState<BoardRow[]>([]);
+  const [therapistIds, setTherapistIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
 
@@ -169,8 +169,15 @@ export default function ScheduleDisplayPage() {
     async function load() {
       try {
         setError(null);
-        const data = await listAppointmentsByDate(getTodayISODate());
-        if (!cancelled) setAppointments(data);
+        // Accent colors come from the full therapist list, so they match the console. If that
+        // request fails, keep the last list rather than blanking the board.
+        const [data, therapists] = await Promise.all([
+          listAppointmentsByDate(getTodayISODate()),
+          listTherapists().catch(() => null),
+        ]);
+        if (cancelled) return;
+        setAppointments(data);
+        if (therapists) setTherapistIds(therapists.map((therapist) => therapist.id));
       } catch (loadError) {
         if (!cancelled)
           setError(loadError instanceof Error ? loadError.message : "Failed to load appointments");
@@ -210,10 +217,10 @@ export default function ScheduleDisplayPage() {
         .slice(0, 6),
     [appointments],
   );
-  const therapistAccents = useMemo(
-    () => buildTherapistAccentMap(appointments, theme.vars.palette.therapist),
-    [appointments, theme],
-  );
+  const therapistAccents = useTherapistAccents([
+    ...therapistIds,
+    ...appointments.map((appointment) => appointment.therapistId),
+  ]);
 
   return (
     <Box
