@@ -39,8 +39,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 
 ## UI Stack
 
-- **MUI v7** — use for all UI components (layout, data grids, dialogs, chips, etc.)
-- **Tailwind v3** — available for utility classes where MUI's `sx` prop would be verbose
+- **MUI v7** — use for all UI components (layout, data grids, dialogs, chips, etc.). Style with the `sx` prop and theme overrides in `src/theme.ts`; there is no Tailwind or other CSS framework.
 - **MUI X DataGrid** — used in `PatientsDirectory` only. `SchedulePage` renders today's appointments as an MUI `Table`, and `TherapistsManage` uses a plain MUI list.
 
 ## Key Conventions
