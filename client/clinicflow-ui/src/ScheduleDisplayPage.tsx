@@ -17,10 +17,23 @@ import { alpha } from "@mui/material/styles";
 import { useAuth } from "./auth/AuthContext";
 import { buildTherapistAccentMap } from "./features/display/therapistAccents";
 import { listAppointmentsByDate } from "./services/appointmentService";
-import { colors } from "./theme";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
+
+const displayColors = {
+  canvas: "#EEF3F1",
+  surface: "#FFFFFF",
+  surfaceSubtle: "#F7F9F8",
+  border: "#D3DFDB",
+  borderStrong: "#B9CBC5",
+  ink: "#18363B",
+  inkSecondary: "#53696B",
+  inkMuted: "#718183",
+  clinical: "#2F6F62",
+  clinicalDark: "#24574D",
+  upcoming: "#3F6F82",
+} as const;
 
 function getTodayISODate(): string {
   const d = new Date();
@@ -54,9 +67,11 @@ function ScheduleCard({
         position: "relative",
         overflow: "hidden",
         height: "100%",
-        bgcolor: large ? colors.surfaceRaised : alpha(colors.surfaceRaised, 0.65),
-        borderColor: alpha(accent, large ? 0.34 : 0.18),
-        boxShadow: large ? "0 18px 45px rgba(0,0,0,.27)" : "none",
+        bgcolor: large ? displayColors.surface : displayColors.surfaceSubtle,
+        color: displayColors.ink,
+        borderColor: large ? alpha(accent, 0.32) : displayColors.border,
+        borderRadius: 2,
+        boxShadow: large ? "0 3px 12px rgba(31, 63, 59, 0.07)" : "none",
         "&::before": {
           content: '""',
           position: "absolute",
@@ -99,6 +114,7 @@ function ScheduleCard({
               color="text.secondary"
               sx={{
                 mt: 1,
+                color: displayColors.inkSecondary,
                 fontSize: large ? "clamp(.95rem, 1.25vw, 1.3rem)" : "clamp(.85rem, 1vw, 1.05rem)",
                 fontWeight: 600,
               }}
@@ -113,9 +129,10 @@ function ScheduleCard({
               height: "auto",
               py: 0.75,
               px: 0.5,
-              bgcolor: alpha(accent, 0.11),
+              bgcolor: alpha(accent, 0.08),
               color: accent,
-              border: `1px solid ${alpha(accent, 0.26)}`,
+              border: `1px solid ${alpha(accent, 0.22)}`,
+              borderRadius: 1.25,
               fontSize: large ? "clamp(1rem, 1.45vw, 1.5rem)" : "clamp(.9rem, 1vw, 1.1rem)",
             }}
           />
@@ -135,13 +152,15 @@ function EmptyPanel({ title, description }: { title: string; description: string
         minHeight: 150,
         p: 4,
         textAlign: "center",
-        borderRadius: 3,
-        border: `1px dashed ${colors.border}`,
+        borderRadius: 2,
+        bgcolor: displayColors.surfaceSubtle,
+        color: displayColors.ink,
+        border: `1px dashed ${displayColors.borderStrong}`,
       }}
     >
-      <EventAvailableRoundedIcon sx={{ fontSize: 38, color: "text.disabled" }} />
+      <EventAvailableRoundedIcon sx={{ fontSize: 38, color: displayColors.inkMuted }} />
       <Typography variant="h5">{title}</Typography>
-      <Typography color="text.secondary">{description}</Typography>
+      <Typography sx={{ color: displayColors.inkSecondary }}>{description}</Typography>
     </Stack>
   );
 }
@@ -211,8 +230,8 @@ export default function ScheduleDisplayPage() {
       sx={{
         minHeight: "100vh",
         p: { xs: 2, sm: 3, lg: 4 },
-        background:
-          "radial-gradient(circle at 0% 0%, rgba(56,189,248,.08), transparent 28%), #050b18",
+        bgcolor: displayColors.canvas,
+        color: displayColors.ink,
       }}
     >
       <Stack spacing={{ xs: 3, lg: 4 }} sx={{ maxWidth: 1800, mx: "auto" }}>
@@ -239,6 +258,15 @@ export default function ScheduleDisplayPage() {
                 variant="outlined"
                 startIcon={<ArrowBackRoundedIcon />}
                 onClick={() => navigate("/")}
+                sx={{
+                  color: displayColors.clinicalDark,
+                  borderColor: displayColors.borderStrong,
+                  bgcolor: displayColors.surface,
+                  "&:hover": {
+                    borderColor: displayColors.clinical,
+                    bgcolor: alpha(displayColors.clinical, 0.04),
+                  },
+                }}
               >
                 Console
               </Button>
@@ -250,8 +278,11 @@ export default function ScheduleDisplayPage() {
                 {currentTime}
               </Typography>
               <Typography
-                color="text.secondary"
-                sx={{ mt: 0.75, fontSize: "clamp(.85rem, 1.1vw, 1.15rem)" }}
+                sx={{
+                  mt: 0.75,
+                  color: displayColors.inkSecondary,
+                  fontSize: "clamp(.85rem, 1.1vw, 1.15rem)",
+                }}
               >
                 {currentDate}
               </Typography>
@@ -263,16 +294,33 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <GroupsRoundedIcon sx={{ color: "success.main" }} />
+            <GroupsRoundedIcon sx={{ color: displayColors.clinical }} />
             <Typography
               component="h2"
               sx={{ fontSize: "clamp(1.45rem, 2.1vw, 2.35rem)", fontWeight: 750 }}
             >
               Currently waiting
             </Typography>
-            <Chip label={waiting.length} color="success" variant="outlined" />
+            <Chip
+              label={waiting.length}
+              variant="outlined"
+              sx={{
+                color: displayColors.clinicalDark,
+                borderColor: alpha(displayColors.clinical, 0.35),
+                bgcolor: alpha(displayColors.clinical, 0.05),
+              }}
+            />
           </Stack>
-          <Paper sx={{ p: { xs: 1.5, sm: 2, lg: 2.5 }, bgcolor: alpha(colors.surface, 0.82) }}>
+          <Paper
+            sx={{
+              p: { xs: 1.5, sm: 2, lg: 2.5 },
+              bgcolor: displayColors.surface,
+              color: displayColors.ink,
+              borderColor: displayColors.border,
+              borderRadius: 2.5,
+              boxShadow: "0 8px 24px rgba(31, 63, 59, 0.06)",
+            }}
+          >
             {waiting.length === 0 ? (
               <EmptyPanel
                 title="No one is waiting"
@@ -305,16 +353,33 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <EventAvailableRoundedIcon sx={{ color: "primary.main" }} />
+            <EventAvailableRoundedIcon sx={{ color: displayColors.upcoming }} />
             <Typography
               component="h2"
               sx={{ fontSize: "clamp(1.2rem, 1.55vw, 1.65rem)", fontWeight: 720 }}
             >
               Up next
             </Typography>
-            <Chip label={upNext.length} color="primary" variant="outlined" size="small" />
+            <Chip
+              label={upNext.length}
+              variant="outlined"
+              size="small"
+              sx={{
+                color: displayColors.upcoming,
+                borderColor: alpha(displayColors.upcoming, 0.3),
+                bgcolor: alpha(displayColors.upcoming, 0.04),
+              }}
+            />
           </Stack>
-          <Paper sx={{ p: { xs: 1.5, sm: 2 }, bgcolor: alpha(colors.surface, 0.5) }}>
+          <Paper
+            sx={{
+              p: { xs: 1.5, sm: 2 },
+              bgcolor: displayColors.surface,
+              color: displayColors.ink,
+              borderColor: displayColors.border,
+              borderRadius: 2.5,
+            }}
+          >
             {upNext.length === 0 ? (
               <EmptyPanel
                 title="Nothing upcoming"
@@ -351,7 +416,11 @@ export default function ScheduleDisplayPage() {
             size="small"
             startIcon={<LogoutRoundedIcon fontSize="small" />}
             onClick={() => void logout()}
-            sx={{ alignSelf: "flex-end", color: "text.secondary" }}
+            sx={{
+              alignSelf: "flex-end",
+              color: displayColors.inkSecondary,
+              "&:hover": { bgcolor: alpha(displayColors.clinical, 0.05) },
+            }}
           >
             Log out
           </Button>

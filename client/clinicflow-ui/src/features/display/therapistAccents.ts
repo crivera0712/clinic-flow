@@ -1,14 +1,14 @@
 import type { BoardRow } from "../../types/appointment";
 
 const THERAPIST_ACCENT_PALETTE = [
-  "#38bdf8",
-  "#2dd4bf",
-  "#fbbf24",
-  "#fb923c",
-  "#a78bfa",
-  "#fb7185",
-  "#34d399",
-  "#facc15",
+  "#2F6F62",
+  "#3F6F82",
+  "#75673D",
+  "#675F7D",
+  "#875C62",
+  "#4E7462",
+  "#596B73",
+  "#79634F",
 ];
 
 export function buildTherapistAccentMap(appointments: BoardRow[]): Map<number, string> {
@@ -19,7 +19,7 @@ export function buildTherapistAccentMap(appointments: BoardRow[]): Map<number, s
   return new Map(
     therapistIds.map((therapistId, index) => [
       therapistId,
-      THERAPIST_ACCENT_PALETTE[index] ?? `hsl(${Math.round((index * 137.508) % 360)} 72% 62%)`,
+      THERAPIST_ACCENT_PALETTE[index] ?? `hsl(${Math.round((index * 137.508) % 360)} 24% 38%)`,
     ]),
   );
 }
