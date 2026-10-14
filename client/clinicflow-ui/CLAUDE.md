@@ -40,6 +40,11 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 ## UI Stack
 
 - **MUI v7** — use for all UI components (layout, data grids, dialogs, chips, etc.). Style with the `sx` prop and theme overrides in `src/theme.ts`; there is no Tailwind or other CSS framework.
+- **Theme (`src/theme.ts`)** — the single source of colors. It defines light (default) and dark color schemes as CSS variables (`colorSchemeSelector: "data"` → `data-light` / `data-dark` on `<html>`). Never hard-code colors in components:
+  - Use palette paths in `sx` (`"text.secondary"`, `"background.subtle"`, `"status.waiting"`), or `theme.vars.palette.*` in an `sx` callback. `theme.palette.*` holds light-mode values only, so it won't follow dark mode.
+  - For transparency use `theme.alpha(theme.vars.palette.primary.main, 0.1)`, not the standalone `alpha()` helper.
+  - Custom tokens: `background.subtle`, `border.strong`, `elevation.{card,raised,overlay}` (box shadows), `status.{scheduled,waiting,done}`, `therapist[]` (board accents).
+  - The color mode is saved in `localStorage` (`mui-mode`); `ColorModeToggle` switches it, and an inline script in `index.html` applies it before first paint.
 - **MUI X DataGrid** — used in `PatientsDirectory` only. `SchedulePage` renders today's appointments as an MUI `Table`, and `TherapistsManage` uses a plain MUI list.
 
 ## Key Conventions
@@ -47,5 +52,5 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 - No external state management library — use React Context for shared state, local `useState` for component state.
 - All API calls go through `apiRequest` from `src/api/client.ts` — never use `fetch` directly in components or services.
 - Front-desk pages live under `src/features/console/`.
-- Shared UI components (styles, confirm dialog) live in `src/components/admin/` (`adminStyles.ts`, `ConfirmDeleteDialog.tsx`).
+- Shared UI components live in `src/components/ui/` (`PageHeader`, `EmptyState`, `BrandMark`, `ColorModeToggle`, ...); `ConfirmDeleteDialog.tsx` is still in `src/components/admin/`.
 - Types are co-located one-per-entity in `src/types/`.

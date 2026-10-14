@@ -27,16 +27,9 @@ import TableContainer from "@mui/material/TableContainer";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
-import {
-  adminColors,
-  adminSelectProps,
-  adminTextFieldSx,
-} from "../../components/admin/adminStyles";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { colors } from "../../theme";
 import {
   createAppointment,
   listAppointmentsByDate,
@@ -268,23 +261,19 @@ export function SchedulePage() {
 
       {/* Fast-add row */}
       <Paper
-        sx={{
-          p: { xs: 2, md: 3 },
-          bgcolor: colors.surface,
-          boxShadow: "0 18px 50px rgba(0,0,0,.18)",
-        }}
+        sx={(theme) => ({ p: { xs: 2, md: 3 }, boxShadow: theme.vars.palette.elevation.card })}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
           <Box
-            sx={{
+            sx={(theme) => ({
               width: 36,
               height: 36,
               borderRadius: 2,
               display: "grid",
               placeItems: "center",
               color: "primary.main",
-              bgcolor: alpha(colors.primary, 0.11),
-            }}
+              bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.11),
+            })}
           >
             <AddRoundedIcon />
           </Box>
@@ -321,12 +310,8 @@ export function SchedulePage() {
                 inputRef={patientInputRef}
                 label="Patient"
                 required={!patientInput}
-                sx={adminTextFieldSx}
               />
             )}
-            slotProps={{
-              paper: { sx: { bgcolor: adminColors.panelElevated, color: adminColors.textStrong } },
-            }}
           />
           <TextField
             select
@@ -334,8 +319,7 @@ export function SchedulePage() {
             value={therapistId}
             onChange={(e) => setTherapistId(e.target.value)}
             required
-            sx={{ minWidth: 180, ...adminTextFieldSx }}
-            SelectProps={adminSelectProps}
+            sx={{ minWidth: 180 }}
           >
             {therapists.map((t) => (
               <MenuItem key={t.id} value={String(t.id)}>
@@ -349,7 +333,7 @@ export function SchedulePage() {
             value={time}
             onChange={(e) => setTime(e.target.value)}
             required
-            sx={{ minWidth: 130, ...adminTextFieldSx }}
+            sx={{ minWidth: 130 }}
             InputLabelProps={{ shrink: true }}
           />
           <TextField
@@ -357,8 +341,7 @@ export function SchedulePage() {
             label="Type"
             value={type}
             onChange={(e) => setType(e.target.value as AppointmentType)}
-            sx={{ minWidth: 160, ...adminTextFieldSx }}
-            SelectProps={adminSelectProps}
+            sx={{ minWidth: 160 }}
           >
             {appointmentTypeOptions.map((o) => (
               <MenuItem key={o.value} value={o.value}>
@@ -379,13 +362,13 @@ export function SchedulePage() {
       </Paper>
 
       {/* Schedule table */}
-      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+      <Paper sx={{ overflow: "hidden" }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
           alignItems={{ sm: "center" }}
           justifyContent="space-between"
-          sx={{ p: { xs: 2, md: 2.5 }, borderBottom: `1px solid ${colors.borderSoft}` }}
+          sx={{ p: { xs: 2, md: 2.5 }, borderBottom: 1, borderColor: "divider" }}
         >
           <Box>
             <Stack direction="row" spacing={1} alignItems="center">
@@ -403,7 +386,7 @@ export function SchedulePage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            sx={{ width: { xs: "100%", sm: 210 }, ...adminTextFieldSx }}
+            sx={{ width: { xs: "100%", sm: 210 } }}
             InputLabelProps={{ shrink: true }}
           />
         </Stack>
@@ -418,31 +401,18 @@ export function SchedulePage() {
           ) : (
             <>
               <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-                <Table
-                  sx={{ minWidth: 900, "& td, & th": { borderColor: adminColors.borderMuted } }}
-                >
+                <Table sx={{ minWidth: 900 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: alpha(colors.surfaceRaised, 0.55) }}>
+                    <TableRow>
                       {["Time", "Patient", "Therapist", "Type", "Status", "Actions"].map((h) => (
-                        <TableCell
-                          key={h}
-                          sx={{
-                            color: "text.secondary",
-                            fontSize: "0.75rem",
-                            textTransform: "uppercase",
-                            letterSpacing: ".08em",
-                            fontWeight: 750,
-                          }}
-                        >
-                          {h}
-                        </TableCell>
+                        <TableCell key={h}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {rows.map((row) => (
                       <TableRow key={row.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                        <TableCell sx={{ fontWeight: 750, color: "primary.light" }}>
+                        <TableCell sx={{ fontWeight: 750, color: "primary.main" }}>
                           {formatTime(row.scheduledAt)}
                         </TableCell>
                         <TableCell>
@@ -477,14 +447,7 @@ export function SchedulePage() {
 
               <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" }, p: 2 }}>
                 {rows.map((row) => (
-                  <Paper
-                    key={row.id}
-                    sx={{
-                      p: 2,
-                      bgcolor: alpha(colors.surfaceRaised, 0.52),
-                      borderColor: colors.borderSoft,
-                    }}
-                  >
+                  <Paper key={row.id} sx={{ p: 2, bgcolor: "background.subtle" }}>
                     <Stack
                       direction="row"
                       spacing={2}
@@ -492,7 +455,7 @@ export function SchedulePage() {
                       alignItems="flex-start"
                     >
                       <Box>
-                        <Typography color="primary.light" fontWeight={750}>
+                        <Typography color="primary.main" fontWeight={750}>
                           {formatTime(row.scheduledAt)}
                         </Typography>
                         <Typography variant="h6" sx={{ mt: 0.25 }}>
@@ -511,7 +474,7 @@ export function SchedulePage() {
                         variant={row.status === "SCHEDULED" ? "outlined" : "filled"}
                       />
                     </Stack>
-                    <Box sx={{ mt: 2, pt: 1.5, borderTop: `1px solid ${colors.borderSoft}` }}>
+                    <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
                       <AppointmentActions
                         row={row}
                         onStatus={(status) => void setStatus(row, status)}
@@ -603,21 +566,8 @@ function EditAppointmentDialog({
   }
 
   return (
-    <Dialog
-      open
-      onClose={saving ? undefined : onClose}
-      fullWidth
-      maxWidth="xs"
-      PaperProps={{
-        sx: {
-          bgcolor: adminColors.panelElevated,
-          color: adminColors.textStrong,
-          border: `1px solid ${adminColors.border}`,
-          backgroundImage: "none",
-        },
-      }}
-    >
-      <DialogTitle sx={{ color: adminColors.textStrong }}>Edit Appointment</DialogTitle>
+    <Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Edit Appointment</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField
@@ -625,7 +575,6 @@ function EditAppointmentDialog({
             type="datetime-local"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
-            sx={adminTextFieldSx}
             InputLabelProps={{ shrink: true }}
           />
           <TextField
@@ -633,8 +582,6 @@ function EditAppointmentDialog({
             label="Therapist"
             value={therapistId}
             onChange={(e) => setTherapistId(e.target.value)}
-            sx={adminTextFieldSx}
-            SelectProps={adminSelectProps}
           >
             {therapists.map((t) => (
               <MenuItem key={t.id} value={String(t.id)}>
@@ -647,8 +594,6 @@ function EditAppointmentDialog({
             label="Type"
             value={type}
             onChange={(e) => setType(e.target.value as AppointmentType)}
-            sx={adminTextFieldSx}
-            SelectProps={adminSelectProps}
           >
             {appointmentTypeOptions.map((o) => (
               <MenuItem key={o.value} value={o.value}>

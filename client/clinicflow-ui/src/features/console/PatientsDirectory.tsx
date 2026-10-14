@@ -14,9 +14,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { colors } from "../../theme";
 import { createPatient, listPatients } from "../../services/patientService";
 import type { Patient } from "../../types/patient";
 
@@ -90,12 +88,12 @@ export function PatientsDirectory() {
           </Button>
         }
       />
-      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+      <Paper sx={{ overflow: "hidden" }}>
         <Stack
           direction="row"
           spacing={1.25}
           alignItems="center"
-          sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}
+          sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: 1, borderColor: "divider" }}
         >
           <PeopleAltRoundedIcon color="primary" />
           <Box sx={{ flexGrow: 1 }}>
@@ -122,7 +120,6 @@ export function PatientsDirectory() {
             columnHeaderHeight={50}
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
-            sx={adminDataGridSx}
           />
         </Box>
       </Paper>
@@ -154,7 +151,6 @@ export function PatientsDirectory() {
               required
               autoFocus
               fullWidth
-              sx={adminTextFieldSx}
             />
             <TextField
               label="Last Name"
@@ -162,7 +158,6 @@ export function PatientsDirectory() {
               onChange={(e) => setLastName(e.target.value)}
               required
               fullWidth
-              sx={adminTextFieldSx}
             />
             <DialogActions sx={{ px: 0, pb: 0 }}>
               <Button onClick={() => setOpen(false)} disabled={saving}>

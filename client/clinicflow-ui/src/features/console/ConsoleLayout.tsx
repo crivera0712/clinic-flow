@@ -21,12 +21,12 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { alpha, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
 import { Link as RouterLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { BrandMark } from "../../components/ui/BrandMark";
-import { colors } from "../../theme";
+import { ColorModeToggle } from "../../components/ui/ColorModeToggle";
 
 const drawerWidth = 264;
 
@@ -51,7 +51,7 @@ export function ConsoleLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const drawer = (
-    <Stack sx={{ height: "100%", bgcolor: colors.canvasRaised }}>
+    <Stack sx={{ height: "100%", bgcolor: "background.paper" }}>
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ px: 3, py: 3.25 }}>
         <BrandMark size={40} />
         <Box>
@@ -79,17 +79,20 @@ export function ConsoleLayout() {
               to={item.to}
               selected={selected}
               onClick={() => setMobileOpen(false)}
-              sx={{
-                minHeight: 50,
-                mb: 0.75,
-                px: 1.5,
-                borderRadius: 2.5,
-                color: selected ? "text.primary" : "text.secondary",
-                bgcolor: selected ? alpha(colors.primary, 0.11) : "transparent",
-                border: `1px solid ${selected ? alpha(colors.primary, 0.22) : "transparent"}`,
-                "&.Mui-selected": { bgcolor: alpha(colors.primary, 0.11) },
-                "&.Mui-selected:hover": { bgcolor: alpha(colors.primary, 0.16) },
-                "&:hover": { bgcolor: alpha(colors.primary, 0.07), color: "text.primary" },
+              sx={(theme) => {
+                const primary = theme.vars.palette.primary.main;
+                return {
+                  minHeight: 50,
+                  mb: 0.75,
+                  px: 1.5,
+                  borderRadius: 2.5,
+                  color: selected ? "text.primary" : "text.secondary",
+                  bgcolor: selected ? theme.alpha(primary, 0.11) : "transparent",
+                  border: `1px solid ${selected ? theme.alpha(primary, 0.22) : "transparent"}`,
+                  "&.Mui-selected": { bgcolor: theme.alpha(primary, 0.11) },
+                  "&.Mui-selected:hover": { bgcolor: theme.alpha(primary, 0.16) },
+                  "&:hover": { bgcolor: theme.alpha(primary, 0.07), color: "text.primary" },
+                };
               }}
             >
               <ListItemIcon
@@ -109,6 +112,9 @@ export function ConsoleLayout() {
         })}
       </List>
       <Box sx={{ p: 2 }}>
+        <Box sx={{ mb: 1 }}>
+          <ColorModeToggle />
+        </Box>
         <Stack
           direction="row"
           spacing={1.5}
@@ -116,18 +122,19 @@ export function ConsoleLayout() {
           sx={{
             p: 1.5,
             borderRadius: 2.5,
-            bgcolor: alpha(colors.surfaceRaised, 0.65),
-            border: `1px solid ${colors.borderSoft}`,
+            bgcolor: "background.subtle",
+            border: 1,
+            borderColor: "divider",
           }}
         >
           <Avatar
-            sx={{
+            sx={(theme) => ({
               width: 38,
               height: 38,
-              bgcolor: alpha(colors.primary, 0.15),
+              bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.15),
               color: "primary.main",
               fontWeight: 750,
-            }}
+            })}
           >
             {currentUser?.username?.charAt(0).toUpperCase() ?? "U"}
           </Avatar>
@@ -160,15 +167,16 @@ export function ConsoleLayout() {
         position="fixed"
         color="transparent"
         elevation={0}
-        sx={{
+        sx={(theme) => ({
           width: { lg: `calc(100% - ${drawerWidth}px)` },
           ml: { lg: `${drawerWidth}px` },
-          bgcolor: alpha(colors.canvas, 0.82),
+          color: "text.primary",
+          bgcolor: theme.alpha(theme.vars.palette.background.default, 0.82),
           backdropFilter: "blur(18px)",
           border: 0,
-          borderBottom: `1px solid ${colors.borderSoft}`,
+          borderBottom: `1px solid ${theme.vars.palette.divider}`,
           boxShadow: "none",
-        }}
+        })}
       >
         <Toolbar sx={{ minHeight: { xs: 64, sm: 72 }, px: { xs: 2, md: 4 } }}>
           {!isDesktop && (
@@ -212,14 +220,7 @@ export function ConsoleLayout() {
           open={isDesktop || mobileOpen}
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-              boxSizing: "border-box",
-              border: 0,
-              borderRight: `1px solid ${colors.borderSoft}`,
-            },
-          }}
+          sx={{ "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}
         >
           {drawer}
         </Drawer>

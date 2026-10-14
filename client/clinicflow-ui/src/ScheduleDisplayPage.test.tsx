@@ -5,6 +5,7 @@ import { vi } from "vitest";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { buildTherapistAccentMap } from "./features/display/therapistAccents";
 import { renderWithTheme } from "./test/render";
+import { clinicTheme } from "./theme";
 
 const authMock = vi.hoisted(() => ({
   currentUser: { username: "demo_admin", roleName: "ADMIN" },
@@ -80,7 +81,7 @@ describe("ScheduleDisplayPage", () => {
       },
     ];
 
-    const accents = buildTherapistAccentMap(appointments);
+    const accents = buildTherapistAccentMap(appointments, clinicTheme.vars.palette.therapist);
 
     expect(accents.get(1)).toBeDefined();
     expect(accents.get(9)).toBeDefined();

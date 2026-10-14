@@ -13,27 +13,13 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { useAuth } from "./auth/AuthContext";
 import { buildTherapistAccentMap } from "./features/display/therapistAccents";
 import { listAppointmentsByDate } from "./services/appointmentService";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
-
-const displayColors = {
-  canvas: "#EEF3F1",
-  surface: "#FFFFFF",
-  surfaceSubtle: "#F7F9F8",
-  border: "#D3DFDB",
-  borderStrong: "#B9CBC5",
-  ink: "#18363B",
-  inkSecondary: "#53696B",
-  inkMuted: "#718183",
-  clinical: "#2F6F62",
-  clinicalDark: "#24574D",
-  upcoming: "#3F6F82",
-} as const;
 
 function getTodayISODate(): string {
   const d = new Date();
@@ -63,15 +49,15 @@ function ScheduleCard({
 
   return (
     <Card
-      sx={{
+      sx={(theme) => ({
         position: "relative",
         overflow: "hidden",
         height: "100%",
-        bgcolor: large ? displayColors.surface : displayColors.surfaceSubtle,
-        color: displayColors.ink,
-        borderColor: large ? alpha(accent, 0.32) : displayColors.border,
+        bgcolor: large ? "background.paper" : "background.subtle",
+        color: "text.primary",
+        borderColor: large ? theme.alpha(accent, 0.32) : "divider",
         borderRadius: 2,
-        boxShadow: large ? "0 3px 12px rgba(31, 63, 59, 0.07)" : "none",
+        boxShadow: large ? theme.vars.palette.elevation.card : "none",
         "&::before": {
           content: '""',
           position: "absolute",
@@ -79,7 +65,7 @@ function ScheduleCard({
           width: large ? 8 : 5,
           bgcolor: accent,
         },
-      }}
+      })}
     >
       <CardContent
         sx={{
@@ -114,7 +100,6 @@ function ScheduleCard({
               color="text.secondary"
               sx={{
                 mt: 1,
-                color: displayColors.inkSecondary,
                 fontSize: large ? "clamp(.95rem, 1.25vw, 1.3rem)" : "clamp(.85rem, 1vw, 1.05rem)",
                 fontWeight: 600,
               }}
@@ -124,17 +109,17 @@ function ScheduleCard({
           </Box>
           <Chip
             label={formatTime(row.scheduledAt)}
-            sx={{
+            sx={(theme) => ({
               flexShrink: 0,
               height: "auto",
               py: 0.75,
               px: 0.5,
-              bgcolor: alpha(accent, 0.08),
+              bgcolor: theme.alpha(accent, 0.08),
               color: accent,
-              border: `1px solid ${alpha(accent, 0.22)}`,
+              border: `1px solid ${theme.alpha(accent, 0.22)}`,
               borderRadius: 1.25,
               fontSize: large ? "clamp(1rem, 1.45vw, 1.5rem)" : "clamp(.9rem, 1vw, 1.1rem)",
-            }}
+            })}
           />
         </Stack>
       </CardContent>
@@ -153,14 +138,15 @@ function EmptyPanel({ title, description }: { title: string; description: string
         p: 4,
         textAlign: "center",
         borderRadius: 2,
-        bgcolor: displayColors.surfaceSubtle,
-        color: displayColors.ink,
-        border: `1px dashed ${displayColors.borderStrong}`,
+        bgcolor: "background.subtle",
+        color: "text.primary",
+        border: "1px dashed",
+        borderColor: "border.strong",
       }}
     >
-      <EventAvailableRoundedIcon sx={{ fontSize: 38, color: displayColors.inkMuted }} />
+      <EventAvailableRoundedIcon sx={{ fontSize: 38, color: "text.disabled" }} />
       <Typography variant="h5">{title}</Typography>
-      <Typography sx={{ color: displayColors.inkSecondary }}>{description}</Typography>
+      <Typography color="text.secondary">{description}</Typography>
     </Stack>
   );
 }
@@ -168,6 +154,7 @@ function EmptyPanel({ title, description }: { title: string; description: string
 export default function ScheduleDisplayPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [appointments, setAppointments] = useState<BoardRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -223,15 +210,18 @@ export default function ScheduleDisplayPage() {
         .slice(0, 6),
     [appointments],
   );
-  const therapistAccents = useMemo(() => buildTherapistAccentMap(appointments), [appointments]);
+  const therapistAccents = useMemo(
+    () => buildTherapistAccentMap(appointments, theme.vars.palette.therapist),
+    [appointments, theme],
+  );
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
         p: { xs: 2, sm: 3, lg: 4 },
-        bgcolor: displayColors.canvas,
-        color: displayColors.ink,
+        bgcolor: "background.default",
+        color: "text.primary",
       }}
     >
       <Stack spacing={{ xs: 3, lg: 4 }} sx={{ maxWidth: 1800, mx: "auto" }}>
@@ -258,15 +248,15 @@ export default function ScheduleDisplayPage() {
                 variant="outlined"
                 startIcon={<ArrowBackRoundedIcon />}
                 onClick={() => navigate("/")}
-                sx={{
-                  color: displayColors.clinicalDark,
-                  borderColor: displayColors.borderStrong,
-                  bgcolor: displayColors.surface,
+                sx={(theme) => ({
+                  color: "primary.dark",
+                  borderColor: "border.strong",
+                  bgcolor: "background.paper",
                   "&:hover": {
-                    borderColor: displayColors.clinical,
-                    bgcolor: alpha(displayColors.clinical, 0.04),
+                    borderColor: "primary.main",
+                    bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.04),
                   },
-                }}
+                })}
               >
                 Console
               </Button>
@@ -280,7 +270,7 @@ export default function ScheduleDisplayPage() {
               <Typography
                 sx={{
                   mt: 0.75,
-                  color: displayColors.inkSecondary,
+                  color: "text.secondary",
                   fontSize: "clamp(.85rem, 1.1vw, 1.15rem)",
                 }}
               >
@@ -294,7 +284,7 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <GroupsRoundedIcon sx={{ color: displayColors.clinical }} />
+            <GroupsRoundedIcon sx={{ color: "status.waiting" }} />
             <Typography
               component="h2"
               sx={{ fontSize: "clamp(1.45rem, 2.1vw, 2.35rem)", fontWeight: 750 }}
@@ -304,22 +294,19 @@ export default function ScheduleDisplayPage() {
             <Chip
               label={waiting.length}
               variant="outlined"
-              sx={{
-                color: displayColors.clinicalDark,
-                borderColor: alpha(displayColors.clinical, 0.35),
-                bgcolor: alpha(displayColors.clinical, 0.05),
-              }}
+              sx={(theme) => ({
+                color: "status.waiting",
+                borderColor: theme.alpha(theme.vars.palette.status.waiting, 0.35),
+                bgcolor: theme.alpha(theme.vars.palette.status.waiting, 0.05),
+              })}
             />
           </Stack>
           <Paper
-            sx={{
+            sx={(theme) => ({
               p: { xs: 1.5, sm: 2, lg: 2.5 },
-              bgcolor: displayColors.surface,
-              color: displayColors.ink,
-              borderColor: displayColors.border,
               borderRadius: 2.5,
-              boxShadow: "0 8px 24px rgba(31, 63, 59, 0.06)",
-            }}
+              boxShadow: theme.vars.palette.elevation.raised,
+            })}
           >
             {waiting.length === 0 ? (
               <EmptyPanel
@@ -353,7 +340,7 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <EventAvailableRoundedIcon sx={{ color: displayColors.upcoming }} />
+            <EventAvailableRoundedIcon sx={{ color: "status.scheduled" }} />
             <Typography
               component="h2"
               sx={{ fontSize: "clamp(1.2rem, 1.55vw, 1.65rem)", fontWeight: 720 }}
@@ -364,22 +351,14 @@ export default function ScheduleDisplayPage() {
               label={upNext.length}
               variant="outlined"
               size="small"
-              sx={{
-                color: displayColors.upcoming,
-                borderColor: alpha(displayColors.upcoming, 0.3),
-                bgcolor: alpha(displayColors.upcoming, 0.04),
-              }}
+              sx={(theme) => ({
+                color: "status.scheduled",
+                borderColor: theme.alpha(theme.vars.palette.status.scheduled, 0.3),
+                bgcolor: theme.alpha(theme.vars.palette.status.scheduled, 0.04),
+              })}
             />
           </Stack>
-          <Paper
-            sx={{
-              p: { xs: 1.5, sm: 2 },
-              bgcolor: displayColors.surface,
-              color: displayColors.ink,
-              borderColor: displayColors.border,
-              borderRadius: 2.5,
-            }}
-          >
+          <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5 }}>
             {upNext.length === 0 ? (
               <EmptyPanel
                 title="Nothing upcoming"
@@ -416,11 +395,11 @@ export default function ScheduleDisplayPage() {
             size="small"
             startIcon={<LogoutRoundedIcon fontSize="small" />}
             onClick={() => void logout()}
-            sx={{
+            sx={(theme) => ({
               alignSelf: "flex-end",
-              color: displayColors.inkSecondary,
-              "&:hover": { bgcolor: alpha(displayColors.clinical, 0.05) },
-            }}
+              color: "text.secondary",
+              "&:hover": { bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.05) },
+            })}
           >
             Log out
           </Button>

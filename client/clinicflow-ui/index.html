@@ -8,8 +8,38 @@
       name="description"
       content="ClinicFlow is a multi-tenant scheduling app for physical therapy clinics: a front-desk console for appointments and check-in, plus a live waiting-room display board."
     />
-    <meta name="theme-color" content="#050b18" />
+    <meta name="theme-color" content="#EEF3F1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      Same job as MUI's <InitColorSchemeScript defaultMode="light" attribute="data" />, which only
+      helps server-rendered apps: apply the saved color mode before first paint so dark mode
+      never flashes light. Keys and attributes must match the ThemeProvider in src/main.tsx.
+    -->
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem("mui-mode") || "light";
+          if (mode === "system") {
+            mode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          var root = document.documentElement;
+          root.removeAttribute(mode === "dark" ? "data-light" : "data-dark");
+          root.setAttribute("data-" + mode, "");
+          if (mode === "dark") {
+            document.querySelector('meta[name="theme-color"]').setAttribute("content", "#0E1A1B");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* Page background before the theme's CSS variables load. Mirrors background.default. */
+      html[data-light] body {
+        background: #eef3f1;
+      }
+      html[data-dark] body {
+        background: #0e1a1b;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

@@ -13,12 +13,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { alpha } from "@mui/material/styles";
-import { adminTextFieldSx } from "../../components/admin/adminStyles";
 import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { colors } from "../../theme";
 import { createTherapist, listTherapists, removeTherapist } from "../../services/therapistService";
 import type { Therapist } from "../../types/therapist";
 
@@ -91,7 +88,7 @@ export function TherapistsManage() {
         description="Manage the clinicians available for scheduling and daily patient care."
       />
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, bgcolor: colors.surface }}>
+      <Paper sx={{ p: { xs: 2, md: 2.5 } }}>
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2 }}>
           <MedicalServicesRoundedIcon color="primary" />
           <Box>
@@ -115,7 +112,7 @@ export function TherapistsManage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            sx={{ flex: 1, ...adminTextFieldSx }}
+            sx={{ flex: 1 }}
           />
           <Button
             type="submit"
@@ -128,8 +125,8 @@ export function TherapistsManage() {
         </Stack>
       </Paper>
 
-      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
-        <Box sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}>
+      <Paper sx={{ overflow: "hidden" }}>
+        <Box sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="h6">Active therapists</Typography>
           <Typography variant="body2" color="text.secondary">
             {loading
@@ -149,7 +146,7 @@ export function TherapistsManage() {
             description="Add the first member of your care team above."
           />
         ) : (
-          <Stack divider={<Box sx={{ borderBottom: `1px solid ${colors.borderSoft}` }} />}>
+          <Stack divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}>
             {therapists.map((t) => (
               <Stack
                 key={t.id}
@@ -159,15 +156,15 @@ export function TherapistsManage() {
                 sx={{
                   px: { xs: 2, md: 2.5 },
                   py: 1.75,
-                  "&:hover": { bgcolor: alpha(colors.surfaceRaised, 0.45) },
+                  "&:hover": { bgcolor: "action.hover" },
                 }}
               >
                 <Avatar
-                  sx={{
-                    bgcolor: alpha(colors.success, 0.13),
+                  sx={(theme) => ({
+                    bgcolor: theme.alpha(theme.vars.palette.success.main, 0.13),
                     color: "success.main",
                     fontWeight: 750,
-                  }}
+                  })}
                 >
                   {t.name.charAt(0).toUpperCase()}
                 </Avatar>
