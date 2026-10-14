@@ -30,7 +30,6 @@ function useProvideAuth(): AuthContextValue {
   const [status, setStatus] = useState<AuthStatus>("bootstrapping");
   const accessTokenRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
-  const didBootstrapRef = useRef(false);
 
   function readStoredAccessToken() {
     return sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -158,12 +157,10 @@ function useProvideAuth(): AuthContextValue {
     };
   }, []);
 
+  // No run-once guard here: StrictMode runs effect -> cleanup -> effect in dev,
+  // and the second run must do the real bootstrap since the first is cancelled.
+  // Concurrent runs share one /auth/refresh request via refreshPromiseRef.
   useEffect(() => {
-    if (didBootstrapRef.current) {
-      return;
-    }
-    didBootstrapRef.current = true;
-
     let cancelled = false;
 
     async function bootstrap() {

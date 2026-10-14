@@ -18,8 +18,8 @@ spring:
       com.fasterxml.jackson: DEBUG
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 60 # 15 mins
-    refreshTokenExpiration: 300 # 7 days
+    accessTokenExpiration: 60 # seconds (1 min)
+    refreshTokenExpiration: 300 # seconds (5 mins)
     cookieSecure: false
     cookieSameSite: Lax
 
