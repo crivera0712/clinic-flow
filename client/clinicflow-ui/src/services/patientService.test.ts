@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { createPatient, listPatients, searchPatients } from "./patientService";
+import { createPatient, listPatients, searchPatients, updatePatient } from "./patientService";
 import { server } from "../test/msw/server";
 import { apiUrl } from "../test/constants";
 import { pageOf, patientFixture } from "../test/fixtures";
@@ -53,5 +53,23 @@ describe("patientService", () => {
 
     expect(body).toEqual({ firstName: "Jane", lastName: "Doe" });
     expect(result).toEqual(patientFixture);
+  });
+
+  it("updatePatient PATCHes only the changed fields", async () => {
+    let method: string | undefined;
+    let body: unknown;
+    server.use(
+      http.patch(apiUrl("/patients/:id"), async ({ request, params }) => {
+        method = request.method;
+        body = await request.json();
+        return HttpResponse.json({ ...patientFixture, id: Number(params.id), firstName: "Janet" });
+      }),
+    );
+
+    const result = await updatePatient(1, { firstName: "Janet" });
+
+    expect(method).toBe("PATCH");
+    expect(body).toEqual({ firstName: "Janet" });
+    expect(result.firstName).toBe("Janet");
   });
 });
