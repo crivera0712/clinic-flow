@@ -58,7 +58,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 - All API calls go through `apiRequest` from `src/api/client.ts` — never use `fetch` directly in components or services.
 - Front-desk pages live under `src/features/console/`.
 - Shared UI components live in `src/components/ui/`. Build pages from them instead of hand-rolling the pattern:
-  - `PageHeader` (with optional `onRefresh`), `SectionCard` (titled card; `disablePadding` for tables/lists), `EmptyState`, `TableSkeletonRows` / `ListSkeleton` for first load.
+  - `PageHeader` (with optional `onRefresh`), `SectionCard` (titled card; `disablePadding` for tables/lists), `EmptyState`, `ListSkeleton` for first load, `StatCard` for summary numbers (optionally a toggle).
   - `StatusChip` for appointment status; `TherapistBadge` + `useTherapistAccents()` for therapist colors (assigned by position in the full therapist list, so they match across console and board).
   - `ConfirmDialog` (`tone="danger"`, pass `loading` while the request runs).
   - Toasts: call `useToast()` (`toast.success(...)`, `toast.error(...)`); `ToastProvider` is mounted once in `main.tsx`. Don't add per-page `Snackbar`s.

@@ -1,29 +1,8 @@
 import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
 
 // Placeholder rows shown on first load, before there is any data to render.
-
-export function TableSkeletonRows({ columns, rows = 5 }: { columns: number; rows?: number }) {
-  return (
-    <>
-      {Array.from({ length: rows }, (_, row) => (
-        <TableRow key={row} aria-hidden="true">
-          {Array.from({ length: columns }, (_, column) => (
-            <TableCell key={column}>
-              <Skeleton
-                variant="text"
-                width={column === 0 ? 64 : `${60 + ((row + column) % 3) * 12}%`}
-              />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
 
 export function ListSkeleton({ rows = 4, avatar = false }: { rows?: number; avatar?: boolean }) {
   return (
