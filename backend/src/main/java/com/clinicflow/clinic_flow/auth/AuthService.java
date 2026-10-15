@@ -57,6 +57,21 @@ public class AuthService {
     }
 
     @Transactional
+    public LoginResult loginAsDemo(Users.RoleName role) {
+        log.info("Demo login attempt role={}", role);
+
+        var user = usersRepository
+                .findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(role)
+                .orElseThrow(() -> new ClinicNotFoundException("Demo user not available"));
+
+        log.info(
+                "Demo login success for user={} clinicId={}",
+                user.getUsername(),
+                user.getClinic().getId());
+        return issueTokenPair(user);
+    }
+
+    @Transactional
     public UsersResponseDto register(String clinicSlug, CreateUserRequest request) {
         log.info("Register attempt for username={} clinicSlug={}", request.getUsername(), clinicSlug);
 

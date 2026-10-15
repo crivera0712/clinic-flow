@@ -14,4 +14,6 @@ public interface UsersRepository extends JpaRepository<Users, Long> {
     Optional<Users> findByUsernameAndClinicId(@NotBlank(message = "username required") String username, Long clinicId);
 
     Optional<Users> findByIdAndClinicId(Long id, Long clinicId);
+
+    Optional<Users> findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(Users.RoleName roleName);
 }

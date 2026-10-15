@@ -42,6 +42,8 @@ public class SecurityConfig {
                         .hasRole(Users.RoleName.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/auth/login")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/demo/*")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/*/register")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
