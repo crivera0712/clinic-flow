@@ -223,3 +223,9 @@ export function useAuth() {
 
   return context;
 }
+
+// True when signed into the demo clinic, where only check-in is allowed. Returns false outside an
+// AuthProvider (e.g. in page tests) instead of throwing.
+export function useIsDemo(): boolean {
+  return useContext(AuthContext)?.currentUser?.isDemo ?? false;
+}

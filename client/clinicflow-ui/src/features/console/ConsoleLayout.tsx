@@ -236,7 +236,7 @@ export function ConsoleLayout() {
             {(isSmUp ? longDate : shortDate).format(today)}
           </Typography>
           {currentUser?.isDemo && (
-            <Tooltip title="Shared demo clinic. Data resets nightly and changes are disabled.">
+            <Tooltip title="Shared demo clinic. You can check patients in; other changes are turned off.">
               <Chip
                 size="small"
                 icon={<InfoOutlinedIcon />}

@@ -62,6 +62,8 @@ Board reads return a denormalized `BoardRowDto` (patient/therapist names inline)
 
 **Exception handling:** Domain-specific exceptions (e.g., `AppointmentNotFoundException`, `DemoClinicReadOnlyException`) are defined in `exception/` and mapped to HTTP responses in `GlobalExceptionHandler`.
 
+**Demo clinic:** `ClinicContextService.assertWritableClinic()` / `requireWritableClinic()` block writes in the demo clinic. The one exception is a status-only appointment patch (check-in), allowed in `AppointmentService.updateAppointmentById`. `DemoResetService` reseeds the demo with visits around the current time (via the injected `Clock` bean from `ClockConfig`); `AuthService.loginAsDemo(ADMIN)` calls `resetDemoDataIfStale()` (at most every 15 minutes) and `DemoScheduler` resets nightly.
+
 **Pagination:** Controllers return `PageResponse<T>` (a common wrapper in `common/`) for paginated endpoints.
 
 ## Database Migrations
