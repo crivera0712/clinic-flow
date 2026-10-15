@@ -29,7 +29,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 - `src/services/` — per-entity modules (`appointmentService`, `patientService`, etc.) that call `apiRequest`
 - `src/queries/` — TanStack Query hooks over the services; pages use these, never the services directly.
   - `keys.ts` holds every query key. Reads: `useAppointments(date)`, `useTherapists()`, `usePatients()`, `usePatientSearch(q)` (debounced).
-  - Writes are `useMutation` hooks that invalidate what they change. Check-in (`useUpdateAppointmentStatus`) is optimistic and rolls back on error.
+  - Writes are `useMutation` hooks (create/update/delete per entity, incl. `useUpdatePatient`) that invalidate what they change. Check-in (`useUpdateAppointmentStatus`) is optimistic and rolls back on error.
   - `useAppointments` keeps the previous date as placeholder data (`isPlaceholderData`) while a new date loads.
   - `queryClient.ts`: 30s stale time; queries retry once on network/5xx errors, never on 4xx; writes don't retry. `App.tsx` clears the cache on logout so another clinic never sees it.
 
@@ -50,7 +50,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
   - For transparency use `theme.alpha(theme.vars.palette.primary.main, 0.1)`, not the standalone `alpha()` helper.
   - Custom tokens: `background.subtle`, `border.strong`, `elevation.{card,raised,overlay}` (box shadows), `status.{scheduled,waiting,done}`, `therapist[]` (board accents).
   - The color mode is saved in `localStorage` (`mui-mode`); `ColorModeToggle` switches it, and an inline script in `index.html` applies it before first paint.
-- **MUI X DataGrid** — used in `PatientsDirectory` only. `SchedulePage` renders today's appointments as an MUI `Table`, and `TherapistsManage` uses a plain MUI list.
+- **MUI X DataGrid** — used in `PatientsDirectory` only (search filters the loaded rows client-side). `SchedulePage` is an agenda list grouped by time, and `TherapistsManage` is a card grid.
 
 ## Key Conventions
 
@@ -61,5 +61,6 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
   - `PageHeader` (with optional `onRefresh`), `SectionCard` (titled card; `disablePadding` for tables/lists), `EmptyState`, `ListSkeleton` for first load, `StatCard` for summary numbers (optionally a toggle).
   - `StatusChip` for appointment status; `TherapistBadge` + `useTherapistAccents()` for therapist colors (assigned by position in the full therapist list, so they match across console and board).
   - `ConfirmDialog` (`tone="danger"`, pass `loading` while the request runs).
+  - `FormDrawer` for adding and editing records (side drawer, full width on phones); used by Schedule, Patients and Therapists.
   - Toasts: call `useToast()` (`toast.success(...)`, `toast.error(...)`); `ToastProvider` is mounted once in `main.tsx`. Don't add per-page `Snackbar`s.
 - Types are co-located one-per-entity in `src/types/`.

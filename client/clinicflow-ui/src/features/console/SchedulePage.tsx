@@ -3,7 +3,6 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
@@ -12,7 +11,6 @@ import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -26,6 +24,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { FormDrawer } from "../../components/ui/FormDrawer";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { ListSkeleton } from "../../components/ui/Skeletons";
 import { StatCard } from "../../components/ui/StatCard";
@@ -740,89 +739,45 @@ function EditAppointmentDrawer({
   }
 
   return (
-    <Drawer
-      anchor="right"
+    <FormDrawer
       open
-      onClose={saving ? undefined : onClose}
-      PaperProps={{
-        role: "dialog",
-        "aria-labelledby": "edit-appointment-title",
-        sx: { width: { xs: "100%", sm: 400 }, borderLeft: 1, borderColor: "divider" },
-      }}
+      title="Edit appointment"
+      subtitle={row.patientName}
+      saving={saving}
+      onClose={onClose}
+      onSubmit={handleSave}
     >
-      <Stack
-        component="form"
-        sx={{ height: "100%" }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSave();
-        }}
+      <TextField
+        label="Scheduled at"
+        type="datetime-local"
+        value={scheduledAt}
+        onChange={(e) => setScheduledAt(e.target.value)}
+        InputLabelProps={{ shrink: true }}
+      />
+      <TextField
+        select
+        label="Therapist"
+        value={therapistId}
+        onChange={(e) => setTherapistId(e.target.value)}
       >
-        <Stack
-          direction="row"
-          alignItems="flex-start"
-          justifyContent="space-between"
-          sx={{ px: 3, py: 2.5, borderBottom: 1, borderColor: "divider" }}
-        >
-          <Box>
-            <Typography id="edit-appointment-title" variant="h6" component="h2">
-              Edit appointment
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {row.patientName}
-            </Typography>
-          </Box>
-          <IconButton aria-label="Close" onClick={onClose} disabled={saving} edge="end">
-            <CloseRoundedIcon />
-          </IconButton>
-        </Stack>
-        <Stack spacing={2.5} sx={{ p: 3, flexGrow: 1, overflowY: "auto" }}>
-          <TextField
-            label="Scheduled at"
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            select
-            label="Therapist"
-            value={therapistId}
-            onChange={(e) => setTherapistId(e.target.value)}
-          >
-            {therapists.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Type"
-            value={type}
-            onChange={(e) => setType(e.target.value as AppointmentType)}
-          >
-            {appointmentTypeOptions.map((o) => (
-              <MenuItem key={o.value} value={o.value}>
-                {o.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={1}
-          justifyContent="flex-end"
-          sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider" }}
-        >
-          <Button onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={saving}>
-            Save
-          </Button>
-        </Stack>
-      </Stack>
-    </Drawer>
+        {therapists.map((t) => (
+          <MenuItem key={t.id} value={String(t.id)}>
+            {t.name}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        label="Type"
+        value={type}
+        onChange={(e) => setType(e.target.value as AppointmentType)}
+      >
+        {appointmentTypeOptions.map((o) => (
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
+          </MenuItem>
+        ))}
+      </TextField>
+    </FormDrawer>
   );
 }

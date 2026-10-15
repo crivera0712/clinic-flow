@@ -9,6 +9,8 @@ export interface PatientCreateRequest {
   lastName: string;
 }
 
+export type PatientUpdateRequest = Partial<PatientCreateRequest>;
+
 export interface PatientListParams {
   page: number;
   size: number;

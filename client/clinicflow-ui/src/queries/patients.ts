@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPatient, listPatients, searchPatients } from "../services/patientService";
-import type { PatientCreateRequest } from "../types/patient";
+import {
+  createPatient,
+  listPatients,
+  searchPatients,
+  updatePatient,
+} from "../services/patientService";
+import type { PatientCreateRequest, PatientUpdateRequest } from "../types/patient";
 import { queryKeys } from "./keys";
 
 // The directory loads the first 200 patients in one request and pages through them client-side.
@@ -37,5 +42,18 @@ export function useCreatePatient() {
   return useMutation({
     mutationFn: (payload: PatientCreateRequest) => createPatient(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+  });
+}
+
+export function useUpdatePatient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: PatientUpdateRequest }) =>
+      updatePatient(id, patch),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+      // Schedule rows and the board show patient names.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+    },
   });
 }
