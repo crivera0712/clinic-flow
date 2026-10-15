@@ -23,15 +23,21 @@ export function ColorModeToggle() {
   }
 
   return (
+    // Icon column and text size match the sidebar nav items above it.
     <Stack
       component="label"
       direction="row"
       alignItems="center"
-      spacing={1.5}
-      sx={{ minHeight: 50, pl: 1.5, pr: 0.5, borderRadius: 2.5, cursor: "pointer" }}
+      sx={{ minHeight: 44, pl: 1.5, borderRadius: 2, cursor: "pointer" }}
     >
-      <DarkModeRoundedIcon sx={{ color: "text.disabled" }} />
-      <Typography fontWeight={600} color="text.secondary" sx={{ flexGrow: 1, pl: 0.5 }}>
+      <DarkModeRoundedIcon sx={{ color: "text.disabled", mr: 1.5 }} />
+      <Typography
+        fontWeight={600}
+        fontSize="0.95rem"
+        color="text.secondary"
+        noWrap
+        sx={{ flexGrow: 1, minWidth: 0 }}
+      >
         Dark mode
       </Typography>
       <Switch checked={isDark} onChange={(event) => handleChange(event.target.checked)} />

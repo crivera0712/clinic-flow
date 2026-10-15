@@ -1,6 +1,6 @@
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import MonitorRoundedIcon from "@mui/icons-material/MonitorRounded";
@@ -8,8 +8,7 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -22,13 +21,15 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link as RouterLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { BrandMark } from "../../components/ui/BrandMark";
 import { ColorModeToggle } from "../../components/ui/ColorModeToggle";
+import type { RoleName } from "../../types/auth";
 
-const drawerWidth = 264;
+const drawerWidth = 232;
+const topBarHeight = 64;
 
 const navItems = [
   { label: "Schedule", to: "/", icon: <CalendarMonthRoundedIcon /> },
@@ -37,39 +38,63 @@ const navItems = [
   { label: "Clinic Display", to: "/board", icon: <MonitorRoundedIcon /> },
 ];
 
-const pageNames: Record<string, string> = {
-  "/": "Schedule",
-  "/patients": "Patients",
-  "/therapists": "Therapists",
-};
+const roleLabels: Record<RoleName, string> = { ADMIN: "Admin", DISPLAY: "Display" };
+
+// Today's date, kept current if the console stays open past midnight.
+function useToday(): Date {
+  const [today, setToday] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setToday(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return today;
+}
+
+// Local calendar date ("2026-10-14"); toISOString() would give the UTC date.
+function toLocalISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const longDate = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
+const shortDate = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
 
 export function ConsoleLayout() {
   const { currentUser, logout } = useAuth();
   const location = useLocation();
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  // The sidebar stays open from tablets in landscape and laptops up; narrower screens get a drawer.
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const today = useToday();
 
   const drawer = (
     <Stack sx={{ height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ px: 3, py: 3.25 }}>
-        <BrandMark size={40} />
-        <Box>
-          <Typography variant="h6" lineHeight={1.1}>
+      <Stack
+        direction="row"
+        spacing={1.25}
+        alignItems="center"
+        sx={{ px: 2.5, minHeight: topBarHeight, borderBottom: 1, borderColor: "divider" }}
+      >
+        <BrandMark size={34} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography fontWeight={720} lineHeight={1.15}>
             ClinicFlow
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" noWrap component="p">
             Front desk workspace
           </Typography>
         </Box>
       </Stack>
-      <Divider />
-      <Box sx={{ px: 2, pt: 2.5 }}>
-        <Typography variant="overline" color="text.disabled" sx={{ px: 1.5 }}>
-          Workspace
-        </Typography>
-      </Box>
-      <List sx={{ px: 2, py: 1, flexGrow: 1 }}>
+      <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
         {navItems.map((item) => {
           const selected = location.pathname === item.to;
           return (
@@ -78,49 +103,60 @@ export function ConsoleLayout() {
               component={RouterLink}
               to={item.to}
               selected={selected}
+              aria-current={selected ? "page" : undefined}
               onClick={() => setMobileOpen(false)}
               sx={(theme) => {
                 const primary = theme.vars.palette.primary.main;
                 return {
-                  minHeight: 50,
-                  mb: 0.75,
+                  position: "relative",
+                  minHeight: 44,
+                  mb: 0.5,
                   px: 1.5,
-                  borderRadius: 2.5,
-                  color: selected ? "text.primary" : "text.secondary",
-                  bgcolor: selected ? theme.alpha(primary, 0.11) : "transparent",
-                  border: `1px solid ${selected ? theme.alpha(primary, 0.22) : "transparent"}`,
-                  "&.Mui-selected": { bgcolor: theme.alpha(primary, 0.11) },
-                  "&.Mui-selected:hover": { bgcolor: theme.alpha(primary, 0.16) },
+                  borderRadius: 2,
+                  color: "text.secondary",
                   "&:hover": { bgcolor: theme.alpha(primary, 0.07), color: "text.primary" },
+                  // Active item: tinted background, primary text and a bar on the left edge.
+                  "&.Mui-selected": {
+                    bgcolor: theme.alpha(primary, 0.12),
+                    color: "primary.main",
+                    "&:hover": { bgcolor: theme.alpha(primary, 0.16) },
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      left: 0,
+                      top: 10,
+                      bottom: 10,
+                      width: 3,
+                      borderRadius: 3,
+                      bgcolor: "primary.main",
+                    },
+                  },
                 };
               }}
             >
               <ListItemIcon
-                sx={{ minWidth: 40, color: selected ? "primary.main" : "text.disabled" }}
+                sx={{ minWidth: 36, color: selected ? "primary.main" : "text.disabled" }}
               >
                 {item.icon}
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { fontWeight: selected ? 700 : 600 } }}
+                slotProps={{ primary: { fontWeight: selected ? 700 : 600, fontSize: "0.95rem" } }}
               />
-              {selected && (
-                <ChevronRightRoundedIcon fontSize="small" sx={{ color: "primary.main" }} />
-              )}
             </ListItemButton>
           );
         })}
       </List>
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 1.5 }}>
         <Box sx={{ mb: 1 }}>
           <ColorModeToggle />
         </Box>
         <Stack
           direction="row"
-          spacing={1.5}
+          spacing={1.25}
           alignItems="center"
           sx={{
-            p: 1.5,
+            p: 1.25,
             borderRadius: 2.5,
             bgcolor: "background.subtle",
             border: 1,
@@ -129,8 +165,9 @@ export function ConsoleLayout() {
         >
           <Avatar
             sx={(theme) => ({
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
+              fontSize: "0.95rem",
               bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.15),
               color: "primary.main",
               fontWeight: 750,
@@ -142,8 +179,8 @@ export function ConsoleLayout() {
             <Typography variant="body2" fontWeight={700} noWrap>
               {currentUser?.username}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {currentUser?.roleName}
+            <Typography variant="caption" color="text.secondary" component="p">
+              {currentUser ? roleLabels[currentUser.roleName] : ""}
             </Typography>
           </Box>
           <Tooltip title="Log out">
@@ -168,8 +205,8 @@ export function ConsoleLayout() {
         color="transparent"
         elevation={0}
         sx={(theme) => ({
-          width: { lg: `calc(100% - ${drawerWidth}px)` },
-          ml: { lg: `${drawerWidth}px` },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
           color: "text.primary",
           bgcolor: theme.alpha(theme.vars.palette.background.default, 0.82),
           backdropFilter: "blur(18px)",
@@ -178,41 +215,47 @@ export function ConsoleLayout() {
           boxShadow: "none",
         })}
       >
-        <Toolbar sx={{ minHeight: { xs: 64, sm: 72 }, px: { xs: 2, md: 4 } }}>
+        <Toolbar sx={{ minHeight: { xs: topBarHeight }, px: { xs: 2, md: 4 }, gap: 1.5 }}>
           {!isDesktop && (
             <IconButton
               aria-label="Open navigation"
               color="inherit"
               edge="start"
               onClick={() => setMobileOpen(true)}
-              sx={{ mr: 1 }}
             >
               <MenuRoundedIcon />
             </IconButton>
           )}
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Today’s workspace
-            </Typography>
-            <Typography variant="h6" lineHeight={1.2}>
-              {pageNames[location.pathname] ?? "ClinicFlow"}
-            </Typography>
-          </Box>
-          <Button
-            component={RouterLink}
-            to="/board"
-            variant="outlined"
-            startIcon={<MonitorRoundedIcon />}
-            sx={{ display: { xs: "none", sm: "inline-flex" } }}
+          <Typography
+            component="time"
+            dateTime={toLocalISODate(today)}
+            fontWeight={650}
+            sx={{ flexGrow: 1, minWidth: 0 }}
+            noWrap
           >
-            Open display
-          </Button>
+            {(isSmUp ? longDate : shortDate).format(today)}
+          </Typography>
+          {currentUser?.isDemo && (
+            <Tooltip title="Shared demo clinic. Data resets nightly and changes are disabled.">
+              <Chip
+                size="small"
+                icon={<InfoOutlinedIcon />}
+                label="Demo clinic"
+                sx={(theme) => ({
+                  color: "info.main",
+                  bgcolor: theme.alpha(theme.vars.palette.info.main, 0.1),
+                  border: `1px solid ${theme.alpha(theme.vars.palette.info.main, 0.3)}`,
+                  "& .MuiChip-icon": { color: "inherit" },
+                })}
+              />
+            </Tooltip>
+          )}
         </Toolbar>
       </AppBar>
 
       <Box
         component="nav"
-        sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
         aria-label="Primary navigation"
       >
         <Drawer
@@ -226,8 +269,17 @@ export function ConsoleLayout() {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, minWidth: 0, px: { xs: 2, sm: 3, md: 4.5 }, pb: 5 }}>
-        <Toolbar sx={{ minHeight: { xs: 88, sm: 96 } }} />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          px: { xs: 2, sm: 3, md: 4.5 },
+          pt: { xs: 3, md: 4 },
+          pb: 5,
+        }}
+      >
+        <Toolbar sx={{ minHeight: { xs: topBarHeight } }} />
         <Box sx={{ width: "100%", maxWidth: 1440, mx: "auto" }}>
           <Outlet />
         </Box>
