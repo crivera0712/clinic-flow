@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import MedicalServicesRoundedIcon from "@mui/icons-material/MedicalServicesRounded";
@@ -18,66 +18,47 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { ListSkeleton } from "../../components/ui/Skeletons";
 import { useTherapistAccents } from "../../components/ui/therapistAccents";
 import { useToast } from "../../components/ui/useToast";
-import { createTherapist, listTherapists, removeTherapist } from "../../services/therapistService";
+import { useCreateTherapist, useRemoveTherapist, useTherapists } from "../../queries/therapists";
 import type { Therapist } from "../../types/therapist";
 
 export function TherapistsManage() {
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const therapistsQuery = useTherapists();
+  const therapists = therapistsQuery.data ?? [];
+  const loading = therapistsQuery.isPending;
+  // A failed first load shows only the error, not "No therapists yet".
+  const loadFailed = therapistsQuery.isError && !therapistsQuery.data;
+  const createTherapist = useCreateTherapist();
+  const removeTherapist = useRemoveTherapist();
   const [name, setName] = useState("");
-  const [adding, setAdding] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Therapist | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
   const accents = useTherapistAccents(therapists.map((t) => t.id));
 
-  async function refresh() {
-    try {
-      setLoading(true);
-      setError(null);
-      setTherapists(await listTherapists());
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load therapists.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void refresh();
-  }, []);
-
-  async function handleAdd() {
+  function handleAdd() {
     if (!name.trim()) return;
-    setAdding(true);
-    try {
-      await createTherapist({ name: name.trim() });
-      setName("");
-      await refresh();
-      toast.success("Therapist added.");
-    } catch (addError) {
-      toast.error(addError instanceof Error ? addError.message : "Unable to add therapist.");
-    } finally {
-      setAdding(false);
-    }
+    createTherapist.mutate(
+      { name: name.trim() },
+      {
+        onSuccess: () => {
+          setName("");
+          toast.success("Therapist added.");
+        },
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : "Unable to add therapist."),
+      },
+    );
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      await removeTherapist(deleteTarget.id);
-      setDeleteTarget(null);
-      await refresh();
-      toast.success("Therapist removed.");
-    } catch (deleteError) {
-      toast.error(
-        deleteError instanceof Error ? deleteError.message : "Unable to remove therapist.",
-      );
-    } finally {
-      setDeleting(false);
-    }
+    removeTherapist.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        toast.success("Therapist removed.");
+      },
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Unable to remove therapist."),
+    });
   }
 
   return (
@@ -86,8 +67,8 @@ export function TherapistsManage() {
         eyebrow="Care team"
         title="Therapists"
         description="Manage the clinicians available for scheduling and daily patient care."
-        onRefresh={() => void refresh()}
-        refreshing={loading}
+        onRefresh={() => void therapistsQuery.refetch()}
+        refreshing={therapistsQuery.isFetching}
       />
 
       <SectionCard
@@ -101,7 +82,7 @@ export function TherapistsManage() {
           component="form"
           onSubmit={(e) => {
             e.preventDefault();
-            void handleAdd();
+            handleAdd();
           }}
         >
           <TextField
@@ -115,7 +96,7 @@ export function TherapistsManage() {
             type="submit"
             variant="contained"
             startIcon={<AddRoundedIcon />}
-            disabled={adding}
+            disabled={createTherapist.isPending}
           >
             Add therapist
           </Button>
@@ -131,8 +112,14 @@ export function TherapistsManage() {
         }
         disablePadding
       >
-        {error && <Alert severity="error">{error}</Alert>}
-        {loading && therapists.length === 0 ? (
+        {therapistsQuery.isError && (
+          <Alert severity="error">
+            {therapistsQuery.error instanceof Error
+              ? therapistsQuery.error.message
+              : "Unable to load therapists."}
+          </Alert>
+        )}
+        {loadFailed ? null : loading ? (
           <ListSkeleton avatar />
         ) : therapists.length === 0 ? (
           <EmptyState
@@ -188,14 +175,14 @@ export function TherapistsManage() {
         title="Remove therapist"
         confirmLabel="Remove"
         tone="danger"
-        loading={deleting}
+        loading={removeTherapist.isPending}
         description={
           deleteTarget
             ? `Remove ${deleteTarget.name}? They will no longer be available for scheduling.`
             : ""
         }
         onClose={() => setDeleteTarget(null)}
-        onConfirm={() => void handleDelete()}
+        onConfirm={handleDelete}
       />
     </Stack>
   );

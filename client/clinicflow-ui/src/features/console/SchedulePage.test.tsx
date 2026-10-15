@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, vi } from "vitest";
 import { renderWithTheme } from "../../test/render";
@@ -58,6 +58,23 @@ describe("SchedulePage", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     await user.click(screen.getAllByRole("button", { name: "Cancel Kim Vu's appointment" })[0]);
     expect(screen.getByRole("dialog", { name: "Cancel appointment" })).toBeInTheDocument();
+  });
+
+  it("keeps the previous day dimmed with actions disabled while a new date loads", async () => {
+    // The new date never answers, so the page stays in its "loading the next day" state.
+    listAppointmentsByDate.mockImplementation((date: string) =>
+      date === "2000-01-01" ? new Promise(() => undefined) : Promise.resolve([row]),
+    );
+    renderWithTheme(<SchedulePage />);
+    await screen.findAllByText("Kim Vu");
+
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2000-01-01" } });
+
+    expect(await screen.findByText("Loading Jan 1…")).toBeInTheDocument();
+    expect(screen.getAllByText("Kim Vu")).toHaveLength(2);
+    for (const button of screen.getAllByRole("button", { name: "Arrived" })) {
+      expect(button).toBeDisabled();
+    }
   });
 
   it("shows a clear empty state", async () => {

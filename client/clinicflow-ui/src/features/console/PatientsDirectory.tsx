@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PersonAddAltRoundedIcon from "@mui/icons-material/PersonAddAltRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import Alert from "@mui/material/Alert";
@@ -15,50 +15,34 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { useToast } from "../../components/ui/useToast";
-import { createPatient, listPatients } from "../../services/patientService";
+import { useCreatePatient, usePatients } from "../../queries/patients";
 import type { Patient } from "../../types/patient";
 
 export function PatientsDirectory() {
-  const [rows, setRows] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const patients = usePatients();
+  const rows = patients.data?.rows ?? [];
+  const loading = patients.isPending;
+  const createPatient = useCreatePatient();
+  const saving = createPatient.isPending;
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [saving, setSaving] = useState(false);
   const toast = useToast();
 
-  async function refresh() {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await listPatients({ page: 0, size: 200 });
-      setRows(result.rows);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load patients.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void refresh();
-  }, []);
-
-  async function handleCreate() {
-    setSaving(true);
-    try {
-      await createPatient({ firstName: firstName.trim(), lastName: lastName.trim() });
-      setOpen(false);
-      setFirstName("");
-      setLastName("");
-      await refresh();
-      toast.success("Patient added.");
-    } catch (createError) {
-      toast.error(createError instanceof Error ? createError.message : "Unable to add patient.");
-    } finally {
-      setSaving(false);
-    }
+  function handleCreate() {
+    createPatient.mutate(
+      { firstName: firstName.trim(), lastName: lastName.trim() },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          setFirstName("");
+          setLastName("");
+          toast.success("Patient added.");
+        },
+        onError: (error) =>
+          toast.error(error instanceof Error ? error.message : "Unable to add patient."),
+      },
+    );
   }
 
   const columns: GridColDef<Patient>[] = [
@@ -72,8 +56,8 @@ export function PatientsDirectory() {
         eyebrow="Clinic directory"
         title="Patients"
         description="A focused directory for everyone currently receiving care at the clinic."
-        onRefresh={() => void refresh()}
-        refreshing={loading}
+        onRefresh={() => void patients.refetch()}
+        refreshing={patients.isFetching}
         action={
           <Button
             variant="contained"
@@ -92,7 +76,11 @@ export function PatientsDirectory() {
         }
         disablePadding
       >
-        {error && <Alert severity="error">{error}</Alert>}
+        {patients.isError && (
+          <Alert severity="error">
+            {patients.error instanceof Error ? patients.error.message : "Unable to load patients."}
+          </Alert>
+        )}
         <Box sx={{ height: { xs: 460, md: 580 } }}>
           <DataGrid
             rows={rows}
@@ -125,7 +113,7 @@ export function PatientsDirectory() {
             sx={{ pt: 1 }}
             onSubmit={(e) => {
               e.preventDefault();
-              void handleCreate();
+              handleCreate();
             }}
           >
             <TextField

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -13,6 +13,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -35,13 +36,14 @@ import { TherapistBadge } from "../../components/ui/TherapistBadge";
 import { useTherapistAccents } from "../../components/ui/therapistAccents";
 import { useToast } from "../../components/ui/useToast";
 import {
-  createAppointment,
-  listAppointmentsByDate,
-  removeAppointment,
-  updateAppointment,
-} from "../../services/appointmentService";
-import { searchPatients } from "../../services/patientService";
-import { listTherapists } from "../../services/therapistService";
+  useAppointments,
+  useCreateAppointment,
+  useRemoveAppointment,
+  useUpdateAppointment,
+  useUpdateAppointmentStatus,
+} from "../../queries/appointments";
+import { usePatientSearch } from "../../queries/patients";
+import { useTherapists } from "../../queries/therapists";
 import {
   appointmentTypeOptions,
   type AppointmentType,
@@ -61,17 +63,31 @@ function optionLabel(option: PatientOption): string {
   return option.kind === "existing" ? name : `Add new patient: "${name}"`;
 }
 
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+// "2026-10-15" -> "Oct 15"
+function formatDateLabel(date: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+    new Date(`${date}T00:00`),
+  );
+}
+
 function typeLabel(type: AppointmentType): string {
   return appointmentTypeOptions.find((o) => o.value === type)?.label ?? type;
 }
 
 function AppointmentActions({
   row,
+  disabled,
   onStatus,
   onEdit,
   onDelete,
 }: {
   row: BoardRow;
+  // True while these rows are the previous date's, shown until the new date loads.
+  disabled: boolean;
   onStatus: (status: BoardRow["status"]) => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -79,12 +95,24 @@ function AppointmentActions({
   return (
     <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
       {row.status === "SCHEDULED" && (
-        <Button size="small" variant="outlined" color="primary" onClick={() => onStatus("WAITING")}>
+        <Button
+          size="small"
+          variant="outlined"
+          color="primary"
+          disabled={disabled}
+          onClick={() => onStatus("WAITING")}
+        >
           Arrived
         </Button>
       )}
       {row.status === "WAITING" && (
-        <Button size="small" variant="outlined" color="success" onClick={() => onStatus("DONE")}>
+        <Button
+          size="small"
+          variant="outlined"
+          color="success"
+          disabled={disabled}
+          onClick={() => onStatus("DONE")}
+        >
           Start visit
         </Button>
       )}
@@ -92,6 +120,7 @@ function AppointmentActions({
         <IconButton
           aria-label={`Edit ${row.patientName}'s appointment`}
           size="small"
+          disabled={disabled}
           onClick={onEdit}
         >
           <EditRoundedIcon fontSize="small" />
@@ -102,6 +131,7 @@ function AppointmentActions({
           aria-label={`Cancel ${row.patientName}'s appointment`}
           size="small"
           color="error"
+          disabled={disabled}
           onClick={onDelete}
         >
           <DeleteOutlineRoundedIcon fontSize="small" />
@@ -113,96 +143,58 @@ function AppointmentActions({
 
 export function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
-  const [rows, setRows] = useState<BoardRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
   const toast = useToast();
+
+  // Reload every 60s (and when the tab regains focus) in case another front-desk computer
+  // checks someone in.
+  const appointments = useAppointments(selectedDate, { refetchInterval: 60_000 });
+  const rows = useMemo(() => appointments.data ?? [], [appointments.data]);
+  // The previous date's rows, kept on screen (dimmed, actions disabled) until the new date loads.
+  const showingPreviousDate = appointments.isPlaceholderData;
+  const therapists = useTherapists().data ?? [];
+
+  const createAppointment = useCreateAppointment();
+  const updateStatus = useUpdateAppointmentStatus();
+  const removeAppointment = useRemoveAppointment();
 
   // Fast-add form
   const [patientInput, setPatientInput] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
-  const [patientMatches, setPatientMatches] = useState<PatientOption[]>([]);
   const [therapistId, setTherapistId] = useState("");
   const [time, setTime] = useState("09:00");
   const [type, setType] = useState<AppointmentType>("EVALUATION");
-  const [adding, setAdding] = useState(false);
   const patientInputRef = useRef<HTMLInputElement>(null);
+  const patientSearch = usePatientSearch(patientInput);
 
   const [editTarget, setEditTarget] = useState<BoardRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BoardRow | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const accents = useTherapistAccents([
     ...therapists.map((t) => t.id),
     ...rows.map((row) => row.therapistId),
   ]);
 
-  async function refresh(date = selectedDate) {
-    try {
-      setLoading(true);
-      setError(null);
-      setRows(await listAppointmentsByDate(date));
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load the schedule.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void refresh(selectedDate);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
-
-  useEffect(() => {
-    listTherapists()
-      .then(setTherapists)
-      .catch(() => setTherapists([]));
-  }, []);
-
-  // Debounced patient typeahead.
-  useEffect(() => {
-    const query = patientInput.trim();
-    if (!query) {
-      setPatientMatches([]);
-      return;
-    }
-    const id = window.setTimeout(() => {
-      searchPatients(query)
-        .then((found) =>
-          setPatientMatches(
-            found.map((p) => ({
-              kind: "existing",
-              id: p.id,
-              firstName: p.firstName,
-              lastName: p.lastName,
-            })),
-          ),
-        )
-        .catch(() => setPatientMatches([]));
-    }, 200);
-    return () => window.clearTimeout(id);
-  }, [patientInput]);
-
   const patientOptions = useMemo<PatientOption[]>(() => {
     const typed = patientInput.trim();
-    const hasExactMatch = patientMatches.some(
-      (o) => optionLabel(o).toLowerCase() === typed.toLowerCase(),
-    );
-    if (!typed || hasExactMatch) return patientMatches;
-    const { firstName, lastName } = splitName(typed);
-    return [...patientMatches, { kind: "create", firstName, lastName }];
-  }, [patientInput, patientMatches]);
+    if (!typed) return [];
+    const matches: PatientOption[] = (patientSearch.data ?? []).map((p) => ({
+      kind: "existing",
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+    }));
+    const hasExactMatch = matches.some((o) => optionLabel(o).toLowerCase() === typed.toLowerCase());
+    if (hasExactMatch) return matches;
+    return [...matches, { kind: "create", ...splitName(typed) }];
+  }, [patientInput, patientSearch.data]);
 
   function resetAddForm() {
     setSelectedPatient(null);
     setPatientInput("");
-    setPatientMatches([]);
     patientInputRef.current?.focus();
   }
 
-  async function handleAdd() {
+  function handleAdd() {
     const typed = patientInput.trim();
     const patientChoice =
       selectedPatient ??
@@ -211,50 +203,52 @@ export function SchedulePage() {
       toast.error("Patient, therapist and time are required.");
       return;
     }
-    setAdding(true);
-    try {
-      await createAppointment({
+    createAppointment.mutate(
+      {
         therapistId: Number(therapistId),
         scheduledAt: `${selectedDate}T${time}`,
         type,
         ...(patientChoice.kind === "existing"
           ? { patientId: patientChoice.id }
           : { patient: { firstName: patientChoice.firstName, lastName: patientChoice.lastName } }),
-      });
-      await refresh();
-      resetAddForm();
-      toast.success("Appointment added.");
-    } catch (addError) {
-      toast.error(addError instanceof Error ? addError.message : "Unable to add appointment.");
-    } finally {
-      setAdding(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          resetAddForm();
+          toast.success("Appointment added.");
+        },
+        onError: (error) => toast.error(errorMessage(error, "Unable to add appointment.")),
+      },
+    );
   }
 
-  async function setStatus(row: BoardRow, status: BoardRow["status"]) {
-    try {
-      await updateAppointment(row.id, { status });
-      await refresh();
-    } catch (statusError) {
-      toast.error(statusError instanceof Error ? statusError.message : "Unable to update status.");
-    }
+  // Updates the row instantly; it reverts with an error toast if the server rejects the change.
+  function setStatus(row: BoardRow, status: BoardRow["status"]) {
+    updateStatus.mutate(
+      { row, status },
+      { onError: (error) => toast.error(errorMessage(error, "Unable to update status.")) },
+    );
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      await removeAppointment(deleteTarget.id);
-      await refresh();
-      setDeleteTarget(null);
-      toast.success("Appointment cancelled.");
-    } catch (deleteError) {
-      toast.error(
-        deleteError instanceof Error ? deleteError.message : "Unable to cancel appointment.",
-      );
-    } finally {
-      setDeleting(false);
-    }
+    removeAppointment.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        toast.success("Appointment cancelled.");
+      },
+      onError: (error) => toast.error(errorMessage(error, "Unable to cancel appointment.")),
+    });
+  }
+
+  // A failed first load shows only the error, not "The day is clear".
+  const loadFailed = appointments.isError && !appointments.data;
+  const dayIsEmpty = !appointments.isPending && rows.length === 0;
+
+  function subtitle(): string {
+    if (appointments.isPending) return "Loading appointments…";
+    if (showingPreviousDate) return `Loading ${formatDateLabel(selectedDate)}…`;
+    return `${rows.length} appointment${rows.length === 1 ? "" : "s"}`;
   }
 
   return (
@@ -263,8 +257,8 @@ export function SchedulePage() {
         eyebrow="Daily operations"
         title="Schedule"
         description="Add patients to the day and move each visit from scheduled to waiting to complete."
-        onRefresh={() => void refresh()}
-        refreshing={loading}
+        onRefresh={() => void appointments.refetch()}
+        refreshing={appointments.isFetching}
       />
 
       <SectionCard
@@ -279,7 +273,7 @@ export function SchedulePage() {
           component="form"
           onSubmit={(e) => {
             e.preventDefault();
-            void handleAdd();
+            handleAdd();
           }}
         >
           <Autocomplete
@@ -340,7 +334,7 @@ export function SchedulePage() {
           <Button
             type="submit"
             variant="contained"
-            disabled={adding}
+            disabled={createAppointment.isPending}
             startIcon={<AddRoundedIcon />}
             sx={{ minWidth: 118 }}
           >
@@ -352,11 +346,7 @@ export function SchedulePage() {
       <SectionCard
         icon={<CalendarTodayRoundedIcon />}
         title="Day schedule"
-        subtitle={
-          loading
-            ? "Loading appointments…"
-            : `${rows.length} appointment${rows.length === 1 ? "" : "s"}`
-        }
+        subtitle={subtitle()}
         action={
           <TextField
             label="Date"
@@ -369,109 +359,127 @@ export function SchedulePage() {
         }
         disablePadding
       >
-        {error && <Alert severity="error">{error}</Alert>}
-        {rows.length === 0 && !loading ? (
-          <EmptyState
-            icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
-            title="The day is clear"
-            description="Use Quick add to schedule the first appointment."
-          />
-        ) : (
-          <>
-            <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-              <Table sx={{ minWidth: 900 }}>
-                <TableHead>
-                  <TableRow>
-                    {columns.map((h) => (
-                      <TableCell key={h}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.length === 0 ? (
-                    <TableSkeletonRows columns={columns.length} />
-                  ) : (
-                    rows.map((row) => (
-                      <TableRow key={row.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                        <TableCell sx={{ fontWeight: 750, color: "primary.main" }}>
-                          {formatTime(row.scheduledAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Typography fontWeight={700}>{row.patientName}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <TherapistBadge
-                            name={row.therapistName}
-                            accent={accents.get(row.therapistId)}
-                          />
-                        </TableCell>
-                        <TableCell>{typeLabel(row.type)}</TableCell>
-                        <TableCell>
-                          <StatusChip status={row.status} />
-                        </TableCell>
-                        <TableCell>
-                          <AppointmentActions
-                            row={row}
-                            onStatus={(status) => void setStatus(row, status)}
-                            onEdit={() => setEditTarget(row)}
-                            onDelete={() => setDeleteTarget(row)}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <Box sx={{ display: { xs: "block", md: "none" } }}>
-              {rows.length === 0 ? (
-                <ListSkeleton />
-              ) : (
-                <Stack spacing={1.5} sx={{ p: 2 }}>
-                  {rows.map((row) => (
-                    <Paper key={row.id} sx={{ p: 2, bgcolor: "background.subtle" }}>
-                      <Stack
-                        direction="row"
-                        spacing={2}
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                      >
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography color="primary.main" fontWeight={750}>
+        {showingPreviousDate && (
+          <LinearProgress aria-label={`Loading ${formatDateLabel(selectedDate)}`} />
+        )}
+        {appointments.isError && (
+          <Alert severity="error">
+            {errorMessage(appointments.error, "Unable to load the schedule.")}
+          </Alert>
+        )}
+        <Box
+          aria-busy={showingPreviousDate}
+          sx={{ opacity: showingPreviousDate ? 0.5 : 1, transition: "opacity 160ms ease" }}
+        >
+          {loadFailed ? null : dayIsEmpty ? (
+            <EmptyState
+              icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
+              title="The day is clear"
+              description="Use Quick add to schedule the first appointment."
+            />
+          ) : (
+            <>
+              <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+                <Table sx={{ minWidth: 900 }}>
+                  <TableHead>
+                    <TableRow>
+                      {columns.map((h) => (
+                        <TableCell key={h}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {appointments.isPending ? (
+                      <TableSkeletonRows columns={columns.length} />
+                    ) : (
+                      rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          hover
+                          sx={{ "&:last-child td": { borderBottom: 0 } }}
+                        >
+                          <TableCell sx={{ fontWeight: 750, color: "primary.main" }}>
                             {formatTime(row.scheduledAt)}
-                          </Typography>
-                          <Typography variant="h6" sx={{ mt: 0.25 }}>
-                            {row.patientName}
-                          </Typography>
-                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                          </TableCell>
+                          <TableCell>
+                            <Typography fontWeight={700}>{row.patientName}</Typography>
+                          </TableCell>
+                          <TableCell>
                             <TherapistBadge
                               name={row.therapistName}
                               accent={accents.get(row.therapistId)}
-                              color="text.secondary"
                             />
-                            <Typography variant="body2" color="text.secondary">
-                              · {typeLabel(row.type)}
+                          </TableCell>
+                          <TableCell>{typeLabel(row.type)}</TableCell>
+                          <TableCell>
+                            <StatusChip status={row.status} />
+                          </TableCell>
+                          <TableCell>
+                            <AppointmentActions
+                              row={row}
+                              disabled={showingPreviousDate}
+                              onStatus={(status) => setStatus(row, status)}
+                              onEdit={() => setEditTarget(row)}
+                              onDelete={() => setDeleteTarget(row)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Box sx={{ display: { xs: "block", md: "none" } }}>
+                {appointments.isPending ? (
+                  <ListSkeleton />
+                ) : (
+                  <Stack spacing={1.5} sx={{ p: 2 }}>
+                    {rows.map((row) => (
+                      <Paper key={row.id} sx={{ p: 2, bgcolor: "background.subtle" }}>
+                        <Stack
+                          direction="row"
+                          spacing={2}
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                        >
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography color="primary.main" fontWeight={750}>
+                              {formatTime(row.scheduledAt)}
                             </Typography>
-                          </Stack>
+                            <Typography variant="h6" sx={{ mt: 0.25 }}>
+                              {row.patientName}
+                            </Typography>
+                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                              <TherapistBadge
+                                name={row.therapistName}
+                                accent={accents.get(row.therapistId)}
+                                color="text.secondary"
+                              />
+                              <Typography variant="body2" color="text.secondary">
+                                · {typeLabel(row.type)}
+                              </Typography>
+                            </Stack>
+                          </Box>
+                          <StatusChip status={row.status} />
+                        </Stack>
+                        <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
+                          <AppointmentActions
+                            row={row}
+                            disabled={showingPreviousDate}
+                            onStatus={(status) => setStatus(row, status)}
+                            onEdit={() => setEditTarget(row)}
+                            onDelete={() => setDeleteTarget(row)}
+                          />
                         </Box>
-                        <StatusChip status={row.status} />
-                      </Stack>
-                      <Box sx={{ mt: 2, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
-                        <AppointmentActions
-                          row={row}
-                          onStatus={(status) => void setStatus(row, status)}
-                          onEdit={() => setEditTarget(row)}
-                          onDelete={() => setDeleteTarget(row)}
-                        />
-                      </Box>
-                    </Paper>
-                  ))}
-                </Stack>
-              )}
-            </Box>
-          </>
-        )}
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+            </>
+          )}
+        </Box>
       </SectionCard>
 
       {editTarget && (
@@ -479,9 +487,8 @@ export function SchedulePage() {
           row={editTarget}
           therapists={therapists}
           onClose={() => setEditTarget(null)}
-          onSaved={async () => {
+          onSaved={() => {
             setEditTarget(null);
-            await refresh();
             toast.success("Appointment updated.");
           }}
           onError={toast.error}
@@ -494,14 +501,14 @@ export function SchedulePage() {
         confirmLabel="Cancel appointment"
         cancelLabel="Keep appointment"
         tone="danger"
-        loading={deleting}
+        loading={removeAppointment.isPending}
         description={
           deleteTarget
             ? `Cancel ${deleteTarget.patientName}'s ${formatTime(deleteTarget.scheduledAt)} appointment?`
             : ""
         }
         onClose={() => setDeleteTarget(null)}
-        onConfirm={() => void handleDelete()}
+        onConfirm={handleDelete}
       />
     </Stack>
   );
@@ -517,24 +524,23 @@ function EditAppointmentDialog({
   row: BoardRow;
   therapists: Therapist[];
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
   onError: (message: string) => void;
 }) {
   const [scheduledAt, setScheduledAt] = useState(row.scheduledAt.slice(0, 16));
   const [therapistId, setTherapistId] = useState(String(row.therapistId));
   const [type, setType] = useState<AppointmentType>(row.type);
-  const [saving, setSaving] = useState(false);
+  const updateAppointment = useUpdateAppointment();
+  const saving = updateAppointment.isPending;
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await updateAppointment(row.id, { scheduledAt, therapistId: Number(therapistId), type });
-      await onSaved();
-    } catch (saveError) {
-      onError(saveError instanceof Error ? saveError.message : "Unable to update appointment.");
-    } finally {
-      setSaving(false);
-    }
+  function handleSave() {
+    updateAppointment.mutate(
+      { id: row.id, patch: { scheduledAt, therapistId: Number(therapistId), type } },
+      {
+        onSuccess: onSaved,
+        onError: (error) => onError(errorMessage(error, "Unable to update appointment.")),
+      },
+    );
   }
 
   return (
@@ -579,7 +585,7 @@ function EditAppointmentDialog({
         <Button onClick={onClose} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="contained" onClick={() => void handleSave()} disabled={saving}>
+        <Button variant="contained" onClick={handleSave} disabled={saving}>
           Save
         </Button>
       </DialogActions>

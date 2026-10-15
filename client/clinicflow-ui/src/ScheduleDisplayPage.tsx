@@ -15,16 +15,18 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "./auth/AuthContext";
 import { useTherapistAccents } from "./components/ui/therapistAccents";
-import { listAppointmentsByDate } from "./services/appointmentService";
-import { listTherapists } from "./services/therapistService";
+import { useAppointments } from "./queries/appointments";
+import { useTherapists } from "./queries/therapists";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
 
-function getTodayISODate(): string {
-  const d = new Date();
+function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+// The board runs all day on a TV: reload every 30s, and whenever the tab regains focus.
+const BOARD_REFRESH_MS = 30_000;
 
 function formatTime(value: string): string {
   const parsed = new Date(value.includes("T") ? value : value.replace(" ", "T"));
@@ -154,9 +156,6 @@ function EmptyPanel({ title, description }: { title: string; description: string
 export default function ScheduleDisplayPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<BoardRow[]>([]);
-  const [therapistIds, setTherapistIds] = useState<number[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -164,32 +163,11 @@ export default function ScheduleDisplayPage() {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        setError(null);
-        // Accent colors come from the full therapist list, so they match the console. If that
-        // request fails, keep the last list rather than blanking the board.
-        const [data, therapists] = await Promise.all([
-          listAppointmentsByDate(getTodayISODate()),
-          listTherapists().catch(() => null),
-        ]);
-        if (cancelled) return;
-        setAppointments(data);
-        if (therapists) setTherapistIds(therapists.map((therapist) => therapist.id));
-      } catch (loadError) {
-        if (!cancelled)
-          setError(loadError instanceof Error ? loadError.message : "Failed to load appointments");
-      }
-    }
-    void load();
-    const interval = setInterval(load, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
+  // `now` ticks every minute, so the board moves to the next day's schedule after midnight.
+  const appointmentsQuery = useAppointments(toISODate(now), { refetchInterval: BOARD_REFRESH_MS });
+  const appointments = useMemo(() => appointmentsQuery.data ?? [], [appointmentsQuery.data]);
+  // Accent colors come from the full therapist list, so they match the console.
+  const therapists = useTherapists({ refetchInterval: BOARD_REFRESH_MS }).data ?? [];
 
   const currentTime = useMemo(
     () => new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(now),
@@ -218,7 +196,7 @@ export default function ScheduleDisplayPage() {
     [appointments],
   );
   const therapistAccents = useTherapistAccents([
-    ...therapistIds,
+    ...therapists.map((therapist) => therapist.id),
     ...appointments.map((appointment) => appointment.therapistId),
   ]);
 
@@ -287,7 +265,13 @@ export default function ScheduleDisplayPage() {
           </Stack>
         </Stack>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {appointmentsQuery.isError && (
+          <Alert severity="error">
+            {appointmentsQuery.error instanceof Error
+              ? appointmentsQuery.error.message
+              : "Failed to load appointments"}
+          </Alert>
+        )}
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
