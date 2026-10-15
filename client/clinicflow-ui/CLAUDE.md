@@ -27,6 +27,11 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 - `src/api/client.ts` — central `apiRequest<T>()` function. Automatically attaches `Authorization: Bearer` header and retries once on 401 using the refresh token before calling `onAuthFailure`.
 - `src/api/auth.ts` — login, logout, refresh, getCurrentUser
 - `src/services/` — per-entity modules (`appointmentService`, `patientService`, etc.) that call `apiRequest`
+- `src/queries/` — TanStack Query hooks over the services; pages use these, never the services directly.
+  - `keys.ts` holds every query key. Reads: `useAppointments(date)`, `useTherapists()`, `usePatients()`, `usePatientSearch(q)` (debounced).
+  - Writes are `useMutation` hooks that invalidate what they change. Check-in (`useUpdateAppointmentStatus`) is optimistic and rolls back on error.
+  - `useAppointments` keeps the previous date as placeholder data (`isPlaceholderData`) while a new date loads.
+  - `queryClient.ts`: 30s stale time; queries retry once on network/5xx errors, never on 4xx; writes don't retry. `App.tsx` clears the cache on logout so another clinic never sees it.
 
 **Data model (flat):** `Patient {firstName,lastName}`, `Therapist {name}`, `Appointment {patient, therapist, scheduledAt, type, status}`. `type` = Evaluation/Reassessment/Follow-up. `status` is a minimal 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`. There is no Case or Body Region. Types live one-per-entity in `src/types/` (`patient.ts`, `therapist.ts`, `appointment.ts`, `common.ts`). The API returns denormalized `BoardRow`s (patient/therapist names inline) for both surfaces.
 
@@ -49,7 +54,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 
 ## Key Conventions
 
-- No external state management library — use React Context for shared state, local `useState` for component state.
+- Server data lives in TanStack Query (`src/queries/`); don't fetch in `useEffect`. React Context is for app state (auth, toasts), local `useState` for component state.
 - All API calls go through `apiRequest` from `src/api/client.ts` — never use `fetch` directly in components or services.
 - Front-desk pages live under `src/features/console/`.
 - Shared UI components live in `src/components/ui/`. Build pages from them instead of hand-rolling the pattern:

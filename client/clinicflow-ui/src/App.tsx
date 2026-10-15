@@ -2,6 +2,8 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
@@ -41,6 +43,13 @@ function DisplayApp() {
 function App() {
   const { status, currentUser } = useAuth();
   const { pathname } = useLocation();
+  const queryClient = useQueryClient();
+
+  // Cached data belongs to the clinic that was signed in. Drop all of it on logout or session
+  // expiry, so the next login (possibly another clinic) never sees it.
+  useEffect(() => {
+    if (status === "anonymous") queryClient.clear();
+  }, [status, queryClient]);
 
   if (pathname.startsWith("/register")) {
     return (
