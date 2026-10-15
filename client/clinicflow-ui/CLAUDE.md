@@ -38,7 +38,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 **Two surfaces / role-based routing** (`src/App.tsx` renders by `currentUser.roleName`):
 
 - **ADMIN (front desk):** `ConsoleLayout` (`src/features/console/`) — `/` = `SchedulePage` (today's schedule + fast-add row with patient typeahead + Arrived/Start check-in), `/patients`, `/therapists`; `/board` opens the clinic display.
-- **DISPLAY:** `/` = `ScheduleDisplayPage` only — read-only, auto-refreshing, **Currently Waiting** large + **Up Next** smaller.
+- **DISPLAY:** `/` = `ScheduleDisplayPage` only — read-only TV board, auto-refreshing every 30s, **Currently Waiting** large + **Up Next** smaller. It's a public screen, so patients show as first name + last initial (`boardName()` in `src/types/patient.ts`); the console keeps full names. It has a therapist color legend, a live "Updated Xs ago" indicator (amber after 2 min without a successful refresh), and a dark mode button. Type sizes scale with screen width for 1080p and 4K TVs.
 
 **Testing:** the Vitest suite mocks the API with MSW in `src/test/msw/` (node server, wired up in `src/test/setup.ts`). This is test-only — the running app has no mock backend and always hits the real API.
 

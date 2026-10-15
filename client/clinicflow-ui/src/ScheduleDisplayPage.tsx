@@ -13,20 +13,54 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { keyframes } from "@mui/material/styles";
 import { useAuth } from "./auth/AuthContext";
+import { ColorModeIconButton } from "./components/ui/ColorModeToggle";
 import { useTherapistAccents } from "./components/ui/therapistAccents";
 import { useAppointments } from "./queries/appointments";
 import { useTherapists } from "./queries/therapists";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
+import { boardName } from "./types/patient";
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
+
+// The board runs all day on a TV: reload every 30s, and whenever the tab regains focus.
+const BOARD_REFRESH_MS = 30_000;
+// No successful update for this long means the board is probably offline.
+const STALE_AFTER_MS = 2 * 60_000;
+
+// Type sizes that grow with the screen width, so the board reads from across the room on a
+// 1080p TV and keeps growing on a 4K TV running at 100% scaling (3840 CSS px wide).
+const size = {
+  clinic: "clamp(1.45rem, 2.2vw, 4.4rem)",
+  clock: "clamp(1.35rem, 2.1vw, 4.2rem)",
+  date: "clamp(.85rem, 1.1vw, 2.2rem)",
+  legend: "clamp(.85rem, 1vw, 2rem)",
+  waitingTitle: "clamp(1.45rem, 2.1vw, 4.2rem)",
+  upNextTitle: "clamp(1.2rem, 1.6vw, 3.2rem)",
+  primary: {
+    therapist: "clamp(1rem, 1.35vw, 2.7rem)",
+    patient: "clamp(1.8rem, 3vw, 6rem)",
+    type: "clamp(.95rem, 1.25vw, 2.5rem)",
+    time: "clamp(1rem, 1.5vw, 3rem)",
+  },
+  secondary: {
+    therapist: "clamp(.9rem, 1vw, 2rem)",
+    patient: "clamp(1.35rem, 2vw, 4rem)",
+    type: "clamp(.85rem, 1vw, 2rem)",
+    time: "clamp(.9rem, 1.05vw, 2.1rem)",
+  },
+};
+
+const pulse = keyframes`
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+`;
 
 function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-
-// The board runs all day on a TV: reload every 30s, and whenever the tab regains focus.
-const BOARD_REFRESH_MS = 30_000;
 
 function formatTime(value: string): string {
   const parsed = new Date(value.includes("T") ? value : value.replace(" ", "T"));
@@ -36,6 +70,53 @@ function formatTime(value: string): string {
 
 function typeLabel(type: BoardRow["type"]): string {
   return appointmentTypeOptions.find((option) => option.value === type)?.label ?? "";
+}
+
+// "Updated 12s ago", turning amber ("Reconnecting…") when updates stop.
+function LiveIndicator({ updatedAt, failing }: { updatedAt: number; failing: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const ageMs = Math.max(0, now - updatedAt);
+  const seconds = Math.floor(ageMs / 1000);
+  const ago =
+    seconds < 10
+      ? "just now"
+      : seconds < 60
+        ? `${seconds}s ago`
+        : `${Math.floor(seconds / 60)} min ago`;
+  const live = updatedAt > 0 && !failing && ageMs < STALE_AFTER_MS;
+  const label =
+    updatedAt === 0 ? "Connecting…" : live ? `Updated ${ago}` : `Reconnecting… last updated ${ago}`;
+
+  return (
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+      <Box
+        aria-hidden="true"
+        sx={{
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          color: live ? "success.main" : "warning.main",
+          bgcolor: "currentColor",
+          animation: live ? `${pulse} 2s ease-out infinite` : "none",
+        }}
+      />
+      <Typography
+        sx={{
+          fontSize: size.legend,
+          fontWeight: 600,
+          color: live ? "text.secondary" : "warning.main",
+        }}
+      >
+        {label}
+      </Typography>
+    </Stack>
+  );
 }
 
 function ScheduleCard({
@@ -48,6 +129,7 @@ function ScheduleCard({
   accent: string;
 }) {
   const large = prominence === "primary";
+  const sizes = large ? size.primary : size.secondary;
 
   return (
     <Card
@@ -64,7 +146,7 @@ function ScheduleCard({
           content: '""',
           position: "absolute",
           inset: "0 auto 0 0",
-          width: large ? 8 : 5,
+          width: large ? "clamp(8px, 0.45vw, 16px)" : "clamp(5px, 0.3vw, 10px)",
           bgcolor: accent,
         },
       })}
@@ -78,33 +160,23 @@ function ScheduleCard({
       >
         <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="flex-start">
           <Box sx={{ minWidth: 0 }}>
-            <Typography
-              sx={{
-                color: accent,
-                fontSize: large ? "clamp(1rem, 1.35vw, 1.4rem)" : "clamp(.9rem, 1vw, 1.1rem)",
-                fontWeight: 750,
-              }}
-            >
+            <Typography sx={{ color: accent, fontSize: sizes.therapist, fontWeight: 750 }}>
               {row.therapistName}
             </Typography>
             <Typography
               sx={{
                 mt: 0.6,
-                fontSize: large ? "clamp(1.8rem, 3vw, 3.35rem)" : "clamp(1.35rem, 2vw, 2.05rem)",
+                fontSize: sizes.patient,
                 fontWeight: 760,
                 lineHeight: 1.08,
                 letterSpacing: "-.03em",
               }}
             >
-              {row.patientName}
+              {boardName(row.patientName)}
             </Typography>
             <Typography
               color="text.secondary"
-              sx={{
-                mt: 1,
-                fontSize: large ? "clamp(.95rem, 1.25vw, 1.3rem)" : "clamp(.85rem, 1vw, 1.05rem)",
-                fontWeight: 600,
-              }}
+              sx={{ mt: 1, fontSize: sizes.type, fontWeight: 600 }}
             >
               {typeLabel(row.type)}
             </Typography>
@@ -120,7 +192,7 @@ function ScheduleCard({
               color: accent,
               border: `1px solid ${theme.alpha(accent, 0.22)}`,
               borderRadius: 1.25,
-              fontSize: large ? "clamp(1rem, 1.45vw, 1.5rem)" : "clamp(.9rem, 1vw, 1.1rem)",
+              fontSize: sizes.time,
             })}
           />
         </Stack>
@@ -136,7 +208,7 @@ function EmptyPanel({ title, description }: { title: string; description: string
       justifyContent="center"
       spacing={1.25}
       sx={{
-        minHeight: 150,
+        minHeight: "clamp(150px, 12vw, 320px)",
         p: 4,
         textAlign: "center",
         borderRadius: 2,
@@ -146,9 +218,13 @@ function EmptyPanel({ title, description }: { title: string; description: string
         borderColor: "border.strong",
       }}
     >
-      <EventAvailableRoundedIcon sx={{ fontSize: 38, color: "text.disabled" }} />
-      <Typography variant="h5">{title}</Typography>
-      <Typography color="text.secondary">{description}</Typography>
+      <EventAvailableRoundedIcon
+        sx={{ fontSize: "clamp(38px, 2.5vw, 76px)", color: "text.disabled" }}
+      />
+      <Typography sx={{ fontSize: size.upNextTitle, fontWeight: 700 }}>{title}</Typography>
+      <Typography color="text.secondary" sx={{ fontSize: size.legend }}>
+        {description}
+      </Typography>
     </Stack>
   );
 }
@@ -200,6 +276,19 @@ export default function ScheduleDisplayPage() {
     ...appointments.map((appointment) => appointment.therapistId),
   ]);
 
+  // Legend: only the therapists with someone on the board, in first-appearance order.
+  const legend = useMemo(() => {
+    const seen = new Map<number, string>();
+    for (const row of [...waiting, ...upNext]) {
+      if (!seen.has(row.therapistId)) seen.set(row.therapistId, row.therapistName);
+    }
+    return [...seen.entries()];
+  }, [waiting, upNext]);
+
+  // A failed refresh keeps showing the last data (the live indicator turns amber); only a board
+  // that never loaded shows an error.
+  const loadFailed = appointmentsQuery.isError && !appointmentsQuery.data;
+
   return (
     <Box
       sx={{
@@ -209,7 +298,7 @@ export default function ScheduleDisplayPage() {
         color: "text.primary",
       }}
     >
-      <Stack spacing={{ xs: 3, lg: 4 }} sx={{ maxWidth: 1800, mx: "auto" }}>
+      <Stack spacing={{ xs: 3, lg: 4 }} sx={{ maxWidth: 3400, mx: "auto" }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
@@ -218,7 +307,7 @@ export default function ScheduleDisplayPage() {
         >
           <Typography
             component="h1"
-            sx={{ fontSize: "clamp(1.45rem, 2.3vw, 2.5rem)", fontWeight: 750, lineHeight: 1.15 }}
+            sx={{ fontSize: size.clinic, fontWeight: 750, lineHeight: 1.15 }}
           >
             {CLINIC_NAME}
           </Typography>
@@ -247,25 +336,59 @@ export default function ScheduleDisplayPage() {
               </Button>
             )}
             <Box sx={{ textAlign: "right" }}>
-              <Typography
-                sx={{ fontSize: "clamp(1.35rem, 2vw, 2.2rem)", fontWeight: 720, lineHeight: 1 }}
-              >
+              <Typography sx={{ fontSize: size.clock, fontWeight: 720, lineHeight: 1 }}>
                 {currentTime}
               </Typography>
-              <Typography
-                sx={{
-                  mt: 0.75,
-                  color: "text.secondary",
-                  fontSize: "clamp(.85rem, 1.1vw, 1.15rem)",
-                }}
-              >
+              <Typography sx={{ mt: 0.75, color: "text.secondary", fontSize: size.date }}>
                 {currentDate}
               </Typography>
             </Box>
           </Stack>
         </Stack>
 
-        {appointmentsQuery.isError && (
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 1.5, md: 3 }}
+          alignItems={{ md: "center" }}
+          justifyContent="space-between"
+        >
+          <Stack
+            component="ul"
+            aria-label="Therapists"
+            direction="row"
+            flexWrap="wrap"
+            columnGap={3}
+            rowGap={1}
+            sx={{ listStyle: "none", m: 0, p: 0 }}
+          >
+            {legend.map(([therapistId, name]) => (
+              <Stack
+                component="li"
+                key={therapistId}
+                direction="row"
+                spacing={1}
+                alignItems="center"
+              >
+                <Box
+                  aria-hidden="true"
+                  sx={{
+                    width: "clamp(10px, 0.7vw, 22px)",
+                    height: "clamp(10px, 0.7vw, 22px)",
+                    borderRadius: "50%",
+                    bgcolor: therapistAccents.get(therapistId),
+                  }}
+                />
+                <Typography sx={{ fontSize: size.legend, fontWeight: 650 }}>{name}</Typography>
+              </Stack>
+            ))}
+          </Stack>
+          <LiveIndicator
+            updatedAt={appointmentsQuery.dataUpdatedAt}
+            failing={appointmentsQuery.isError}
+          />
+        </Stack>
+
+        {loadFailed && (
           <Alert severity="error">
             {appointmentsQuery.error instanceof Error
               ? appointmentsQuery.error.message
@@ -275,11 +398,8 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <GroupsRoundedIcon sx={{ color: "status.waiting" }} />
-            <Typography
-              component="h2"
-              sx={{ fontSize: "clamp(1.45rem, 2.1vw, 2.35rem)", fontWeight: 750 }}
-            >
+            <GroupsRoundedIcon sx={{ color: "status.waiting", fontSize: size.waitingTitle }} />
+            <Typography component="h2" sx={{ fontSize: size.waitingTitle, fontWeight: 750 }}>
               Currently waiting
             </Typography>
             <Chip
@@ -287,6 +407,7 @@ export default function ScheduleDisplayPage() {
               variant="outlined"
               sx={(theme) => ({
                 color: "status.waiting",
+                fontSize: size.legend,
                 borderColor: theme.alpha(theme.vars.palette.status.waiting, 0.35),
                 bgcolor: theme.alpha(theme.vars.palette.status.waiting, 0.05),
               })}
@@ -313,6 +434,9 @@ export default function ScheduleDisplayPage() {
                     md: "repeat(2, minmax(0, 1fr))",
                     xl: "repeat(3, minmax(0, 1fr))",
                   },
+                  "@media (min-width: 2400px)": {
+                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                  },
                   gap: { xs: 1.5, lg: 2 },
                 }}
               >
@@ -331,11 +455,10 @@ export default function ScheduleDisplayPage() {
 
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.25} alignItems="center">
-            <EventAvailableRoundedIcon sx={{ color: "status.scheduled" }} />
-            <Typography
-              component="h2"
-              sx={{ fontSize: "clamp(1.2rem, 1.55vw, 1.65rem)", fontWeight: 720 }}
-            >
+            <EventAvailableRoundedIcon
+              sx={{ color: "status.scheduled", fontSize: size.upNextTitle }}
+            />
+            <Typography component="h2" sx={{ fontSize: size.upNextTitle, fontWeight: 720 }}>
               Up next
             </Typography>
             <Chip
@@ -344,6 +467,7 @@ export default function ScheduleDisplayPage() {
               size="small"
               sx={(theme) => ({
                 color: "status.scheduled",
+                fontSize: size.legend,
                 borderColor: theme.alpha(theme.vars.palette.status.scheduled, 0.3),
                 bgcolor: theme.alpha(theme.vars.palette.status.scheduled, 0.04),
               })}
@@ -352,8 +476,8 @@ export default function ScheduleDisplayPage() {
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5 }}>
             {upNext.length === 0 ? (
               <EmptyPanel
-                title="Nothing upcoming"
-                description="Scheduled patients will appear here."
+                title="No more visits today"
+                description="Upcoming patients will appear here."
               />
             ) : (
               <Box
@@ -380,21 +504,24 @@ export default function ScheduleDisplayPage() {
           </Paper>
         </Stack>
 
-        {currentUser?.roleName === "DISPLAY" && (
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<LogoutRoundedIcon fontSize="small" />}
-            onClick={() => void logout()}
-            sx={(theme) => ({
-              alignSelf: "flex-end",
-              color: "text.secondary",
-              "&:hover": { bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.05) },
-            })}
-          >
-            Log out
-          </Button>
-        )}
+        {/* Quiet footer: dark mode for the TV, and log out for display accounts. */}
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+          <ColorModeIconButton />
+          {currentUser?.roleName === "DISPLAY" && (
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<LogoutRoundedIcon fontSize="small" />}
+              onClick={() => void logout()}
+              sx={(theme) => ({
+                color: "text.secondary",
+                "&:hover": { bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.05) },
+              })}
+            >
+              Log out
+            </Button>
+          )}
+        </Stack>
       </Stack>
     </Box>
   );
