@@ -1,5 +1,11 @@
 import { apiRequest } from "./client";
-import type { CurrentUser, JwtResponse, LoginRequest, RegisterRequest } from "../types/auth";
+import type {
+  CurrentUser,
+  JwtResponse,
+  LoginRequest,
+  RegisterRequest,
+  RoleName,
+} from "../types/auth";
 
 export function login(request: LoginRequest) {
   return apiRequest<JwtResponse>("/auth/login", {
@@ -8,6 +14,16 @@ export function login(request: LoginRequest) {
     skipAuth: true,
     retryOn401: false,
     statusMessages: { 401: "Username or password is incorrect." },
+  });
+}
+
+// One-click sign-in to the shared demo clinic as its front desk (ADMIN) or display (DISPLAY)
+// account. No password: the backend only allows this for the demo clinic.
+export function loginAsDemo(role: RoleName) {
+  return apiRequest<JwtResponse>(`/auth/demo/${role}`, {
+    method: "POST",
+    skipAuth: true,
+    retryOn401: false,
   });
 }
 

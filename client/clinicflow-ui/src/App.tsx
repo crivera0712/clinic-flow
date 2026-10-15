@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
+import LandingPage from "./features/landing/LandingPage";
 import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { ConsoleLayout } from "./features/console/ConsoleLayout";
@@ -71,8 +72,16 @@ function App() {
     );
   }
 
+  // Signed out: the landing page at /, sign-in at /login; anything else goes to the landing
+  // page (so logging out lands there too).
   if (status === "anonymous") {
-    return <LoginPage />;
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   return currentUser?.roleName === "ADMIN" ? <AdminApp /> : <DisplayApp />;

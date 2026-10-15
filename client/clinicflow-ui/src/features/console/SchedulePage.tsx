@@ -22,7 +22,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { useIsDemo } from "../../auth/AuthContext";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { DemoReadOnly } from "../../components/ui/DemoReadOnly";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { FormDrawer } from "../../components/ui/FormDrawer";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -96,6 +98,7 @@ function AppointmentRow({
   row,
   accent,
   disabled,
+  readOnly,
   onStatus,
   onEdit,
   onCancel,
@@ -104,6 +107,8 @@ function AppointmentRow({
   accent?: string;
   // True while these rows are the previous date's, shown until the new date loads.
   disabled: boolean;
+  // Demo clinic: check-in still works, but edit and cancel are turned off.
+  readOnly: boolean;
   onStatus: (status: AppointmentStatus) => void;
   onEdit: () => void;
   onCancel: () => void;
@@ -183,6 +188,7 @@ function AppointmentRow({
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <MenuItem
+            disabled={readOnly}
             onClick={() => {
               setMenuAnchor(null);
               onEdit();
@@ -191,9 +197,12 @@ function AppointmentRow({
             <ListItemIcon>
               <EditRoundedIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Edit appointment</ListItemText>
+            <ListItemText secondary={readOnly ? "Read-only in the demo" : undefined}>
+              Edit appointment
+            </ListItemText>
           </MenuItem>
           <MenuItem
+            disabled={readOnly}
             onClick={() => {
               setMenuAnchor(null);
               onCancel();
@@ -203,7 +212,9 @@ function AppointmentRow({
             <ListItemIcon sx={{ color: "inherit" }}>
               <DeleteOutlineRoundedIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Cancel appointment</ListItemText>
+            <ListItemText secondary={readOnly ? "Read-only in the demo" : undefined}>
+              Cancel appointment
+            </ListItemText>
           </MenuItem>
         </Menu>
       </Stack>
@@ -285,6 +296,7 @@ export function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | null>(null);
   const toast = useToast();
+  const isDemo = useIsDemo();
 
   // Reload every 60s (and when the tab regains focus) in case another front-desk computer
   // checks someone in.
@@ -368,6 +380,7 @@ export function SchedulePage() {
   }
 
   function handleAdd() {
+    if (isDemo) return;
     const typed = patientInput.trim();
     const patientChoice =
       selectedPatient ??
@@ -470,6 +483,7 @@ export function SchedulePage() {
             row={row}
             accent={accents.get(row.therapistId)}
             disabled={showingPreviousDate}
+            readOnly={isDemo}
             onStatus={(status) => setStatus(row, status)}
             onEdit={() => setEditTarget(row)}
             onCancel={() => setCancelTarget(row)}
@@ -645,15 +659,17 @@ export function SchedulePage() {
                 </MenuItem>
               ))}
             </TextField>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createAppointment.isPending}
-              startIcon={<AddRoundedIcon />}
-              sx={{ minWidth: 112 }}
-            >
-              Add visit
-            </Button>
+            <DemoReadOnly active={isDemo}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={createAppointment.isPending || isDemo}
+                startIcon={<AddRoundedIcon />}
+                sx={{ minWidth: 112 }}
+              >
+                Add visit
+              </Button>
+            </DemoReadOnly>
           </Stack>
         </Box>
 

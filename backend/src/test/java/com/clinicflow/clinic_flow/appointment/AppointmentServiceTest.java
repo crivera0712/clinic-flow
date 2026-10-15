@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -203,7 +205,25 @@ class AppointmentServiceTest {
         appointmentService.updateAppointmentById(9L, patch);
 
         assertEquals(Appointment.Status.WAITING, appointment.getStatus());
-        verify(clinicContextService).assertWritableClinic();
+        // Status-only changes (check-in) are allowed even in the read-only demo clinic.
+        verify(clinicContextService, never()).assertWritableClinic();
+    }
+
+    @Test
+    void updateAppointment_inDemoClinic_rejectsChangesBeyondStatus() {
+        doThrow(new DemoClinicReadOnlyException()).when(clinicContextService).assertWritableClinic();
+
+        var reschedule = new AppointmentPatchDto(AT.plusHours(1), null, null, null);
+        var statusAndType = new AppointmentPatchDto(null, null, Appointment.Status.WAITING, Appointment.Type.FOLLOW_UP);
+        var statusAndTherapist = new AppointmentPatchDto(null, 3L, Appointment.Status.DONE, null);
+
+        assertThrows(DemoClinicReadOnlyException.class, () -> appointmentService.updateAppointmentById(9L, reschedule));
+        assertThrows(
+                DemoClinicReadOnlyException.class, () -> appointmentService.updateAppointmentById(9L, statusAndType));
+        assertThrows(
+                DemoClinicReadOnlyException.class,
+                () -> appointmentService.updateAppointmentById(9L, statusAndTherapist));
+        verify(appointmentRepository, never()).save(any());
     }
 
     @Test

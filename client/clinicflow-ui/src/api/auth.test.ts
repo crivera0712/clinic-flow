@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { getCurrentUser, login, logout, refresh, register } from "./auth";
+import { getCurrentUser, login, loginAsDemo, logout, refresh, register } from "./auth";
 import { configureApiClient, resetApiClient } from "./client";
 import { server } from "../test/msw/server";
 import { apiUrl } from "../test/constants";
@@ -104,5 +104,21 @@ describe("auth api", () => {
 
     expect(captured?.headers.get("authorization")).toBe("Bearer tok");
     expect(res).toEqual(currentUserFixture);
+  });
+
+  it("loginAsDemo POSTs to /auth/demo/{role} with no body or auth header", async () => {
+    let captured: Request | undefined;
+    server.use(
+      http.post(apiUrl("/auth/demo/:role"), ({ request }) => {
+        captured = request;
+        return HttpResponse.json(jwtFixture);
+      }),
+    );
+
+    const result = await loginAsDemo("DISPLAY");
+
+    expect(new URL(captured!.url).pathname).toBe("/api/auth/demo/DISPLAY");
+    expect(captured?.headers.get("authorization")).toBeNull();
+    expect(result).toEqual(jwtFixture);
   });
 });

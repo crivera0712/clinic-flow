@@ -20,7 +20,7 @@ export function displayName(patient: Pick<Patient, "firstName" | "lastName">): s
   return `${patient.firstName} ${patient.lastName}`.trim();
 }
 
-// For the public display board in the waiting room: first name and last initial
+// For the public display board in the gym: first name and last initial
 // ("Maya Lopez" -> "Maya L."), so full names aren't shown to everyone. The console keeps full names.
 export function boardName(fullName: string): string {
   const parts = fullName.trim().split(/\s+/);

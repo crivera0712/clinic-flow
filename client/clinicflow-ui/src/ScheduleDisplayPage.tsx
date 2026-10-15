@@ -22,8 +22,6 @@ import { useTherapists } from "./queries/therapists";
 import { appointmentTypeOptions, type BoardRow } from "./types/appointment";
 import { boardName } from "./types/patient";
 
-const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || "Mill Valley Physical Therapy";
-
 // The board runs all day on a TV: reload every 30s, and whenever the tab regains focus.
 const BOARD_REFRESH_MS = 30_000;
 // No successful update for this long means the board is probably offline.
@@ -309,7 +307,7 @@ export default function ScheduleDisplayPage() {
             component="h1"
             sx={{ fontSize: size.clinic, fontWeight: 750, lineHeight: 1.15 }}
           >
-            {CLINIC_NAME}
+            {currentUser?.clinicName}
           </Typography>
           <Stack
             direction="row"

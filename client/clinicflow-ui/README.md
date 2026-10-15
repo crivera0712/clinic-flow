@@ -10,7 +10,6 @@ In local dev the app calls `/api`, which Vite proxies to the backend at
 
 ```bash
 VITE_API_PROXY_TARGET=http://localhost:8080   # backend the dev proxy points at
-VITE_CLINIC_NAME=Mill Valley Physical Therapy # clinic name shown on the display board
 ```
 
 For a deployed frontend talking to a different API origin, set:

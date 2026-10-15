@@ -14,5 +14,6 @@ public interface UsersMapper {
     public Users toEntity(CreateUserRequest createUserRequest);
 
     @Mapping(target = "isDemo", source = "clinic.isDemo")
+    @Mapping(target = "clinicName", source = "clinic.name")
     public LoginResponse toLoginResponse(Users user);
 }

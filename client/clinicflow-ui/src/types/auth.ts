@@ -19,4 +19,5 @@ export interface CurrentUser {
   username: string;
   roleName: RoleName;
   isDemo: boolean;
+  clinicName: string;
 }

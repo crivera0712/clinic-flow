@@ -17,7 +17,9 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useIsDemo } from "../../auth/AuthContext";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { DemoReadOnly } from "../../components/ui/DemoReadOnly";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { FormDrawer } from "../../components/ui/FormDrawer";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -46,11 +48,14 @@ function TherapistCard({
   therapist,
   accent,
   load,
+  readOnly,
   onRemove,
 }: {
   therapist: Therapist;
   accent?: string;
   load?: DayLoad;
+  // Demo clinic: removing therapists is turned off.
+  readOnly: boolean;
   onRemove: () => void;
 }) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -107,6 +112,7 @@ function TherapistCard({
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <MenuItem
+            disabled={readOnly}
             onClick={() => {
               setMenuAnchor(null);
               onRemove();
@@ -116,7 +122,9 @@ function TherapistCard({
             <ListItemIcon sx={{ color: "inherit" }}>
               <DeleteOutlineRoundedIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Remove therapist</ListItemText>
+            <ListItemText secondary={readOnly ? "Read-only in the demo" : undefined}>
+              Remove therapist
+            </ListItemText>
           </MenuItem>
         </Menu>
       </Stack>
@@ -132,6 +140,7 @@ export function TherapistsManage() {
   const [adding, setAdding] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<Therapist | null>(null);
   const toast = useToast();
+  const isDemo = useIsDemo();
   const accents = useTherapistAccents(therapists.map((t) => t.id));
 
   // Today's visits per therapist, from the same cached schedule the Schedule page uses.
@@ -160,6 +169,19 @@ export function TherapistsManage() {
     });
   }
 
+  const addTherapistButton = (
+    <DemoReadOnly active={isDemo}>
+      <Button
+        variant="contained"
+        startIcon={<AddRoundedIcon />}
+        disabled={isDemo}
+        onClick={() => setAdding(true)}
+      >
+        Add therapist
+      </Button>
+    </DemoReadOnly>
+  );
+
   function renderGrid() {
     if (loadFailed) return null;
     if (therapistsQuery.isPending) {
@@ -178,15 +200,7 @@ export function TherapistsManage() {
             icon={<MedicalServicesRoundedIcon sx={{ fontSize: 42 }} />}
             title="No therapists yet"
             description="Add the first member of your care team."
-            action={
-              <Button
-                variant="contained"
-                startIcon={<AddRoundedIcon />}
-                onClick={() => setAdding(true)}
-              >
-                Add therapist
-              </Button>
-            }
+            action={addTherapistButton}
           />
         </Paper>
       );
@@ -199,6 +213,7 @@ export function TherapistsManage() {
             therapist={therapist}
             accent={accents.get(therapist.id)}
             load={loads.get(therapist.id)}
+            readOnly={isDemo}
             onRemove={() => setRemoveTarget(therapist)}
           />
         ))}
@@ -216,15 +231,7 @@ export function TherapistsManage() {
         description="Manage the clinicians available for scheduling and daily patient care."
         onRefresh={() => void therapistsQuery.refetch()}
         refreshing={therapistsQuery.isFetching}
-        action={
-          <Button
-            variant="contained"
-            startIcon={<AddRoundedIcon />}
-            onClick={() => setAdding(true)}
-          >
-            Add therapist
-          </Button>
-        }
+        action={addTherapistButton}
       />
 
       <Stack component="section" aria-label="Care team" spacing={1.5}>

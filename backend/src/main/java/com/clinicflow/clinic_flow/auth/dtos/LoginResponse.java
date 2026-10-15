@@ -9,4 +9,5 @@ public class LoginResponse {
     private String username;
     private Users.RoleName roleName;
     private Boolean isDemo;
+    private String clinicName;
 }
