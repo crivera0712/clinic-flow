@@ -274,6 +274,7 @@ class AuthControllerTest {
         response.setUsername("sam");
         response.setRoleName(Users.RoleName.ADMIN);
         response.setIsDemo(true);
+        response.setClinicName("Raccoon City Physical Therapy");
 
         when(authService.me()).thenReturn(response);
 
@@ -282,7 +283,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.id").value(11L))
                 .andExpect(jsonPath("$.username").value("sam"))
                 .andExpect(jsonPath("$.roleName").value("ADMIN"))
-                .andExpect(jsonPath("$.isDemo").value(true));
+                .andExpect(jsonPath("$.isDemo").value(true))
+                .andExpect(jsonPath("$.clinicName").value("Raccoon City Physical Therapy"));
     }
 
     @Test

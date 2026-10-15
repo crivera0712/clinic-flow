@@ -4,10 +4,11 @@ import { configureApiClient, resetApiClient } from "../api/client";
 import {
   getCurrentUser,
   login as loginRequest,
+  loginAsDemo as loginAsDemoRequest,
   logout as logoutRequest,
   refresh as refreshRequest,
 } from "../api/auth";
-import type { CurrentUser, LoginRequest } from "../types/auth";
+import type { CurrentUser, LoginRequest, RoleName } from "../types/auth";
 
 type AuthStatus = "bootstrapping" | "authenticated" | "anonymous";
 
@@ -18,6 +19,7 @@ type AuthContextValue = {
   currentUser: CurrentUser | null;
   status: AuthStatus;
   login: (request: LoginRequest) => Promise<void>;
+  loginAsDemo: (role: RoleName) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<string | null>;
 };
@@ -112,7 +114,15 @@ function useProvideAuth(): AuthContextValue {
   }
 
   async function login(request: LoginRequest) {
-    const response = await loginRequest(request);
+    await finishLogin(await loginRequest(request));
+  }
+
+  async function loginAsDemo(role: RoleName) {
+    await finishLogin(await loginAsDemoRequest(role));
+  }
+
+  // Store the new access token, then load who signed in; undo it all if that fails.
+  async function finishLogin(response: { token: string }) {
     setAccessTokenState(response.token);
 
     try {
@@ -207,7 +217,7 @@ function useProvideAuth(): AuthContextValue {
     };
   }, []);
 
-  return { accessToken, currentUser, status, login, logout, refresh };
+  return { accessToken, currentUser, status, login, loginAsDemo, logout, refresh };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

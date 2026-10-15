@@ -8,7 +8,8 @@ import Typography from "@mui/material/Typography";
 import { ApiError } from "./api/client";
 import { useAuth } from "./auth/AuthContext";
 import { AuthShell } from "./components/ui/AuthShell";
-import { BrandMark } from "./components/ui/BrandMark";
+import Link from "@mui/material/Link";
+import { Link as RouterLink } from "react-router-dom";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -38,19 +39,12 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <Stack spacing={3.5} component="form" onSubmit={handleSubmit}>
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
-          <BrandMark size={38} />
-          <Typography variant="h6">ClinicFlow</Typography>
-        </Stack>
         <div>
-          <Typography variant="overline" color="primary.main">
-            Welcome back
-          </Typography>
-          <Typography variant="h4" sx={{ mt: 0.5 }}>
+          <Typography variant="h4" component="h1">
             Sign in
           </Typography>
           <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>
-            Sign in to access your clinic schedule.
+            Sign in to your clinic's schedule.
           </Typography>
         </div>
 
@@ -88,8 +82,15 @@ export default function LoginPage() {
           disabled={submitting}
           sx={{ mt: 0.5 }}
         >
-          {submitting ? <CircularProgress size={24} color="inherit" /> : "Login"}
+          {submitting ? <CircularProgress size={24} color="inherit" /> : "Sign in"}
         </Button>
+
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          Just looking?{" "}
+          <Link component={RouterLink} to="/" fontWeight={650}>
+            Try the demo
+          </Link>
+        </Typography>
       </Stack>
     </AuthShell>
   );

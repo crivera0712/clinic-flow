@@ -10,6 +10,7 @@ npm run build    # Type-check + production build
 npm run lint     # ESLint
 npm run preview  # Preview production build locally
 npm run test:run # Vitest (headless)
+npm run screenshots # Recapture public/landing/*.jpg from a running app (see scripts/capture-screenshots.mjs)
 ```
 
 The app always talks to the real backend (via the Vite `/api` proxy in dev). There is no in-browser mock backend.
@@ -34,6 +35,8 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
   - `queryClient.ts`: 30s stale time; queries retry once on network/5xx errors, never on 4xx; writes don't retry. `App.tsx` clears the cache on logout so another clinic never sees it.
 
 **Data model (flat):** `Patient {firstName,lastName}`, `Therapist {name}`, `Appointment {patient, therapist, scheduledAt, type, status}`. `type` = Evaluation/Reassessment/Follow-up. `status` is a minimal 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`. There is no Case or Body Region. Types live one-per-entity in `src/types/` (`patient.ts`, `therapist.ts`, `appointment.ts`, `common.ts`). The API returns denormalized `BoardRow`s (patient/therapist names inline) for both surfaces.
+
+**Signed out:** `/` = `LandingPage` (`src/features/landing/`; one-click demo buttons call `loginAsDemo(role)` → `POST /api/auth/demo/{ADMIN|DISPLAY}`), `/login` = `LoginPage`, `/register/:clinicSlug` = `RegisterPage`; any other path redirects to `/` (so logging out lands on the landing page). The landing screenshots in `public/landing/` are captured by `npm run screenshots` (playwright-core driving the installed Chrome; credentials via env vars).
 
 **Two surfaces / role-based routing** (`src/App.tsx` renders by `currentUser.roleName`):
 

@@ -9,7 +9,11 @@ import { clinicTheme } from "./theme";
 import { boardName } from "./types/patient";
 
 const authMock = vi.hoisted(() => ({
-  currentUser: { username: "demo_admin", roleName: "ADMIN" },
+  currentUser: {
+    username: "demo_admin",
+    roleName: "ADMIN",
+    clinicName: "Raccoon City Physical Therapy",
+  },
   logout: vi.fn(),
 }));
 
@@ -66,7 +70,11 @@ function renderBoard() {
 
 describe("ScheduleDisplayPage", () => {
   beforeEach(() => {
-    authMock.currentUser = { username: "demo_admin", roleName: "ADMIN" };
+    authMock.currentUser = {
+      username: "demo_admin",
+      roleName: "ADMIN",
+      clinicName: "Raccoon City Physical Therapy",
+    };
     authMock.logout.mockReset();
     board.list.mockReset();
     board.list.mockResolvedValue(board.rows);
@@ -93,8 +101,9 @@ describe("ScheduleDisplayPage", () => {
 
     expect(screen.getByRole("heading", { name: "Currently waiting" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Up next" })).toBeInTheDocument();
+    // The signed-in clinic's name, from the API.
     expect(
-      screen.getByRole("heading", { name: "Mill Valley Physical Therapy" }),
+      screen.getByRole("heading", { name: "Raccoon City Physical Therapy" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("Mary R.")).toBeInTheDocument();
     expect(screen.getByText("Pat S.")).toBeInTheDocument();
@@ -143,7 +152,11 @@ describe("ScheduleDisplayPage", () => {
 
   it("shows the logout button only for display users, next to the dark mode button", async () => {
     const user = userEvent.setup();
-    authMock.currentUser = { username: "demo_display", roleName: "DISPLAY" };
+    authMock.currentUser = {
+      username: "demo_display",
+      roleName: "DISPLAY",
+      clinicName: "Raccoon City Physical Therapy",
+    };
     renderBoard();
 
     expect(screen.queryByRole("button", { name: /Console/ })).not.toBeInTheDocument();

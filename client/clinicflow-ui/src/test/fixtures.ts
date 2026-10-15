@@ -26,6 +26,7 @@ export const currentUserFixture: CurrentUser = {
   username: "demo_admin",
   roleName: "ADMIN",
   isDemo: true,
+  clinicName: "Raccoon City Physical Therapy",
 };
 
 // Wrap an array of rows in the backend's `PageResponse` envelope.
