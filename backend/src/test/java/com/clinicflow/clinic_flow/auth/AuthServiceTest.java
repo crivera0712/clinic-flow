@@ -15,6 +15,8 @@ import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
 import com.clinicflow.clinic_flow.clinics.Clinics;
 import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
 import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.demo.DemoResetService;
+import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
 import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
@@ -51,6 +53,9 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private DemoResetService demoResetService;
 
     @InjectMocks
     private AuthService authService;
@@ -171,6 +176,83 @@ class AuthServiceTest {
         assertSame(newRefreshJwt, result.refreshToken());
         verify(usersRepository).findByUsernameAndClinicId("sam", 7L);
         verify(authSessionService).revokeSession(session.getId(), 7L);
+    }
+
+    @Test
+    void shouldLoginAsDemoWithoutCheckingPassword() {
+        Clinics clinic = clinic(5L, "demo");
+        Users user = user(1L, "demo_admin", clinic);
+        Jwt accessJwt = mock(Jwt.class);
+        Jwt refreshJwt = mock(Jwt.class);
+        AuthSessions session = new AuthSessions();
+        session.setId(UUID.randomUUID());
+        session.setClinic(clinic);
+
+        when(usersRepository.findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(Users.RoleName.ADMIN))
+                .thenReturn(Optional.of(user));
+        when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
+        when(authSessionService.createSession(any(), any())).thenReturn(session);
+        when(jwtService.generateAccessToken(user, session.getId().toString(), 5L))
+                .thenReturn(accessJwt);
+        when(jwtService.generateRefreshToken(user, session.getId().toString(), 5L))
+                .thenReturn(refreshJwt);
+
+        LoginResult result = authService.loginAsDemo(Users.RoleName.ADMIN);
+
+        assertSame(accessJwt, result.accessToken());
+        assertSame(refreshJwt, result.refreshToken());
+        verify(passwordEncoder, never()).matches(any(), any());
+        // A demo admin (front desk) login gives the visitor a fresh demo day.
+        verify(demoResetService).resetDemoDataIfStale();
+    }
+
+    @Test
+    void shouldNotResetDemoForDisplayLogin() {
+        stubDemoLogin(Users.RoleName.DISPLAY);
+
+        authService.loginAsDemo(Users.RoleName.DISPLAY);
+
+        verify(demoResetService, never()).resetDemoDataIfStale();
+    }
+
+    @Test
+    void shouldStillLoginAsDemoWhenResetFails() {
+        Jwt accessJwt = stubDemoLogin(Users.RoleName.ADMIN);
+        when(demoResetService.resetDemoDataIfStale()).thenThrow(new IllegalStateException("db busy"));
+
+        LoginResult result = authService.loginAsDemo(Users.RoleName.ADMIN);
+
+        assertSame(accessJwt, result.accessToken());
+    }
+
+    private Jwt stubDemoLogin(Users.RoleName role) {
+        Clinics clinic = clinic(5L, "demo");
+        Users user = user(1L, "demo_user", clinic);
+        user.setRoleName(role);
+        Jwt accessJwt = mock(Jwt.class);
+        AuthSessions session = new AuthSessions();
+        session.setId(UUID.randomUUID());
+        session.setClinic(clinic);
+
+        when(usersRepository.findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(role))
+                .thenReturn(Optional.of(user));
+        when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
+        when(authSessionService.createSession(any(), any())).thenReturn(session);
+        when(jwtService.generateAccessToken(user, session.getId().toString(), 5L))
+                .thenReturn(accessJwt);
+        when(jwtService.generateRefreshToken(user, session.getId().toString(), 5L))
+                .thenReturn(mock(Jwt.class));
+        return accessJwt;
+    }
+
+    @Test
+    void shouldThrowClinicNotFoundWhenNoDemoUserForRole() {
+        when(usersRepository.findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(Users.RoleName.DISPLAY))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ClinicNotFoundException.class, () -> authService.loginAsDemo(Users.RoleName.DISPLAY));
+
+        verify(authSessionService, never()).createSession(any(), any());
     }
 
     private Clinics clinic(Long id, String slug) {

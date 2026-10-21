@@ -1,8 +1,25 @@
-import type { AppointmentStatus } from "../../types/appointment";
+function toDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export function getTodayDateString(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return toDateString(new Date());
+}
+
+// "2026-10-14" + 1 -> "2026-10-15", in local time so month and DST boundaries are handled.
+export function shiftDate(date: string, days: number): string {
+  const d = new Date(`${date}T00:00`);
+  d.setDate(d.getDate() + days);
+  return toDateString(d);
+}
+
+// "2026-10-14" -> "Wednesday, October 14"
+export function formatLongDate(date: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date(`${date}T00:00`));
 }
 
 // Parse "YYYY-MM-DDTHH:mm" (also tolerates a space separator) into a Date.
@@ -21,9 +38,3 @@ export function splitName(input: string): { firstName: string; lastName: string 
   const parts = input.trim().split(/\s+/);
   return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
 }
-
-export const statusChipColor: Record<AppointmentStatus, "default" | "info" | "success"> = {
-  SCHEDULED: "default",
-  WAITING: "info",
-  DONE: "success",
-};

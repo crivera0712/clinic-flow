@@ -4,10 +4,11 @@ import { configureApiClient, resetApiClient } from "../api/client";
 import {
   getCurrentUser,
   login as loginRequest,
+  loginAsDemo as loginAsDemoRequest,
   logout as logoutRequest,
   refresh as refreshRequest,
 } from "../api/auth";
-import type { CurrentUser, LoginRequest } from "../types/auth";
+import type { CurrentUser, LoginRequest, RoleName } from "../types/auth";
 
 type AuthStatus = "bootstrapping" | "authenticated" | "anonymous";
 
@@ -18,6 +19,7 @@ type AuthContextValue = {
   currentUser: CurrentUser | null;
   status: AuthStatus;
   login: (request: LoginRequest) => Promise<void>;
+  loginAsDemo: (role: RoleName) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<string | null>;
 };
@@ -30,7 +32,6 @@ function useProvideAuth(): AuthContextValue {
   const [status, setStatus] = useState<AuthStatus>("bootstrapping");
   const accessTokenRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
-  const didBootstrapRef = useRef(false);
 
   function readStoredAccessToken() {
     return sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -113,7 +114,15 @@ function useProvideAuth(): AuthContextValue {
   }
 
   async function login(request: LoginRequest) {
-    const response = await loginRequest(request);
+    await finishLogin(await loginRequest(request));
+  }
+
+  async function loginAsDemo(role: RoleName) {
+    await finishLogin(await loginAsDemoRequest(role));
+  }
+
+  // Store the new access token, then load who signed in; undo it all if that fails.
+  async function finishLogin(response: { token: string }) {
     setAccessTokenState(response.token);
 
     try {
@@ -158,12 +167,10 @@ function useProvideAuth(): AuthContextValue {
     };
   }, []);
 
+  // No run-once guard here: StrictMode runs effect -> cleanup -> effect in dev,
+  // and the second run must do the real bootstrap since the first is cancelled.
+  // Concurrent runs share one /auth/refresh request via refreshPromiseRef.
   useEffect(() => {
-    if (didBootstrapRef.current) {
-      return;
-    }
-    didBootstrapRef.current = true;
-
     let cancelled = false;
 
     async function bootstrap() {
@@ -210,7 +217,7 @@ function useProvideAuth(): AuthContextValue {
     };
   }, []);
 
-  return { accessToken, currentUser, status, login, logout, refresh };
+  return { accessToken, currentUser, status, login, loginAsDemo, logout, refresh };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -225,4 +232,10 @@ export function useAuth() {
   }
 
   return context;
+}
+
+// True when signed into the demo clinic, where only check-in is allowed. Returns false outside an
+// AuthProvider (e.g. in page tests) instead of throwing.
+export function useIsDemo(): boolean {
+  return useContext(AuthContext)?.currentUser?.isDemo ?? false;
 }

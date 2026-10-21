@@ -7,6 +7,7 @@ import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
 import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
 import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.demo.DemoResetService;
 import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.users.Users;
@@ -35,6 +36,7 @@ public class AuthService {
     private final AuthSessionService authSessionService;
     private final ClinicsRepository clinicsRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DemoResetService demoResetService;
 
     @Transactional
     public LoginResult login(LoginRequest request) {
@@ -51,6 +53,23 @@ public class AuthService {
 
         log.info(
                 "Login success for user={} clinicId={}",
+                user.getUsername(),
+                user.getClinic().getId());
+        return issueTokenPair(user);
+    }
+
+    @Transactional
+    public LoginResult loginAsDemo(Users.RoleName role) {
+        log.info("Demo login attempt role={}", role);
+
+        var user = usersRepository
+                .findFirstByClinic_IsDemoTrueAndRoleNameAndEnabledTrueOrderByIdAsc(role)
+                .orElseThrow(() -> new ClinicNotFoundException("Demo user not available"));
+
+        if (role == Users.RoleName.ADMIN) resetDemoForNewVisitor();
+
+        log.info(
+                "Demo login success for user={} clinicId={}",
                 user.getUsername(),
                 user.getClinic().getId());
         return issueTokenPair(user);
@@ -140,5 +159,15 @@ public class AuthService {
         var accessToken = jwtService.generateAccessToken(user, sessionId, clinicId);
         var refreshToken = jwtService.generateRefreshToken(user, sessionId, clinicId);
         return new LoginResult(accessToken, refreshToken);
+    }
+
+    // Give each demo visitor a fresh, time-correct day (at most once every 15 minutes). A failed
+    // reset shouldn't stop the visitor from signing in, so it's logged and skipped.
+    private void resetDemoForNewVisitor() {
+        try {
+            if (demoResetService.resetDemoDataIfStale()) log.info("Demo data reset for a new demo visitor");
+        } catch (RuntimeException ex) {
+            log.warn("Demo reset on login failed; continuing with existing demo data", ex);
+        }
     }
 }

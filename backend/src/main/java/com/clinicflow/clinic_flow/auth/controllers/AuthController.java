@@ -8,6 +8,7 @@ import com.clinicflow.clinic_flow.auth.dtos.LoginResponse;
 import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.exception.InvalidSessionException;
+import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
 import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,6 +39,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         var result = authService.login(request);
+        writeRefreshCookie(response, result.refreshToken().toString());
+        return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
+    }
+
+    @PostMapping("/demo/{role}")
+    public ResponseEntity<JwtResponse> loginAsDemo(@PathVariable Users.RoleName role, HttpServletResponse response) {
+        var result = authService.loginAsDemo(role);
         writeRefreshCookie(response, result.refreshToken().toString());
         return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
     }

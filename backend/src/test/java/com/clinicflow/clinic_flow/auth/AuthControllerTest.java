@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,6 +21,7 @@ import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.records.LoginResult;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.config.JwtConfig;
+import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
 import com.clinicflow.clinic_flow.exception.GlobalExceptionHandler;
 import com.clinicflow.clinic_flow.users.Users;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,6 +99,47 @@ class AuthControllerTest {
         verify(authService)
                 .login(argThat(loginRequest ->
                         "sam".equals(loginRequest.getUsername()) && "secret1".equals(loginRequest.getPassword())));
+    }
+
+    @Test
+    void shouldLoginAsDemo_whenRoleIsValid() throws Exception {
+        Jwt accessToken = mock(Jwt.class);
+        Jwt refreshToken = mock(Jwt.class);
+
+        when(accessToken.toString()).thenReturn("demo-access-token");
+        when(refreshToken.toString()).thenReturn("demo-refresh-token");
+        when(jwtConfig.getRefreshTokenExpiration()).thenReturn(3600);
+        when(jwtConfig.isCookieSecure()).thenReturn(false);
+        when(jwtConfig.getCookieSameSite()).thenReturn("Lax");
+        when(authService.loginAsDemo(Users.RoleName.ADMIN)).thenReturn(new LoginResult(accessToken, refreshToken));
+
+        mockMvc.perform(post("/api/auth/demo/ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("demo-access-token"))
+                .andExpect(cookie().value("refreshToken", "demo-refresh-token"))
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().path("refreshToken", "/api/auth/refresh"));
+
+        verify(authService).loginAsDemo(Users.RoleName.ADMIN);
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenDemoRoleIsInvalid() throws Exception {
+        mockMvc.perform(post("/api/auth/demo/foo"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid value for 'role'"));
+
+        verify(authService, never()).loginAsDemo(any());
+    }
+
+    @Test
+    void shouldReturnNotFound_whenDemoUserIsMissing() throws Exception {
+        when(authService.loginAsDemo(Users.RoleName.DISPLAY))
+                .thenThrow(new ClinicNotFoundException("Demo user not available"));
+
+        mockMvc.perform(post("/api/auth/demo/DISPLAY"))
+                .andExpect(status().isNotFound())
+                .andExpect(cookie().doesNotExist("refreshToken"));
     }
 
     @Test
@@ -231,6 +274,7 @@ class AuthControllerTest {
         response.setUsername("sam");
         response.setRoleName(Users.RoleName.ADMIN);
         response.setIsDemo(true);
+        response.setClinicName("Raccoon City Physical Therapy");
 
         when(authService.me()).thenReturn(response);
 
@@ -239,7 +283,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.id").value(11L))
                 .andExpect(jsonPath("$.username").value("sam"))
                 .andExpect(jsonPath("$.roleName").value("ADMIN"))
-                .andExpect(jsonPath("$.isDemo").value(true));
+                .andExpect(jsonPath("$.isDemo").value(true))
+                .andExpect(jsonPath("$.clinicName").value("Raccoon City Physical Therapy"));
     }
 
     @Test

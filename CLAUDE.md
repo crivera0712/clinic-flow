@@ -22,7 +22,7 @@ Multi-tenant scheduling backend for physical therapy clinics. Manages appointmen
 
 Scheduling uses a **flat appointment model**: an appointment holds its patient, therapist, `scheduledAt`, `type` (`EVALUATION` / `REASSESSMENT` / `FOLLOW_UP`), and `status` directly — there is no Case or Body Region. `status` is a 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`.
 
-A demo clinic (`demo_admin` / `demo_display`) is seeded and kept read-only; `DemoScheduler` reseeds it periodically.
+A demo clinic (`demo_admin` / `demo_display`) is seeded and read-only except for check-in: a `PATCH /api/appointments/{id}` that changes only `status` is allowed, everything else throws `DemoClinicReadOnlyException`. `POST /api/auth/demo/{ADMIN|DISPLAY}` signs into the demo without a password; a demo admin login reseeds the demo (at most every 15 minutes) with visits around the current time, and `DemoScheduler` also reseeds it nightly.
 
 ## Authentication Flow
 

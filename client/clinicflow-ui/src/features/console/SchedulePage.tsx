@@ -1,60 +1,65 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableContainer from "@mui/material/TableContainer";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
-import {
-  adminColors,
-  adminSelectProps,
-  adminTextFieldSx,
-} from "../../components/admin/adminStyles";
-import { ConfirmDeleteDialog } from "../../components/admin/ConfirmDeleteDialog";
+import { useIsDemo } from "../../auth/AuthContext";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { DemoReadOnly } from "../../components/ui/DemoReadOnly";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { FormDrawer } from "../../components/ui/FormDrawer";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { colors } from "../../theme";
+import { ListSkeleton } from "../../components/ui/Skeletons";
+import { StatCard } from "../../components/ui/StatCard";
+import { StatusChip } from "../../components/ui/StatusChip";
+import { useTherapistAccents } from "../../components/ui/therapistAccents";
+import { useToast } from "../../components/ui/useToast";
 import {
-  createAppointment,
-  listAppointmentsByDate,
-  removeAppointment,
-  updateAppointment,
-} from "../../services/appointmentService";
-import { searchPatients } from "../../services/patientService";
-import { listTherapists } from "../../services/therapistService";
+  useAppointments,
+  useCreateAppointment,
+  useRemoveAppointment,
+  useUpdateAppointment,
+  useUpdateAppointmentStatus,
+} from "../../queries/appointments";
+import { usePatientSearch } from "../../queries/patients";
+import { useTherapists } from "../../queries/therapists";
 import {
   appointmentStatusLabels,
   appointmentTypeOptions,
+  type AppointmentStatus,
   type AppointmentType,
   type BoardRow,
 } from "../../types/appointment";
 import type { Therapist } from "../../types/therapist";
-import { formatTime, getTodayDateString, splitName, statusChipColor } from "./scheduleUtils";
+import {
+  formatLongDate,
+  formatTime,
+  getTodayDateString,
+  shiftDate,
+  splitName,
+} from "./scheduleUtils";
 
-type SnackbarState = { open: boolean; severity: "success" | "error"; message: string };
+const statuses: AppointmentStatus[] = ["SCHEDULED", "WAITING", "DONE"];
+
 type PatientOption =
   | { kind: "existing"; id: number; firstName: string; lastName: string }
   | { kind: "create"; firstName: string; lastName: string };
@@ -64,515 +69,663 @@ function optionLabel(option: PatientOption): string {
   return option.kind === "existing" ? name : `Add new patient: "${name}"`;
 }
 
-function AppointmentActions({
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+// "2026-10-15" -> "Oct 15"
+function formatShortDate(date: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+    new Date(`${date}T00:00`),
+  );
+}
+
+function typeLabel(type: AppointmentType): string {
+  return appointmentTypeOptions.find((o) => o.value === type)?.label ?? type;
+}
+
+// True when a key press is meant for a form field or an open dialog/menu, not a page shortcut.
+function isTypingTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest(
+      "input, textarea, select, [contenteditable='true'], [role='dialog'], [role='menu']",
+    ) !== null
+  );
+}
+
+function AppointmentRow({
   row,
+  accent,
+  disabled,
+  readOnly,
   onStatus,
   onEdit,
-  onDelete,
+  onCancel,
 }: {
   row: BoardRow;
-  onStatus: (status: BoardRow["status"]) => void;
+  accent?: string;
+  // True while these rows are the previous date's, shown until the new date loads.
+  disabled: boolean;
+  // Demo clinic: check-in still works, but edit and cancel are turned off.
+  readOnly: boolean;
+  onStatus: (status: AppointmentStatus) => void;
   onEdit: () => void;
-  onDelete: () => void;
+  onCancel: () => void;
 }) {
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const done = row.status === "DONE";
+  const nextStep =
+    row.status === "SCHEDULED"
+      ? { label: "Arrived", status: "WAITING" as const, color: "primary" as const }
+      : row.status === "WAITING"
+        ? { label: "Start visit", status: "DONE" as const, color: "success" as const }
+        : null;
+
   return (
-    <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-      {row.status === "SCHEDULED" && (
-        <Button size="small" variant="outlined" color="primary" onClick={() => onStatus("WAITING")}>
-          Arrived
-        </Button>
-      )}
-      {row.status === "WAITING" && (
-        <Button size="small" variant="outlined" color="success" onClick={() => onStatus("DONE")}>
-          Start visit
-        </Button>
-      )}
-      <Tooltip title="Edit appointment">
+    <Stack
+      direction="row"
+      alignItems="center"
+      flexWrap="wrap"
+      columnGap={2}
+      rowGap={1}
+      sx={{ px: { xs: 2, md: 2.5 }, py: 1.25, "&:hover": { bgcolor: "action.hover" } }}
+    >
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        sx={{ flex: "1 1 220px", minWidth: 0 }}
+      >
+        <Box
+          aria-hidden="true"
+          sx={(theme) => ({
+            width: 10,
+            height: 10,
+            flexShrink: 0,
+            borderRadius: "50%",
+            bgcolor: done ? theme.alpha(accent ?? theme.vars.palette.text.disabled, 0.4) : accent,
+          })}
+        />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography fontWeight={700} noWrap color={done ? "text.secondary" : "text.primary"}>
+            {row.patientName}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {row.therapistName} · {typeLabel(row.type)}
+          </Typography>
+        </Box>
+      </Stack>
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: "auto" }}>
+        <StatusChip status={row.status} />
+        {/* Fixed width so chips and buttons line up down the list, with or without an action. */}
+        <Box sx={{ width: 112, display: "flex", justifyContent: "flex-end" }}>
+          {nextStep && (
+            <Button
+              size="small"
+              variant="outlined"
+              color={nextStep.color}
+              disabled={disabled}
+              onClick={() => onStatus(nextStep.status)}
+            >
+              {nextStep.label}
+            </Button>
+          )}
+        </Box>
         <IconButton
-          aria-label={`Edit ${row.patientName}'s appointment`}
+          aria-label={`More actions for ${row.patientName}`}
           size="small"
-          onClick={onEdit}
+          disabled={disabled}
+          onClick={(event) => setMenuAnchor(event.currentTarget)}
         >
-          <EditRoundedIcon fontSize="small" />
+          <MoreVertRoundedIcon fontSize="small" />
+        </IconButton>
+        <Menu
+          anchorEl={menuAnchor}
+          open={menuAnchor !== null}
+          onClose={() => setMenuAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <MenuItem
+            disabled={readOnly}
+            onClick={() => {
+              setMenuAnchor(null);
+              onEdit();
+            }}
+          >
+            <ListItemIcon>
+              <EditRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText secondary={readOnly ? "Read-only in the demo" : undefined}>
+              Edit appointment
+            </ListItemText>
+          </MenuItem>
+          <MenuItem
+            disabled={readOnly}
+            onClick={() => {
+              setMenuAnchor(null);
+              onCancel();
+            }}
+            sx={{ color: "error.main" }}
+          >
+            <ListItemIcon sx={{ color: "inherit" }}>
+              <DeleteOutlineRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText secondary={readOnly ? "Read-only in the demo" : undefined}>
+              Cancel appointment
+            </ListItemText>
+          </MenuItem>
+        </Menu>
+      </Stack>
+    </Stack>
+  );
+}
+
+function DateStepper({ date, onChange }: { date: string; onChange: (date: string) => void }) {
+  const pickerRef = useRef<HTMLInputElement>(null);
+  const isToday = date === getTodayDateString();
+
+  return (
+    <Stack direction="row" alignItems="center" flexWrap="wrap" columnGap={0.5} rowGap={1}>
+      <Tooltip title="Previous day">
+        <IconButton aria-label="Previous day" onClick={() => onChange(shiftDate(date, -1))}>
+          <ChevronLeftRoundedIcon />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Cancel appointment">
-        <IconButton
-          aria-label={`Cancel ${row.patientName}'s appointment`}
-          size="small"
-          color="error"
-          onClick={onDelete}
-        >
-          <DeleteOutlineRoundedIcon fontSize="small" />
+      <Button
+        variant="outlined"
+        size="small"
+        disabled={isToday}
+        onClick={() => onChange(getTodayDateString())}
+      >
+        Today
+      </Button>
+      <Tooltip title="Next day">
+        <IconButton aria-label="Next day" onClick={() => onChange(shiftDate(date, 1))}>
+          <ChevronRightRoundedIcon />
         </IconButton>
       </Tooltip>
+      <Typography component="h2" variant="h6" sx={{ mx: 1 }}>
+        {formatLongDate(date)}
+      </Typography>
+      {/* The browser's own date picker, opened from the calendar button. */}
+      <Box sx={{ position: "relative" }}>
+        <Tooltip title="Pick a date">
+          <IconButton
+            aria-label="Pick a date"
+            onClick={() => {
+              const input = pickerRef.current;
+              if (!input) return;
+              // Older browsers (and jsdom) lack showPicker(); focusing the input is the fallback.
+              try {
+                input.showPicker();
+              } catch {
+                input.focus();
+              }
+            }}
+          >
+            <CalendarMonthRoundedIcon />
+          </IconButton>
+        </Tooltip>
+        <Box
+          component="input"
+          ref={pickerRef}
+          type="date"
+          aria-label="Date"
+          tabIndex={-1}
+          value={date}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if (event.target.value) onChange(event.target.value);
+          }}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0,
+            pointerEvents: "none",
+            border: 0,
+            width: "100%",
+          }}
+        />
+      </Box>
     </Stack>
   );
 }
 
 export function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
-  const [rows, setRows] = useState<BoardRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    severity: "success",
-    message: "",
-  });
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | null>(null);
+  const toast = useToast();
+  const isDemo = useIsDemo();
 
-  // Fast-add form
+  // Reload every 60s (and when the tab regains focus) in case another front-desk computer
+  // checks someone in.
+  const appointments = useAppointments(selectedDate, { refetchInterval: 60_000 });
+  const rows = useMemo(
+    () => [...(appointments.data ?? [])].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
+    [appointments.data],
+  );
+  // The previous date's rows, kept on screen (dimmed, actions disabled) until the new date loads.
+  const showingPreviousDate = appointments.isPlaceholderData;
+  const therapists = useTherapists().data ?? [];
+
+  const createAppointment = useCreateAppointment();
+  const updateStatus = useUpdateAppointmentStatus();
+  const removeAppointment = useRemoveAppointment();
+
+  // Quick add
   const [patientInput, setPatientInput] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
-  const [patientMatches, setPatientMatches] = useState<PatientOption[]>([]);
   const [therapistId, setTherapistId] = useState("");
   const [time, setTime] = useState("09:00");
   const [type, setType] = useState<AppointmentType>("EVALUATION");
-  const [adding, setAdding] = useState(false);
   const patientInputRef = useRef<HTMLInputElement>(null);
+  const patientSearch = usePatientSearch(patientInput);
 
   const [editTarget, setEditTarget] = useState<BoardRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<BoardRow | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<BoardRow | null>(null);
 
-  async function refresh(date = selectedDate) {
-    try {
-      setLoading(true);
-      setError(null);
-      setRows(await listAppointmentsByDate(date));
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load the schedule.");
-    } finally {
-      setLoading(false);
+  const accents = useTherapistAccents([
+    ...therapists.map((t) => t.id),
+    ...rows.map((row) => row.therapistId),
+  ]);
+
+  // Press N anywhere on the page (outside a field or dialog) to jump to Quick add.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== "n") return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return;
+      if (isTypingTarget(event.target)) return;
+      event.preventDefault();
+      patientInputRef.current?.focus();
     }
-  }
-
-  useEffect(() => {
-    void refresh(selectedDate);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
-
-  useEffect(() => {
-    listTherapists()
-      .then(setTherapists)
-      .catch(() => setTherapists([]));
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Debounced patient typeahead.
-  useEffect(() => {
-    const query = patientInput.trim();
-    if (!query) {
-      setPatientMatches([]);
-      return;
+  const counts = useMemo(() => {
+    const byStatus: Record<AppointmentStatus, number> = { SCHEDULED: 0, WAITING: 0, DONE: 0 };
+    for (const row of rows) byStatus[row.status] += 1;
+    return byStatus;
+  }, [rows]);
+
+  // Visible rows grouped by start time, in order.
+  const groups = useMemo(() => {
+    const visible = statusFilter ? rows.filter((row) => row.status === statusFilter) : rows;
+    const byTime = new Map<string, BoardRow[]>();
+    for (const row of visible) {
+      byTime.set(row.scheduledAt, [...(byTime.get(row.scheduledAt) ?? []), row]);
     }
-    const id = window.setTimeout(() => {
-      searchPatients(query)
-        .then((found) =>
-          setPatientMatches(
-            found.map((p) => ({
-              kind: "existing",
-              id: p.id,
-              firstName: p.firstName,
-              lastName: p.lastName,
-            })),
-          ),
-        )
-        .catch(() => setPatientMatches([]));
-    }, 200);
-    return () => window.clearTimeout(id);
-  }, [patientInput]);
+    return [...byTime.entries()];
+  }, [rows, statusFilter]);
 
   const patientOptions = useMemo<PatientOption[]>(() => {
     const typed = patientInput.trim();
-    const hasExactMatch = patientMatches.some(
-      (o) => optionLabel(o).toLowerCase() === typed.toLowerCase(),
-    );
-    if (!typed || hasExactMatch) return patientMatches;
-    const { firstName, lastName } = splitName(typed);
-    return [...patientMatches, { kind: "create", firstName, lastName }];
-  }, [patientInput, patientMatches]);
+    if (!typed) return [];
+    const matches: PatientOption[] = (patientSearch.data ?? []).map((p) => ({
+      kind: "existing",
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+    }));
+    const hasExactMatch = matches.some((o) => optionLabel(o).toLowerCase() === typed.toLowerCase());
+    if (hasExactMatch) return matches;
+    return [...matches, { kind: "create", ...splitName(typed) }];
+  }, [patientInput, patientSearch.data]);
 
   function resetAddForm() {
     setSelectedPatient(null);
     setPatientInput("");
-    setPatientMatches([]);
     patientInputRef.current?.focus();
   }
 
-  async function handleAdd() {
+  function handleAdd() {
+    if (isDemo) return;
     const typed = patientInput.trim();
     const patientChoice =
       selectedPatient ??
       (typed ? ({ kind: "create", ...splitName(typed) } as PatientOption) : null);
     if (!patientChoice || !therapistId || !time) {
-      setSnackbar({
-        open: true,
-        severity: "error",
-        message: "Patient, therapist and time are required.",
-      });
+      toast.error("Patient, therapist and time are required.");
       return;
     }
-    setAdding(true);
-    try {
-      await createAppointment({
+    createAppointment.mutate(
+      {
         therapistId: Number(therapistId),
         scheduledAt: `${selectedDate}T${time}`,
         type,
         ...(patientChoice.kind === "existing"
           ? { patientId: patientChoice.id }
           : { patient: { firstName: patientChoice.firstName, lastName: patientChoice.lastName } }),
-      });
-      await refresh();
-      resetAddForm();
-      setSnackbar({ open: true, severity: "success", message: "Appointment added." });
-    } catch (addError) {
-      const message = addError instanceof Error ? addError.message : "Unable to add appointment.";
-      setSnackbar({ open: true, severity: "error", message });
-    } finally {
-      setAdding(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          resetAddForm();
+          toast.success("Appointment added.");
+        },
+        onError: (error) => toast.error(errorMessage(error, "Unable to add appointment.")),
+      },
+    );
   }
 
-  async function setStatus(row: BoardRow, status: BoardRow["status"]) {
-    try {
-      await updateAppointment(row.id, { status });
-      await refresh();
-    } catch (statusError) {
-      const message =
-        statusError instanceof Error ? statusError.message : "Unable to update status.";
-      setSnackbar({ open: true, severity: "error", message });
-    }
+  // Updates the row instantly; it reverts with an error toast if the server rejects the change.
+  function setStatus(row: BoardRow, status: AppointmentStatus) {
+    updateStatus.mutate(
+      { row, status },
+      { onError: (error) => toast.error(errorMessage(error, "Unable to update status.")) },
+    );
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    try {
-      await removeAppointment(deleteTarget.id);
-      await refresh();
-      setDeleteTarget(null);
-      setSnackbar({ open: true, severity: "success", message: "Appointment cancelled." });
-    } catch (deleteError) {
-      const message =
-        deleteError instanceof Error ? deleteError.message : "Unable to cancel appointment.";
-      setSnackbar({ open: true, severity: "error", message });
+  function handleCancel() {
+    if (!cancelTarget) return;
+    removeAppointment.mutate(cancelTarget.id, {
+      onSuccess: () => {
+        setCancelTarget(null);
+        toast.success("Appointment cancelled.");
+      },
+      onError: (error) => toast.error(errorMessage(error, "Unable to cancel appointment.")),
+    });
+  }
+
+  function toggleFilter(status: AppointmentStatus) {
+    setStatusFilter((current) => (current === status ? null : status));
+  }
+
+  // A failed first load shows only the error, not "The day is clear".
+  const loadFailed = appointments.isError && !appointments.data;
+  const dayIsEmpty = !appointments.isPending && rows.length === 0;
+
+  function countLabel(): string {
+    if (appointments.isPending) return "Loading appointments…";
+    if (showingPreviousDate) return `Loading ${formatShortDate(selectedDate)}…`;
+    return `${rows.length} appointment${rows.length === 1 ? "" : "s"}`;
+  }
+
+  function renderList() {
+    if (loadFailed) return null;
+    if (appointments.isPending) return <ListSkeleton rows={5} />;
+    if (dayIsEmpty) {
+      return (
+        <EmptyState
+          icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
+          title="The day is clear"
+          description="Use Quick add to schedule the first appointment."
+        />
+      );
     }
+    if (groups.length === 0 && statusFilter) {
+      return (
+        <EmptyState
+          title={`No ${appointmentStatusLabels[statusFilter].toLowerCase()} visits`}
+          description="Nobody on this day is in that state right now."
+          action={<Button onClick={() => setStatusFilter(null)}>Show all visits</Button>}
+        />
+      );
+    }
+    return groups.map(([scheduledAt, groupRows]) => (
+      <Box
+        key={scheduledAt}
+        component="section"
+        aria-label={formatTime(scheduledAt)}
+        sx={{ "& + &": { borderTop: 1, borderColor: "divider" } }}
+      >
+        <Typography
+          variant="body2"
+          fontWeight={700}
+          color="text.secondary"
+          sx={{ px: { xs: 2, md: 2.5 }, pt: 1.5, pb: 0.25 }}
+        >
+          {formatTime(scheduledAt)}
+        </Typography>
+        {groupRows.map((row) => (
+          <AppointmentRow
+            key={row.id}
+            row={row}
+            accent={accents.get(row.therapistId)}
+            disabled={showingPreviousDate}
+            readOnly={isDemo}
+            onStatus={(status) => setStatus(row, status)}
+            onEdit={() => setEditTarget(row)}
+            onCancel={() => setCancelTarget(row)}
+          />
+        ))}
+      </Box>
+    ));
   }
 
   return (
-    <Stack spacing={3.5}>
+    <Stack spacing={3}>
       <PageHeader
         eyebrow="Daily operations"
         title="Schedule"
         description="Add patients to the day and move each visit from scheduled to waiting to complete."
+        onRefresh={() => void appointments.refetch()}
+        refreshing={appointments.isFetching}
       />
 
-      {/* Fast-add row */}
-      <Paper
+      {/* Day summary; each status card also filters the list. */}
+      <Box
         sx={{
-          p: { xs: 2, md: 3 },
-          bgcolor: colors.surface,
-          boxShadow: "0 18px 50px rgba(0,0,0,.18)",
+          display: "grid",
+          gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" },
+          gap: 1.5,
+          opacity: showingPreviousDate ? 0.5 : 1,
+          transition: "opacity 160ms ease",
         }}
       >
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              display: "grid",
-              placeItems: "center",
-              color: "primary.main",
-              bgcolor: alpha(colors.primary, 0.11),
-            }}
-          >
-            <AddRoundedIcon />
-          </Box>
-          <Box>
-            <Typography variant="h6">Quick add</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create an appointment without leaving the schedule.
-            </Typography>
-          </Box>
-        </Stack>
-        <Stack
-          direction={{ xs: "column", lg: "row" }}
-          spacing={2}
-          alignItems={{ lg: "center" }}
-          component="form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void handleAdd();
-          }}
-        >
-          <Autocomplete
-            sx={{ flex: 1, minWidth: 220 }}
-            options={patientOptions}
-            value={selectedPatient}
-            inputValue={patientInput}
-            onInputChange={(_, value) => setPatientInput(value)}
-            onChange={(_, value) => setSelectedPatient(value)}
-            getOptionLabel={optionLabel}
-            isOptionEqualToValue={(a, b) => optionLabel(a) === optionLabel(b)}
-            filterOptions={(opts) => opts}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                inputRef={patientInputRef}
-                label="Patient"
-                required={!patientInput}
-                sx={adminTextFieldSx}
-              />
-            )}
-            slotProps={{
-              paper: { sx: { bgcolor: adminColors.panelElevated, color: adminColors.textStrong } },
-            }}
+        <StatCard
+          label="Total"
+          value={rows.length}
+          selected={statusFilter === null}
+          onClick={() => setStatusFilter(null)}
+        />
+        {statuses.map((status) => (
+          <StatCard
+            key={status}
+            label={appointmentStatusLabels[status]}
+            value={counts[status]}
+            tone={status.toLowerCase() as Lowercase<AppointmentStatus>}
+            selected={statusFilter === status}
+            onClick={() => toggleFilter(status)}
           />
-          <TextField
-            select
-            label="Therapist"
-            value={therapistId}
-            onChange={(e) => setTherapistId(e.target.value)}
-            required
-            sx={{ minWidth: 180, ...adminTextFieldSx }}
-            SelectProps={adminSelectProps}
-          >
-            {therapists.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="Time"
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-            sx={{ minWidth: 130, ...adminTextFieldSx }}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            select
-            label="Type"
-            value={type}
-            onChange={(e) => setType(e.target.value as AppointmentType)}
-            sx={{ minWidth: 160, ...adminTextFieldSx }}
-            SelectProps={adminSelectProps}
-          >
-            {appointmentTypeOptions.map((o) => (
-              <MenuItem key={o.value} value={o.value}>
-                {o.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={adding}
-            startIcon={<AddRoundedIcon />}
-            sx={{ minWidth: 118 }}
-          >
-            Add visit
-          </Button>
-        </Stack>
-      </Paper>
+        ))}
+      </Box>
 
-      {/* Schedule table */}
-      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+      <Paper
+        component="section"
+        aria-label="Day schedule"
+        sx={(theme) => ({ overflow: "hidden", boxShadow: theme.vars.palette.elevation.card })}
+      >
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={2}
           alignItems={{ sm: "center" }}
           justifyContent="space-between"
-          sx={{ p: { xs: 2, md: 2.5 }, borderBottom: `1px solid ${colors.borderSoft}` }}
+          spacing={1}
+          sx={{ px: { xs: 1, md: 1.5 }, py: 1.25 }}
         >
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <CalendarTodayRoundedIcon color="primary" fontSize="small" />
-              <Typography variant="h6">Day schedule</Typography>
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {loading
-                ? "Loading appointments…"
-                : `${rows.length} appointment${rows.length === 1 ? "" : "s"}`}
-            </Typography>
-          </Box>
-          <TextField
-            label="Date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            sx={{ width: { xs: "100%", sm: 210 }, ...adminTextFieldSx }}
-            InputLabelProps={{ shrink: true }}
-          />
+          <DateStepper date={selectedDate} onChange={setSelectedDate} />
+          <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+            {countLabel()}
+          </Typography>
         </Stack>
-        <Stack>
-          {error && <Alert severity="error">{error}</Alert>}
-          {rows.length === 0 && !loading ? (
-            <EmptyState
-              icon={<EventAvailableRoundedIcon sx={{ fontSize: 42 }} />}
-              title="The day is clear"
-              description="Use Quick add to schedule the first appointment."
-            />
-          ) : (
-            <>
-              <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-                <Table
-                  sx={{ minWidth: 900, "& td, & th": { borderColor: adminColors.borderMuted } }}
-                >
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: alpha(colors.surfaceRaised, 0.55) }}>
-                      {["Time", "Patient", "Therapist", "Type", "Status", "Actions"].map((h) => (
-                        <TableCell
-                          key={h}
-                          sx={{
-                            color: "text.secondary",
-                            fontSize: "0.75rem",
-                            textTransform: "uppercase",
-                            letterSpacing: ".08em",
-                            fontWeight: 750,
-                          }}
-                        >
-                          {h}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map((row) => (
-                      <TableRow key={row.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                        <TableCell sx={{ fontWeight: 750, color: "primary.light" }}>
-                          {formatTime(row.scheduledAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Typography fontWeight={700}>{row.patientName}</Typography>
-                        </TableCell>
-                        <TableCell color="text.secondary">{row.therapistName}</TableCell>
-                        <TableCell>
-                          {appointmentTypeOptions.find((o) => o.value === row.type)?.label ??
-                            row.type}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={appointmentStatusLabels[row.status]}
-                            color={statusChipColor[row.status]}
-                            variant={row.status === "SCHEDULED" ? "outlined" : "filled"}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <AppointmentActions
-                            row={row}
-                            onStatus={(status) => void setStatus(row, status)}
-                            onEdit={() => setEditTarget(row)}
-                            onDelete={() => setDeleteTarget(row)}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
 
-              <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" }, p: 2 }}>
-                {rows.map((row) => (
-                  <Paper
-                    key={row.id}
-                    sx={{
-                      p: 2,
-                      bgcolor: alpha(colors.surfaceRaised, 0.52),
-                      borderColor: colors.borderSoft,
-                    }}
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                    >
-                      <Box>
-                        <Typography color="primary.light" fontWeight={750}>
-                          {formatTime(row.scheduledAt)}
-                        </Typography>
-                        <Typography variant="h6" sx={{ mt: 0.25 }}>
-                          {row.patientName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          {row.therapistName} ·{" "}
-                          {appointmentTypeOptions.find((o) => o.value === row.type)?.label ??
-                            row.type}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        size="small"
-                        label={appointmentStatusLabels[row.status]}
-                        color={statusChipColor[row.status]}
-                        variant={row.status === "SCHEDULED" ? "outlined" : "filled"}
-                      />
-                    </Stack>
-                    <Box sx={{ mt: 2, pt: 1.5, borderTop: `1px solid ${colors.borderSoft}` }}>
-                      <AppointmentActions
-                        row={row}
-                        onStatus={(status) => void setStatus(row, status)}
-                        onEdit={() => setEditTarget(row)}
-                        onDelete={() => setDeleteTarget(row)}
-                      />
-                    </Box>
-                  </Paper>
-                ))}
-              </Stack>
-            </>
-          )}
-        </Stack>
+        {/* Quick add: compact bar, adds to the day shown. Press N to focus, Enter to add. */}
+        <Box
+          sx={{
+            px: { xs: 2, md: 2.5 },
+            py: 2,
+            bgcolor: "background.subtle",
+            borderTop: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <Typography variant="body2" fontWeight={700}>
+              Quick add
+            </Typography>
+            {/* Keyboard hint; hidden on phones, which have no hardware keyboard. */}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: { xs: "none", md: "inline" } }}
+            >
+              Press{" "}
+              <Box
+                component="kbd"
+                sx={{
+                  px: 0.75,
+                  py: 0.125,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  bgcolor: "background.paper",
+                  fontFamily: "inherit",
+                  fontWeight: 700,
+                }}
+              >
+                N
+              </Box>{" "}
+              to jump here
+            </Typography>
+          </Stack>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.5}
+            alignItems={{ md: "center" }}
+            component="form"
+            aria-label="Quick add"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAdd();
+            }}
+          >
+            <Autocomplete
+              sx={{ flex: 1, minWidth: 200 }}
+              options={patientOptions}
+              value={selectedPatient}
+              inputValue={patientInput}
+              onInputChange={(_, value) => setPatientInput(value)}
+              onChange={(_, value) => setSelectedPatient(value)}
+              getOptionLabel={optionLabel}
+              isOptionEqualToValue={(a, b) => optionLabel(a) === optionLabel(b)}
+              filterOptions={(opts) => opts}
+              // Keep a typed new-patient name when moving on to the next field (it's added on
+              // submit), and highlight the first match so Enter picks it.
+              clearOnBlur={false}
+              autoHighlight
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  inputRef={patientInputRef}
+                  label="Patient"
+                  required={!patientInput}
+                />
+              )}
+            />
+            <TextField
+              select
+              label="Therapist"
+              value={therapistId}
+              onChange={(e) => setTherapistId(e.target.value)}
+              required
+              sx={{ minWidth: 170 }}
+            >
+              {therapists.map((t) => (
+                <MenuItem key={t.id} value={String(t.id)}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+              sx={{ minWidth: 130 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              select
+              label="Type"
+              value={type}
+              onChange={(e) => setType(e.target.value as AppointmentType)}
+              sx={{ minWidth: 150 }}
+            >
+              {appointmentTypeOptions.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            <DemoReadOnly active={isDemo}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={createAppointment.isPending || isDemo}
+                startIcon={<AddRoundedIcon />}
+                sx={{ minWidth: 112 }}
+              >
+                Add visit
+              </Button>
+            </DemoReadOnly>
+          </Stack>
+        </Box>
+
+        {showingPreviousDate && (
+          <LinearProgress aria-label={`Loading ${formatShortDate(selectedDate)}`} />
+        )}
+        {appointments.isError && (
+          <Alert severity="error" sx={{ borderRadius: 0, border: 0 }}>
+            {errorMessage(appointments.error, "Unable to load the schedule.")}
+          </Alert>
+        )}
+        <Box
+          aria-busy={showingPreviousDate}
+          sx={{
+            pb: 1,
+            opacity: showingPreviousDate ? 0.5 : 1,
+            transition: "opacity 160ms ease",
+          }}
+        >
+          {renderList()}
+        </Box>
       </Paper>
 
       {editTarget && (
-        <EditAppointmentDialog
+        <EditAppointmentDrawer
           row={editTarget}
           therapists={therapists}
           onClose={() => setEditTarget(null)}
-          onSaved={async () => {
+          onSaved={() => {
             setEditTarget(null);
-            await refresh();
-            setSnackbar({ open: true, severity: "success", message: "Appointment updated." });
+            toast.success("Appointment updated.");
           }}
-          onError={(message) => setSnackbar({ open: true, severity: "error", message })}
+          onError={toast.error}
         />
       )}
 
-      <ConfirmDeleteDialog
-        open={deleteTarget !== null}
+      <ConfirmDialog
+        open={cancelTarget !== null}
         title="Cancel appointment"
         confirmLabel="Cancel appointment"
+        cancelLabel="Keep appointment"
+        tone="danger"
+        loading={removeAppointment.isPending}
         description={
-          deleteTarget
-            ? `Cancel ${deleteTarget.patientName}'s ${formatTime(deleteTarget.scheduledAt)} appointment?`
+          cancelTarget
+            ? `Cancel ${cancelTarget.patientName}'s ${formatTime(cancelTarget.scheduledAt)} appointment?`
             : ""
         }
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => void handleDelete()}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={handleCancel}
       />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((c) => ({ ...c, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar((c) => ({ ...c, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Stack>
   );
 }
 
-function EditAppointmentDialog({
+function EditAppointmentDrawer({
   row,
   therapists,
   onClose,
@@ -582,90 +735,65 @@ function EditAppointmentDialog({
   row: BoardRow;
   therapists: Therapist[];
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
   onError: (message: string) => void;
 }) {
   const [scheduledAt, setScheduledAt] = useState(row.scheduledAt.slice(0, 16));
   const [therapistId, setTherapistId] = useState(String(row.therapistId));
   const [type, setType] = useState<AppointmentType>(row.type);
-  const [saving, setSaving] = useState(false);
+  const updateAppointment = useUpdateAppointment();
+  const saving = updateAppointment.isPending;
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await updateAppointment(row.id, { scheduledAt, therapistId: Number(therapistId), type });
-      await onSaved();
-    } catch (saveError) {
-      onError(saveError instanceof Error ? saveError.message : "Unable to update appointment.");
-    } finally {
-      setSaving(false);
-    }
+  function handleSave() {
+    updateAppointment.mutate(
+      { id: row.id, patch: { scheduledAt, therapistId: Number(therapistId), type } },
+      {
+        onSuccess: onSaved,
+        onError: (error) => onError(errorMessage(error, "Unable to update appointment.")),
+      },
+    );
   }
 
   return (
-    <Dialog
+    <FormDrawer
       open
-      onClose={saving ? undefined : onClose}
-      fullWidth
-      maxWidth="xs"
-      PaperProps={{
-        sx: {
-          bgcolor: adminColors.panelElevated,
-          color: adminColors.textStrong,
-          border: `1px solid ${adminColors.border}`,
-          backgroundImage: "none",
-        },
-      }}
+      title="Edit appointment"
+      subtitle={row.patientName}
+      saving={saving}
+      onClose={onClose}
+      onSubmit={handleSave}
     >
-      <DialogTitle sx={{ color: adminColors.textStrong }}>Edit Appointment</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
-          <TextField
-            label="Scheduled At"
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            sx={adminTextFieldSx}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            select
-            label="Therapist"
-            value={therapistId}
-            onChange={(e) => setTherapistId(e.target.value)}
-            sx={adminTextFieldSx}
-            SelectProps={adminSelectProps}
-          >
-            {therapists.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Type"
-            value={type}
-            onChange={(e) => setType(e.target.value as AppointmentType)}
-            sx={adminTextFieldSx}
-            SelectProps={adminSelectProps}
-          >
-            {appointmentTypeOptions.map((o) => (
-              <MenuItem key={o.value} value={o.value}>
-                {o.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} disabled={saving}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={() => void handleSave()} disabled={saving}>
-          Save
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <TextField
+        label="Scheduled at"
+        type="datetime-local"
+        value={scheduledAt}
+        onChange={(e) => setScheduledAt(e.target.value)}
+        InputLabelProps={{ shrink: true }}
+      />
+      <TextField
+        select
+        label="Therapist"
+        value={therapistId}
+        onChange={(e) => setTherapistId(e.target.value)}
+      >
+        {therapists.map((t) => (
+          <MenuItem key={t.id} value={String(t.id)}>
+            {t.name}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        label="Type"
+        value={type}
+        onChange={(e) => setType(e.target.value as AppointmentType)}
+      >
+        {appointmentTypeOptions.map((o) => (
+          <MenuItem key={o.value} value={o.value}>
+            {o.label}
+          </MenuItem>
+        ))}
+      </TextField>
+    </FormDrawer>
   );
 }

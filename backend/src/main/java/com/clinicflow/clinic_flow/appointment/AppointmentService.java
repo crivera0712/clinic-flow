@@ -66,7 +66,9 @@ public class AppointmentService {
 
     @Transactional
     public BoardRowDto updateAppointmentById(Long id, AppointmentPatchDto request) {
-        clinicContextService.assertWritableClinic();
+        // The demo clinic is read-only except for check-in: a patch that only changes the status
+        // (Arrived / Start visit) is allowed there, so demo visitors can try the main flow.
+        if (!isStatusOnlyChange(request)) clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
         var appointment = findAppointmentOrThrow(id, clinicId);
 
@@ -90,6 +92,14 @@ public class AppointmentService {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private static boolean isStatusOnlyChange(AppointmentPatchDto request) {
+        return request != null
+                && request.getStatus() != null
+                && request.getScheduledAt() == null
+                && request.getTherapistId() == null
+                && request.getType() == null;
+    }
 
     private Patient resolvePatient(AppointmentRequestDto request, Clinics clinic, Long clinicId) {
         if (request.getPatientId() != null) {

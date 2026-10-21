@@ -9,7 +9,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { register } from "./api/auth";
 import { ApiError } from "./api/client";
 import { AuthShell } from "./components/ui/AuthShell";
-import { BrandMark } from "./components/ui/BrandMark";
 
 export default function RegisterPage() {
   const { clinicSlug } = useParams<{ clinicSlug: string }>();
@@ -42,15 +41,8 @@ export default function RegisterPage() {
   return (
     <AuthShell>
       <Stack spacing={3.5} component="form" onSubmit={handleSubmit}>
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ display: { md: "none" } }}>
-          <BrandMark size={38} />
-          <Typography variant="h6">ClinicFlow</Typography>
-        </Stack>
         <div>
-          <Typography variant="overline" color="primary.main">
-            Join your clinic
-          </Typography>
-          <Typography variant="h4" sx={{ mt: 0.5 }}>
+          <Typography variant="h4" component="h1">
             Create account
           </Typography>
           <Typography sx={{ mt: 1, color: "text.secondary", lineHeight: 1.7 }}>

@@ -2,8 +2,11 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
+import LandingPage from "./features/landing/LandingPage";
 import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { ConsoleLayout } from "./features/console/ConsoleLayout";
@@ -41,6 +44,13 @@ function DisplayApp() {
 function App() {
   const { status, currentUser } = useAuth();
   const { pathname } = useLocation();
+  const queryClient = useQueryClient();
+
+  // Cached data belongs to the clinic that was signed in. Drop all of it on logout or session
+  // expiry, so the next login (possibly another clinic) never sees it.
+  useEffect(() => {
+    if (status === "anonymous") queryClient.clear();
+  }, [status, queryClient]);
 
   if (pathname.startsWith("/register")) {
     return (
@@ -62,8 +72,16 @@ function App() {
     );
   }
 
+  // Signed out: the landing page at /, sign-in at /login; anything else goes to the landing
+  // page (so logging out lands there too).
   if (status === "anonymous") {
-    return <LoginPage />;
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   return currentUser?.roleName === "ADMIN" ? <AdminApp /> : <DisplayApp />;

@@ -1,195 +1,276 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import PersonAddAltRoundedIcon from "@mui/icons-material/PersonAddAltRounded";
-import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import Alert from "@mui/material/Alert";
+import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
-import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { adminDataGridSx, adminTextFieldSx } from "../../components/admin/adminStyles";
+import { useIsDemo } from "../../auth/AuthContext";
+import { DemoReadOnly } from "../../components/ui/DemoReadOnly";
+import { FormDrawer } from "../../components/ui/FormDrawer";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { colors } from "../../theme";
-import { createPatient, listPatients } from "../../services/patientService";
-import type { Patient } from "../../types/patient";
+import { useToast } from "../../components/ui/useToast";
+import { useCreatePatient, usePatients, useUpdatePatient } from "../../queries/patients";
+import { displayName, type Patient } from "../../types/patient";
+
+// Case-insensitive: every word typed must appear somewhere in the patient's full name.
+function matchesSearch(patient: Patient, query: string): boolean {
+  const name = displayName(patient).toLowerCase();
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => name.includes(word));
+}
+
+function initials(patient: Patient): string {
+  return `${patient.firstName.charAt(0)}${patient.lastName.charAt(0)}`.toUpperCase();
+}
+
+// null = closed, "new" = adding, Patient = editing that patient.
+type DrawerTarget = null | "new" | Patient;
 
 export function PatientsDirectory() {
-  const [rows, setRows] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: "",
-  });
+  const patients = usePatients();
+  const allRows = useMemo(() => patients.data?.rows ?? [], [patients.data]);
+  const totalOnServer = patients.data?.rowCount ?? 0;
+  const [search, setSearch] = useState("");
+  const [drawer, setDrawer] = useState<DrawerTarget>(null);
+  const isDemo = useIsDemo();
 
-  async function refresh() {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await listPatients({ page: 0, size: 200 });
-      setRows(result.rows);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load patients.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void refresh();
-  }, []);
-
-  async function handleCreate() {
-    setSaving(true);
-    try {
-      await createPatient({ firstName: firstName.trim(), lastName: lastName.trim() });
-      setOpen(false);
-      setFirstName("");
-      setLastName("");
-      await refresh();
-      setSnackbar({ open: true, message: "Patient added." });
-    } catch (createError) {
-      setSnackbar({
-        open: true,
-        message: createError instanceof Error ? createError.message : "Unable to add patient.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
+  const rows = useMemo(
+    () => (search.trim() ? allRows.filter((patient) => matchesSearch(patient, search)) : allRows),
+    [allRows, search],
+  );
 
   const columns: GridColDef<Patient>[] = [
-    { field: "firstName", headerName: "First Name", flex: 1, minWidth: 160 },
-    { field: "lastName", headerName: "Last Name", flex: 1, minWidth: 160 },
+    {
+      field: "name",
+      headerName: "Name",
+      flex: 1,
+      minWidth: 220,
+      // Sort by last name, then first; display "First Last".
+      valueGetter: (_value, row) => `${row.lastName} ${row.firstName}`,
+      renderCell: ({ row }) => (
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ height: "100%" }}>
+          <Avatar
+            sx={(theme) => ({
+              width: 34,
+              height: 34,
+              fontSize: "0.85rem",
+              fontWeight: 750,
+              color: "primary.main",
+              bgcolor: theme.alpha(theme.vars.palette.primary.main, 0.12),
+            })}
+          >
+            {initials(row)}
+          </Avatar>
+          <Typography fontWeight={650}>{displayName(row)}</Typography>
+        </Stack>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "",
+      width: 72,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      align: "right",
+      renderCell: ({ row }) => (
+        <Tooltip title={isDemo ? "Read-only in the demo" : "Edit patient"}>
+          <span>
+            <IconButton
+              aria-label={`Edit ${displayName(row)}`}
+              disabled={isDemo}
+              onClick={() => setDrawer(row)}
+            >
+              <EditRoundedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ),
+    },
   ];
 
+  function countLabel(): string {
+    if (patients.isPending) return "Loading patients…";
+    const total = `${allRows.length} patient${allRows.length === 1 ? "" : "s"}`;
+    return search.trim() ? `${rows.length} of ${total}` : total;
+  }
+
   return (
-    <Stack spacing={3.5}>
+    <Stack spacing={3}>
       <PageHeader
         eyebrow="Clinic directory"
         title="Patients"
         description="A focused directory for everyone currently receiving care at the clinic."
+        onRefresh={() => void patients.refetch()}
+        refreshing={patients.isFetching}
         action={
-          <Button
-            variant="contained"
-            startIcon={<PersonAddAltRoundedIcon />}
-            onClick={() => setOpen(true)}
-          >
-            Add patient
-          </Button>
+          <DemoReadOnly active={isDemo}>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddAltRoundedIcon />}
+              disabled={isDemo}
+              onClick={() => setDrawer("new")}
+            >
+              Add patient
+            </Button>
+          </DemoReadOnly>
         }
       />
-      <Paper sx={{ overflow: "hidden", bgcolor: colors.surface }}>
+
+      <Paper
+        component="section"
+        aria-label="Patient directory"
+        sx={(theme) => ({ overflow: "hidden", boxShadow: theme.vars.palette.elevation.card })}
+      >
         <Stack
-          direction="row"
-          spacing={1.25}
-          alignItems="center"
-          sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: `1px solid ${colors.borderSoft}` }}
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          alignItems={{ sm: "center" }}
+          justifyContent="space-between"
+          sx={{ px: { xs: 2, md: 2.5 }, py: 2, borderBottom: 1, borderColor: "divider" }}
         >
-          <PeopleAltRoundedIcon color="primary" />
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6">Patient directory</Typography>
+          <Box>
+            <Typography variant="h6" component="h2">
+              Patient directory
+            </Typography>
             <Typography variant="body2" color="text.secondary">
-              {loading
-                ? "Loading patients…"
-                : `${rows.length} patient${rows.length === 1 ? "" : "s"}`}
+              {countLabel()}
             </Typography>
           </Box>
+          <TextField
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name"
+            sx={{ width: { xs: "100%", sm: 300 } }}
+            slotProps={{
+              htmlInput: { "aria-label": "Search patients" },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRoundedIcon sx={{ color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: search ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="Clear search"
+                      size="small"
+                      onClick={() => setSearch("")}
+                    >
+                      <CloseRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
+              },
+            }}
+          />
         </Stack>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+        {patients.isError && (
+          <Alert severity="error" sx={{ borderRadius: 0, border: 0 }}>
+            {patients.error instanceof Error ? patients.error.message : "Unable to load patients."}
           </Alert>
         )}
-        <Box sx={{ height: { xs: 460, md: 580 } }}>
+        {totalOnServer > allRows.length && (
+          <Alert severity="info" sx={{ borderRadius: 0, border: 0 }}>
+            Showing the first {allRows.length} of {totalOnServer} patients.
+          </Alert>
+        )}
+        <Box sx={{ height: { xs: 480, md: 600 } }}>
           <DataGrid
             rows={rows}
             columns={columns}
-            loading={loading}
+            loading={patients.isPending}
             disableRowSelectionOnClick
-            rowHeight={58}
-            columnHeaderHeight={50}
+            rowHeight={60}
+            columnHeaderHeight={48}
             pageSizeOptions={[10, 25, 50]}
-            initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
-            sx={adminDataGridSx}
+            initialState={{
+              pagination: { paginationModel: { page: 0, pageSize: 10 } },
+              sorting: { sortModel: [{ field: "name", sort: "asc" }] },
+            }}
+            localeText={{
+              noRowsLabel: search.trim()
+                ? `No patients match "${search.trim()}"`
+                : "No patients yet",
+            }}
+            slotProps={{ loadingOverlay: { variant: "skeleton", noRowsVariant: "skeleton" } }}
           />
         </Box>
       </Paper>
 
-      <Dialog
-        open={open}
-        onClose={saving ? undefined : () => setOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Add patient</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary" sx={{ mb: 2.5 }}>
-            Add a patient to the clinic directory.
-          </Typography>
-          <Stack
-            component="form"
-            spacing={2.5}
-            sx={{ pt: 1 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleCreate();
-            }}
-          >
-            <TextField
-              label="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-              autoFocus
-              fullWidth
-              sx={adminTextFieldSx}
-            />
-            <TextField
-              label="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-              fullWidth
-              sx={adminTextFieldSx}
-            />
-            <DialogActions sx={{ px: 0, pb: 0 }}>
-              <Button onClick={() => setOpen(false)} disabled={saving}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="contained" disabled={saving}>
-                Add patient
-              </Button>
-            </DialogActions>
-          </Stack>
-        </DialogContent>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ open: false, message: "" })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ open: false, message: "" })}
-          severity="success"
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {drawer !== null && (
+        <PatientDrawer
+          // Remount per patient so the form starts from that patient's values.
+          key={drawer === "new" ? "new" : drawer.id}
+          patient={drawer === "new" ? null : drawer}
+          onClose={() => setDrawer(null)}
+        />
+      )}
     </Stack>
+  );
+}
+
+function PatientDrawer({ patient, onClose }: { patient: Patient | null; onClose: () => void }) {
+  const [firstName, setFirstName] = useState(patient?.firstName ?? "");
+  const [lastName, setLastName] = useState(patient?.lastName ?? "");
+  const createPatient = useCreatePatient();
+  const updatePatient = useUpdatePatient();
+  const saving = createPatient.isPending || updatePatient.isPending;
+  const toast = useToast();
+
+  function handleSubmit() {
+    const names = { firstName: firstName.trim(), lastName: lastName.trim() };
+    const callbacks = {
+      onSuccess: () => {
+        onClose();
+        toast.success(patient ? "Patient updated." : "Patient added.");
+      },
+      onError: (error: Error) =>
+        toast.error(
+          error.message || (patient ? "Unable to update patient." : "Unable to add patient."),
+        ),
+    };
+    if (patient) updatePatient.mutate({ id: patient.id, patch: names }, callbacks);
+    else createPatient.mutate(names, callbacks);
+  }
+
+  return (
+    <FormDrawer
+      open
+      title={patient ? "Edit patient" : "Add patient"}
+      subtitle={patient ? displayName(patient) : "Add a patient to the clinic directory."}
+      submitLabel={patient ? "Save" : "Add patient"}
+      saving={saving}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    >
+      <TextField
+        label="First name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        required
+        autoFocus
+      />
+      <TextField
+        label="Last name"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        required
+      />
+    </FormDrawer>
   );
 }
