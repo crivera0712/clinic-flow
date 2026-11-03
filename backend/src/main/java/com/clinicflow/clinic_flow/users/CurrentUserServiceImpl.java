@@ -14,4 +14,12 @@ public class CurrentUserServiceImpl implements CurrentUserService {
         AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
         return principal.clinicId();
     }
+
+    @Override
+    public Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
+        return principal.userId();
+    }
 }

@@ -12,4 +12,5 @@ public class UsersResponseDto {
     private String username;
     private LocalDateTime createdAt;
     private Users.RoleName roleName;
+    private boolean enabled;
 }
