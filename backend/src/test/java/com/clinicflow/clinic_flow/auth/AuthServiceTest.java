@@ -120,6 +120,48 @@ class AuthServiceTest {
     }
 
     @Test
+    void shouldThrowBadCredentialsWhenUserIsDisabled() {
+        Clinics clinic = clinic(5L, "demo");
+        Users user = user(1L, "sam", clinic);
+        user.setEnabled(false);
+        LoginRequest request = new LoginRequest();
+        request.setUsername("sam");
+        request.setPassword("secret1");
+
+        when(usersRepository.findByUsername("sam")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("secret1", "encoded")).thenReturn(true);
+
+        assertThrows(BadCredentialsException.class, () -> authService.login(request));
+
+        verify(passwordEncoder).matches("secret1", "encoded");
+        verify(authSessionService, never()).createSession(any(), any());
+    }
+
+    @Test
+    void shouldFailRefreshWhenUserIsDisabled() {
+        Clinics clinic = clinic(7L, "demo");
+        Users user = user(2L, "sam", clinic);
+        user.setEnabled(false);
+        Jwt refreshJwt = mock(Jwt.class);
+        AuthSessions session = new AuthSessions();
+        session.setId(UUID.randomUUID());
+
+        when(refreshJwt.getTokenType()).thenReturn("refresh");
+        when(refreshJwt.isExpired()).thenReturn(false);
+        when(refreshJwt.getClinicId()).thenReturn(7L);
+        when(refreshJwt.getSid()).thenReturn(session.getId().toString());
+        when(refreshJwt.getUsername()).thenReturn("sam");
+        when(authSessionService.requireRefreshableSession(session.getId().toString(), 7L))
+                .thenReturn(session);
+        when(usersRepository.findByUsernameAndClinicId("sam", 7L)).thenReturn(Optional.of(user));
+
+        assertThrows(BadCredentialsException.class, () -> authService.refreshToken(refreshJwt));
+
+        verify(authSessionService, never()).revokeSession(session.getId(), 7L);
+        verify(authSessionService, never()).createSession(any(), any());
+    }
+
+    @Test
     void shouldFailRefreshWhenUsernameExistsOnlyInAnotherClinic() {
         Jwt refreshJwt = mock(Jwt.class);
         AuthSessions session = new AuthSessions();

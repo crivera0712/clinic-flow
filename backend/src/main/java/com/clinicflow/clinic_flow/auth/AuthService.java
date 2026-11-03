@@ -46,6 +46,12 @@ public class AuthService {
             throw new BadCredentialsException("Bad credentials");
         }
 
+        // Checked after the password so the response doesn't reveal which accounts are disabled.
+        if (!user.isEnabled()) {
+            log.warn("Login denied reason=disabled user={}", user.getUsername());
+            throw new BadCredentialsException("Bad credentials");
+        }
+
         log.info(
                 "Login success for user={} clinicId={}",
                 user.getUsername(),
@@ -87,6 +93,12 @@ public class AuthService {
         var user = usersRepository
                 .findByUsernameAndClinicId(refreshToken.getUsername(), clinicId)
                 .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+
+        // A disabled user's existing session ends here, at most one access-token lifetime later.
+        if (!user.isEnabled()) {
+            log.info("Refresh denied reason=disabled userId={} sessionId={}", user.getId(), session.getId());
+            throw new BadCredentialsException("Invalid refresh token");
+        }
 
         authSessionService.revokeSession(session.getId(), clinicId);
 
