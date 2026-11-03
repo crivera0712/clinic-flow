@@ -75,6 +75,16 @@ public class AuthSessionService {
         }
     }
 
+    // Signs a user out everywhere: every open session (and so every access token issued for it) stops working.
+    @Transactional
+    public void revokeAllSessions(Long userId, Long clinicId) {
+        var now = LocalDateTime.now();
+        var open = authSessionRepository.findAllByUserIdAndClinicIdAndRevokedAtIsNull(userId, clinicId);
+        open.forEach(session -> session.setRevokedAt(now));
+        authSessionRepository.saveAll(open);
+        log.info("Revoked all sessions userId={} clinicId={} count={}", userId, clinicId, open.size());
+    }
+
     @Transactional
     public boolean checkRevokedAt(String sid, Long clinicId) {
         var session = findAuthSessionOrThrow(parseSessionId(sid), clinicId);

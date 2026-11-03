@@ -1,5 +1,6 @@
 package com.clinicflow.clinic_flow.users;
 
+import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.clinics.ClinicContextService;
 import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.exception.UserNotFoundException;
@@ -26,6 +27,7 @@ public class UsersService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserService currentUserService;
     private final ClinicContextService clinicContextService;
+    private final AuthSessionService authSessionService;
 
     public List<UsersResponseDto> getUsers() {
         var clinicId = currentUserService.getCurrentClinicId();
@@ -64,10 +66,25 @@ public class UsersService implements UserDetailsService {
 
     @Transactional
     public UsersResponseDto updateUser(Long id, @NonNull UserPatchDto patch) {
+        clinicContextService.assertWritableClinic();
         var clinicId = currentUserService.getCurrentClinicId();
         var user = usersRepository.findByIdAndClinicId(id, clinicId).orElseThrow(() -> new UserNotFoundException(id));
 
-        user.setRoleName(patch.getRoleName());
+        if (patch.getRoleName() != null) {
+            user.setRoleName(patch.getRoleName());
+        }
+
+        if (patch.getEnabled() != null) {
+            boolean disabling = user.isEnabled() && !patch.getEnabled();
+            if (!patch.getEnabled() && user.getId().equals(currentUserService.getCurrentUserId())) {
+                throw new IllegalArgumentException("You can't disable your own account");
+            }
+            user.setEnabled(patch.getEnabled());
+            // Login and refresh already refuse disabled users; this also ends the sessions they have open now.
+            if (disabling) {
+                authSessionService.revokeAllSessions(user.getId(), clinicId);
+            }
+        }
 
         return usersMapper.toUsersResponseDto(usersRepository.save(user));
     }
