@@ -5,16 +5,12 @@ import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.auth.records.LoginResult;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
-import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.demo.DemoResetService;
 import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
-import com.clinicflow.clinic_flow.exception.UserAlreadyExistsException;
 import com.clinicflow.clinic_flow.users.Users;
 import com.clinicflow.clinic_flow.users.UsersMapper;
 import com.clinicflow.clinic_flow.users.UsersRepository;
-import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -34,7 +30,6 @@ public class AuthService {
     private final UsersMapper usersMapper;
     private final JwtConfig jwtConfig;
     private final AuthSessionService authSessionService;
-    private final ClinicsRepository clinicsRepository;
     private final PasswordEncoder passwordEncoder;
     private final DemoResetService demoResetService;
 
@@ -73,28 +68,6 @@ public class AuthService {
                 user.getUsername(),
                 user.getClinic().getId());
         return issueTokenPair(user);
-    }
-
-    @Transactional
-    public UsersResponseDto register(String clinicSlug, CreateUserRequest request) {
-        log.info("Register attempt for username={} clinicSlug={}", request.getUsername(), clinicSlug);
-
-        var clinic = clinicsRepository
-                .findClinicsBySlug(clinicSlug)
-                .orElseThrow(() -> new ClinicNotFoundException("Clinic not found"));
-
-        if (usersRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new UserAlreadyExistsException(request.getUsername());
-        }
-
-        var user = usersMapper.toEntity(request);
-        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
-        user.setCreatedAt(java.time.LocalDateTime.now());
-        user.setRoleName(Users.RoleName.DISPLAY);
-        user.setEnabled(Boolean.TRUE);
-        user.setClinic(clinic);
-
-        return usersMapper.toUsersResponseDto(usersRepository.save(user));
     }
 
     @Transactional

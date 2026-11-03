@@ -82,4 +82,6 @@ Controller tests import `GlobalExceptionHandler` via `@Import` to test error res
 
 ## Security Config
 
-`SecurityConfig` permits `/api/auth/**` without authentication. All other `/api/**` routes require a valid JWT with an active session. Role-based access uses `ROLE_ADMIN` and `ROLE_DISPLAY` Spring Security authorities.
+`SecurityConfig` permits only `POST /api/auth/login`, `/api/auth/demo/*` and `/api/auth/refresh` without authentication. Every other `/api/**` route requires a valid JWT with an active session. Role-based access uses `ROLE_ADMIN` and `ROLE_DISPLAY` Spring Security authorities. There is no self-registration: accounts are created by an admin through `POST /api/users`.
+
+`config/SecurityRulesTest` checks every route for anonymous, DISPLAY and ADMIN callers with the security filters on. Its coverage check fails when a controller route has no row, so a new endpoint needs a row in its `ROUTES` list.

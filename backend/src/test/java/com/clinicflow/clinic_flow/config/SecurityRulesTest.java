@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,7 +76,6 @@ class SecurityRulesTest {
     // Routes whose rules change in a later step of docs/security-hardening-plan.md. Each one moves
     // into ROUTES when its step lands; the list should be empty after Step 3.
     private static final Set<String> KNOWN_GAPS = Set.of(
-            "POST /api/auth/{clinicSlug}/register", // Step 2: route is removed
             "GET /api/users", // Step 3: ADMIN only
             "GET /api/users/{userId}"); // Step 3: ADMIN only
 
@@ -206,6 +206,15 @@ class SecurityRulesTest {
         assertThat(covered).as("routes listed in both ROUTES and KNOWN_GAPS").doesNotContainAnyElementsOf(KNOWN_GAPS);
         assertThat(mapped).as("routes with no row in ROUTES").isSubsetOf(accountedFor);
         assertThat(accountedFor).as("rows for routes that no longer exist").isSubsetOf(mapped);
+    }
+
+    // Self-registration was removed: accounts are only created by an admin through POST /api/users.
+    @Test
+    void oldRegisterRouteIsNotPublic() throws Exception {
+        mockMvc.perform(post("/api/auth/sunrise-pt/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"stranger\",\"passwordHash\":\"secret1\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

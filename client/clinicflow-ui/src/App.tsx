@@ -4,10 +4,9 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import LandingPage from "./features/landing/LandingPage";
-import RegisterPage from "./RegisterPage";
 import ScheduleDisplayPage from "./ScheduleDisplayPage";
 import { ConsoleLayout } from "./features/console/ConsoleLayout";
 import { PatientsDirectory } from "./features/console/PatientsDirectory";
@@ -43,7 +42,6 @@ function DisplayApp() {
 
 function App() {
   const { status, currentUser } = useAuth();
-  const { pathname } = useLocation();
   const queryClient = useQueryClient();
 
   // Cached data belongs to the clinic that was signed in. Drop all of it on logout or session
@@ -51,14 +49,6 @@ function App() {
   useEffect(() => {
     if (status === "anonymous") queryClient.clear();
   }, [status, queryClient]);
-
-  if (pathname.startsWith("/register")) {
-    return (
-      <Routes>
-        <Route path="/register/:clinicSlug" element={<RegisterPage />} />
-      </Routes>
-    );
-  }
 
   if (status === "bootstrapping") {
     return (
