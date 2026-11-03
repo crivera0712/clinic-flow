@@ -31,9 +31,7 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
@@ -73,12 +71,6 @@ class SecurityRulesTest {
     static final String SECRET = "security-rules-test-secret-that-is-at-least-32-bytes";
     private static final Long CLINIC_ID = 7L;
 
-    // Routes whose rules change in a later step of docs/security-hardening-plan.md. Each one moves
-    // into ROUTES when its step lands; the list should be empty after Step 3.
-    private static final Set<String> KNOWN_GAPS = Set.of(
-            "GET /api/users", // Step 3: ADMIN only
-            "GET /api/users/{userId}"); // Step 3: ADMIN only
-
     private static final List<Route> ROUTES = List.of(
             // Appointments: the board read is open to both roles, every write is ADMIN only
             route(HttpMethod.GET, "/api/appointments/date", Access.SIGNED_IN),
@@ -106,6 +98,8 @@ class SecurityRulesTest {
             route(HttpMethod.DELETE, "/api/therapists/{id}", "/api/therapists/1", Access.ADMIN_ONLY),
 
             // Users
+            route(HttpMethod.GET, "/api/users", Access.ADMIN_ONLY),
+            route(HttpMethod.GET, "/api/users/{userId}", "/api/users/1", Access.ADMIN_ONLY),
             route(HttpMethod.POST, "/api/users", Access.ADMIN_ONLY)
                     .withBody("{\"username\":\"newuser\",\"passwordHash\":\"secret1\"}"),
             route(HttpMethod.PATCH, "/api/users/{id}", "/api/users/1", Access.ADMIN_ONLY)
@@ -200,12 +194,8 @@ class SecurityRulesTest {
                 .collect(Collectors.toSet());
         var covered = ROUTES.stream().map(Route::toString).collect(Collectors.toSet());
 
-        var accountedFor = new HashSet<>(covered);
-        accountedFor.addAll(KNOWN_GAPS);
-
-        assertThat(covered).as("routes listed in both ROUTES and KNOWN_GAPS").doesNotContainAnyElementsOf(KNOWN_GAPS);
-        assertThat(mapped).as("routes with no row in ROUTES").isSubsetOf(accountedFor);
-        assertThat(accountedFor).as("rows for routes that no longer exist").isSubsetOf(mapped);
+        assertThat(mapped).as("routes with no row in ROUTES").isSubsetOf(covered);
+        assertThat(covered).as("rows for routes that no longer exist").isSubsetOf(mapped);
     }
 
     // Self-registration was removed: accounts are only created by an admin through POST /api/users.
