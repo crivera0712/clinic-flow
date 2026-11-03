@@ -36,7 +36,7 @@ Vite proxies `/api/*` to `http://localhost:8080` — no `VITE_API_BASE_URL` need
 
 **Data model (flat):** `Patient {firstName,lastName}`, `Therapist {name}`, `Appointment {patient, therapist, scheduledAt, type, status}`. `type` = Evaluation/Reassessment/Follow-up. `status` is a minimal 3-state check-in lifecycle: `SCHEDULED → WAITING → DONE`. There is no Case or Body Region. Types live one-per-entity in `src/types/` (`patient.ts`, `therapist.ts`, `appointment.ts`, `common.ts`). The API returns denormalized `BoardRow`s (patient/therapist names inline) for both surfaces.
 
-**Signed out:** `/` = `LandingPage` (`src/features/landing/`; one-click demo buttons call `loginAsDemo(role)` → `POST /api/auth/demo/{ADMIN|DISPLAY}`), `/login` = `LoginPage`, `/register/:clinicSlug` = `RegisterPage`; any other path redirects to `/` (so logging out lands on the landing page). The landing screenshots in `public/landing/` are captured by `npm run screenshots` (playwright-core driving the installed Chrome; credentials via env vars).
+**Signed out:** `/` = `LandingPage` (`src/features/landing/`; one-click demo buttons call `loginAsDemo(role)` → `POST /api/auth/demo/{ADMIN|DISPLAY}`), `/login` = `LoginPage`; any other path redirects to `/` (so logging out lands on the landing page). The landing screenshots in `public/landing/` are captured by `npm run screenshots` (playwright-core driving the installed Chrome; credentials via env vars).
 
 **Two surfaces / role-based routing** (`src/App.tsx` renders by `currentUser.roleName`):
 

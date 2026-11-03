@@ -44,8 +44,6 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/demo/*")
                         .permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/*/register")
-                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
                         .permitAll()
                         .anyRequest()

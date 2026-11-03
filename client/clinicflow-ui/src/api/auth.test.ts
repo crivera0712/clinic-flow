@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { getCurrentUser, login, loginAsDemo, logout, refresh, register } from "./auth";
+import { getCurrentUser, login, loginAsDemo, logout, refresh } from "./auth";
 import { configureApiClient, resetApiClient } from "./client";
 import { server } from "../test/msw/server";
 import { apiUrl } from "../test/constants";
@@ -41,24 +41,6 @@ describe("auth api", () => {
     await expect(login({ username: "demo_admin", password: "wrong" })).rejects.toThrow(
       "Username or password is incorrect.",
     );
-  });
-
-  it("register POSTs to the clinic-scoped path without an auth header", async () => {
-    let captured: Request | undefined;
-    let body: unknown;
-    server.use(
-      http.post(apiUrl("/auth/demo/register"), async ({ request }) => {
-        captured = request;
-        body = await request.json();
-        return new HttpResponse(null, { status: 204 });
-      }),
-    );
-
-    await register("demo", { username: "newuser", passwordHash: "hash" });
-
-    expect(new URL(captured!.url).pathname).toBe("/api/auth/demo/register");
-    expect(captured?.headers.get("authorization")).toBeNull();
-    expect(body).toEqual({ username: "newuser", passwordHash: "hash" });
   });
 
   it("refresh POSTs to /auth/refresh without an auth header", async () => {

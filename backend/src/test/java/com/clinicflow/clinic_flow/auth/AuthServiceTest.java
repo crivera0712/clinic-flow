@@ -13,7 +13,6 @@ import com.clinicflow.clinic_flow.auth.records.LoginResult;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessionService;
 import com.clinicflow.clinic_flow.auth_sessions.AuthSessions;
 import com.clinicflow.clinic_flow.clinics.Clinics;
-import com.clinicflow.clinic_flow.clinics.ClinicsRepository;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.demo.DemoResetService;
 import com.clinicflow.clinic_flow.exception.ClinicNotFoundException;
@@ -47,9 +46,6 @@ class AuthServiceTest {
 
     @Mock
     private AuthSessionService authSessionService;
-
-    @Mock
-    private ClinicsRepository clinicsRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

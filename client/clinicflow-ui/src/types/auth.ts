@@ -5,11 +5,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterRequest {
-  username: string;
-  passwordHash: string;
-}
-
 export interface JwtResponse {
   token: string;
 }

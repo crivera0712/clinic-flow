@@ -1,11 +1,5 @@
 import { apiRequest } from "./client";
-import type {
-  CurrentUser,
-  JwtResponse,
-  LoginRequest,
-  RegisterRequest,
-  RoleName,
-} from "../types/auth";
+import type { CurrentUser, JwtResponse, LoginRequest, RoleName } from "../types/auth";
 
 export function login(request: LoginRequest) {
   return apiRequest<JwtResponse>("/auth/login", {
@@ -22,15 +16,6 @@ export function login(request: LoginRequest) {
 export function loginAsDemo(role: RoleName) {
   return apiRequest<JwtResponse>(`/auth/demo/${role}`, {
     method: "POST",
-    skipAuth: true,
-    retryOn401: false,
-  });
-}
-
-export function register(clinicSlug: string, request: RegisterRequest) {
-  return apiRequest<void>(`/auth/${clinicSlug}/register`, {
-    method: "POST",
-    body: request,
     skipAuth: true,
     retryOn401: false,
   });

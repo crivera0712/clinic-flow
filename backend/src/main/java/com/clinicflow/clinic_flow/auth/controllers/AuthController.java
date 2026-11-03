@@ -9,11 +9,8 @@ import com.clinicflow.clinic_flow.auth.records.AuthPrincipal;
 import com.clinicflow.clinic_flow.config.JwtConfig;
 import com.clinicflow.clinic_flow.exception.InvalidSessionException;
 import com.clinicflow.clinic_flow.users.Users;
-import com.clinicflow.clinic_flow.users.dtos.CreateUserRequest;
-import com.clinicflow.clinic_flow.users.dtos.UsersResponseDto;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -48,13 +45,6 @@ public class AuthController {
         var result = authService.loginAsDemo(role);
         writeRefreshCookie(response, result.refreshToken().toString());
         return ResponseEntity.ok(new JwtResponse(result.accessToken().toString()));
-    }
-
-    @PostMapping("/{clinicSlug}/register")
-    public ResponseEntity<UsersResponseDto> register(
-            @PathVariable @NotBlank String clinicSlug, @Valid @RequestBody CreateUserRequest request) {
-        var created = authService.register(clinicSlug, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PostMapping("/logout")
