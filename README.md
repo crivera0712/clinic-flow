@@ -1,136 +1,126 @@
 # ClinicFlow
 
-## Overview
+Scheduling and check-in for physical therapy clinics. The front desk books the day and checks patients in, and a TV in the gym shows who is waiting and who is up next.
 
-ClinicFlow started as a scheduling tool for a physical therapy clinic where I worked. The goal was to replace manual scheduling boards with a simple API-driven system that could power both administrative tools and display boards for therapists.
+**Live demo:** [clinicflowappdemo.com](https://clinicflowappdemo.com). One click signs you in, no account needed.
 
-ClinicFlow is a multi-tenant scheduling backend for physical therapy clinics. It manages appointments, therapists, and patients, with clinic-scoped data access and JWT authentication backed by server-side session validation. Scheduling uses a flat appointment model: each appointment links a patient and therapist directly and carries a type and a simple check-in status.
+| Front desk schedule | Clinic display board |
+| --- | --- |
+| ![Front desk schedule](client/clinicflow-ui/public/landing/schedule-light.jpg) | ![Clinic display board](client/clinicflow-ui/public/landing/board-light.jpg) |
 
-This repo includes:
+## Why I built it
 
-- `backend/` - Spring Boot API
-- `client/clinicflow-ui/` - React/Vite client
-
-## Deployment
-
-Current demo deployment:
-
-- Live demo: [https://clinicflowappdemo.com](https://clinicflowappdemo.com)
-- EC2 runs PostgreSQL and the backend Docker container
-- Caddy terminates TLS for `api.clinicflowappdemo.com`
-- Render hosts the frontend static site
-
-### Demo Sandbox
-
-- Seeded admin user: `demo_admin` / `demoadmin`
-- Seeded display user: `demo_display` / `demodisplay`
-- The demo clinic is read-only after login, so seeded records can be explored safely without allowing writes
-
-
-## Design Goals
-
-- Keep clinic data isolated by tenant
-- Use revocable JWT-based authentication
-- Keep the backend easy to extend with a standard layered structure
-- Support both admin workflows and schedule display boards
+ClinicFlow started at a physical therapy clinic where I worked. Every check-in meant someone walking back to the gym to tell a therapist their patient had arrived, and the schedule lived on a whiteboard. ClinicFlow replaces that with one shared system: the front desk updates it, and the board in the gym updates on its own.
 
 ## Features
 
-- Multi-clinic tenancy
-- Appointment scheduling and conflict checks (therapist and patient double-booking)
-- 3-state check-in lifecycle (`SCHEDULED → WAITING → DONE`)
-- Therapist and patient management
-- JWT access tokens with refresh cookies
-- Server-side session tracking and revocation
-- Role-based access control (`ADMIN`, `DISPLAY`)
-- Flyway database migrations
-- Pagination, filtering, and request validation
+**Front desk (`ADMIN`)**
 
-## Tech Stack
+- Today's schedule as an agenda grouped by time, with a fast-add row and patient typeahead
+- One-click check-in through a simple lifecycle: `SCHEDULED → WAITING → DONE`
+- Patient directory and therapist management
+- Double-booking checks for both therapists and patients
+- User management: admins create accounts and can disable or re-enable them
 
-- Java 17
-- Spring Boot
-- Spring Security
-- Spring Data JPA / Hibernate
-- PostgreSQL
-- Flyway
-- Maven
-- JUnit / MockMvc
+**Display board (`DISPLAY`)**
+
+- Read-only TV view with **Currently Waiting** large and **Up Next** smaller
+- Refreshes every 30 seconds and shows how long ago it last updated (turns amber if refreshes stop)
+- Patients appear as first name and last initial, since the screen is public
+- Therapist color legend, light and dark mode, and type that scales for 1080p and 4K screens
+
+**Platform**
+
+- Multi-tenant: every clinic's data is isolated by `clinic_id`
+- JWT access tokens backed by server-side sessions, so a session can be revoked immediately
+- Role-based access, checked by a test matrix that covers every route
+- Read-only demo clinic that reseeds itself with visits around the current time
+
+## Try the demo
+
+The landing page has two buttons: **Front desk** signs in as the demo admin and **Display board** signs in as the display screen. The demo clinic is read-only except for check-in, so you can move patients through `SCHEDULED → WAITING → DONE` but not change other records.
+
+The demo data resets nightly, and also on a demo admin login when it is more than 15 minutes old.
+
+## Tech stack
+
+| Backend | Frontend |
+| --- | --- |
+| Java 17, Spring Boot 3.5 | React 19, TypeScript, Vite 7 |
+| Spring Security, JWT | MUI v7 and MUI X DataGrid |
+| Spring Data JPA / Hibernate, MapStruct | TanStack Query |
+| PostgreSQL, Flyway | React Router |
+| JUnit 5, MockMvc, H2 | Vitest, Testing Library, MSW |
 
 ## Architecture
 
-ClinicFlow follows a typical Spring Boot layered architecture:
+```
+clinic-flow/
+├── backend/              # Spring Boot API
+└── client/clinicflow-ui/ # React / Vite frontend
+```
 
-- Controllers expose `/api/**` endpoints
-- Services contain business logic and clinic scoping
-- Repositories handle persistence
-- DTOs and mappers separate API payloads from entities
-- Security filters validate JWTs and active sessions
+The backend is organized by domain (`appointment`, `patient`, `therapist`, `users`, `auth`, `demo`, ...). Each domain has its own entity, repository, service, controller, MapStruct mapper and DTOs, and controllers never return entities directly.
+
+The frontend has two surfaces, picked by the signed-in user's role: the front desk console for `ADMIN` and the display board for `DISPLAY`. All server data goes through TanStack Query hooks. Check-in updates the screen right away and rolls back if the request fails.
+
+### Request flow
 
 ```mermaid
 sequenceDiagram
-Client ->> API: POST /api/auth/{clinicSlug}/login
-API ->> AuthService: validate credentials
-AuthService ->> Database: create auth_session
-AuthService ->> Client: JWT + refresh cookie
+    participant C as Client
+    participant F as JwtAuthenticationFilter
+    participant S as AppointmentService
+    participant DB as PostgreSQL
 
-Client ->> API: GET /api/appointments/date
-API ->> JwtAuthenticationFilter: validate token
-JwtAuthenticationFilter ->> Database: verify session
-API ->> AppointmentService: fetch clinic appointments
-AppointmentService ->> Repository: query database
-Repository ->> Database: SELECT appointments
-API ->> Client: return DTO response
+    C->>F: POST /api/auth/login
+    F->>DB: verify credentials, create auth_session
+    F-->>C: access token + refresh cookie
+
+    C->>F: GET /api/appointments/date (Bearer token)
+    F->>F: validate JWT signature and expiry
+    F->>DB: is the session still active?
+    F->>S: AuthPrincipal(userId, sid, clinicId)
+    S->>DB: SELECT ... WHERE clinic_id = ?
+    S-->>C: board rows (names inline)
 ```
 
-## Data Model
+### Data model
 
-Core tables:
+Scheduling uses a flat model. An appointment links a patient and a therapist directly and carries `scheduledAt`, a `type` (`EVALUATION`, `REASSESSMENT`, `FOLLOW_UP`) and a `status`.
 
-- `clinics`
-- `users`
-- `patients`
-- `therapists`
-- `appointments`
-- `auth_sessions`
+Core tables: `clinics`, `users`, `patients`, `therapists`, `appointments`, `auth_sessions`. Migrations live in `backend/src/main/resources/db/migration`.
 
-Flyway migrations live in `backend/src/main/resources/db/migration`.
+### Multi-tenancy
 
-## Multi-Clinic Tenancy
+- Every operational table has a `clinic_id` column.
+- The authenticated principal carries the user's `clinicId`.
+- Services pass it to clinic-scoped repository methods such as `findByIdAndClinicId(...)`, so a record from another clinic returns 404.
 
-Tenant isolation is enforced in both the schema and application layer:
+### Authentication and security
 
-- Operational tables include `clinic_id`
-- The authenticated principal carries `clinicId`
-- Repository methods use clinic-aware lookups such as `findByIdAndClinicId(...)`
-- Services scope reads and writes to the current clinic
-- Login is clinic-aware through `POST /api/auth/{clinicSlug}/login`
+- Login returns a short-lived access token (Bearer JWT) and sets a refresh token in an HTTP-only cookie.
+- Each login creates an `auth_sessions` row. A request is accepted only if its JWT is valid **and** its session is still active, so logout and disabling a user take effect immediately.
+- The frontend retries a 401 once with the refresh cookie before signing the user out.
+- There is no public sign-up. Admins create accounts in their own clinic.
+- Disabled users are rejected at login and refresh with the same 401 as a wrong password, so the response doesn't reveal which accounts exist.
+- `config/SecurityRulesTest` runs the real security filters against every route for anonymous, `DISPLAY` and `ADMIN` callers. It fails if a new route has no rule.
 
-## Setup
+## API overview
 
-### Prerequisites
+| Endpoint | Access |
+| --- | --- |
+| `POST /api/auth/login` | Public |
+| `POST /api/auth/demo/{ADMIN\|DISPLAY}` | Public |
+| `POST /api/auth/refresh` | Public (refresh cookie) |
+| `GET /api/auth/me`, `POST /api/auth/logout` | Signed in |
+| `GET /api/appointments/date?date=` | Signed in (defaults to today) |
+| `POST /api/appointments`, `PATCH /api/appointments/{id}`, `DELETE /api/appointments/{id}` | Admin |
+| `GET /api/patients`, `GET /api/patients/search?q=`, `POST`, `PATCH`, `DELETE` | Admin |
+| `GET /api/therapists`, `POST`, `DELETE` | Admin |
+| `GET /api/users`, `POST /api/users`, `PATCH /api/users/{id}` (role, enabled) | Admin |
 
-- Java 17
-- PostgreSQL
-
-## API Overview
-
-Example endpoints:
-
-- `POST /api/auth/{clinicSlug}/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/appointments/date` — daily board (defaults to today)
-- `POST /api/appointments`
-- `PATCH /api/appointments/{id}`
-- `DELETE /api/appointments/{id}`
-- `GET /api/patients`
-- `GET /api/patients/search?q=`
-- `GET /api/therapists`
-
-The daily board returns denormalized rows with patient and therapist names inline.
-
-Example response:
+The daily board returns denormalized rows with patient and therapist names inline:
 
 ```json
 [
@@ -147,20 +137,69 @@ Example response:
 ]
 ```
 
-## Security
+## Running locally
 
-- Access tokens are sent as Bearer JWTs
-- Refresh tokens are stored in HTTP-only cookies
-- Each login creates an `auth_sessions` record
-- Requests are accepted only if the JWT is valid and the session is active
-- `ADMIN` users manage clinic data
-- `DISPLAY` users can access display-oriented schedule views
+### Prerequisites
 
-## Development
+- Java 17
+- Node.js 20.19+ or 22.12+
+- PostgreSQL 16 (or Docker)
 
-Run tests:
+### Backend
+
+Create `backend/.env` (loaded automatically):
+
+```
+DB_URL=jdbc:postgresql://localhost:5432/clinicflow
+DB_USER=postgres
+DB_PASSWORD=postgres
+JWT_SECRET=change-me-to-a-long-random-secret
+```
+
+Then start the API on `http://localhost:8080`. Flyway creates the schema and seeds the demo clinic on first run.
 
 ```bash
-cd backend
-./mvnw test
+cd backend && ./mvnw spring-boot:run
 ```
+
+Or run PostgreSQL and the backend together with Docker:
+
+```bash
+cd backend && docker compose up --build
+```
+
+### Frontend
+
+```bash
+cd client/clinicflow-ui && npm install && npm run dev
+```
+
+The app runs on `http://localhost:5173` and proxies `/api` to the backend on port 8080. To point it at a different backend, set `VITE_API_PROXY_TARGET` in `client/clinicflow-ui/.env.local`.
+
+## Testing
+
+Backend tests run against an in-memory H2 database, so no setup is needed:
+
+```bash
+cd backend && ./mvnw test
+```
+
+Frontend tests use Vitest with MSW mocking the API:
+
+```bash
+cd client/clinicflow-ui && npm run test:run
+```
+
+Formatting: Spotless for the backend (`./mvnw spotless:apply`) and Prettier for the frontend.
+
+## Deployment
+
+- **Frontend:** Render static site, served at [clinicflowappdemo.com](https://clinicflowappdemo.com)
+- **Backend:** Docker container on EC2, with PostgreSQL on the same instance
+- **TLS:** Caddy terminates TLS for `api.clinicflowappdemo.com`
+
+## Roadmap
+
+- Users page in the admin console (the API already supports creating, disabling and re-enabling users)
+- Invite-only sign-up, so new staff can set their own password
+- Guard against an admin demoting themselves or the last admin
