@@ -18,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,20 +92,50 @@ class SecurityWiringIntegrationTest {
     }
 
     @Test
+    void disabledUserCannotLogIn() throws Exception {
+        disable("wiring_display");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody("wiring_display")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void disabledUserCannotRefresh() throws Exception {
+        var refreshCookie = loginResponse("wiring_display").getCookie("refreshToken");
+        disable("wiring_display");
+
+        mockMvc.perform(post("/api/auth/refresh").cookie(refreshCookie)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void requestWithoutTokenIsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/therapists")).andExpect(status().isUnauthorized());
     }
 
     private String login(String username) throws Exception {
-        var body = objectMapper.writeValueAsString(Map.of("username", username, "password", PASSWORD));
-        var response = mockMvc.perform(post("/api/auth/login")
+        var response = loginResponse(username).getContentAsString();
+        return objectMapper.readTree(response).get("token").asText();
+    }
+
+    private MockHttpServletResponse loginResponse(String username) throws Exception {
+        return mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                        .content(loginBody(username)))
                 .andExpect(status().isOk())
                 .andReturn()
-                .getResponse()
-                .getContentAsString();
-        return objectMapper.readTree(response).get("token").asText();
+                .getResponse();
+    }
+
+    private String loginBody(String username) throws Exception {
+        return objectMapper.writeValueAsString(Map.of("username", username, "password", PASSWORD));
+    }
+
+    private void disable(String username) {
+        var user = usersRepository.findByUsername(username).orElseThrow();
+        user.setEnabled(false);
+        usersRepository.save(user);
     }
 
     private void saveUser(String username, Users.RoleName role, Clinics clinic) {
